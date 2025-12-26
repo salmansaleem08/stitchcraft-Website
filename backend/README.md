@@ -13,7 +13,10 @@ npm install
 ```
 PORT=5000
 MONGO_URI=your_mongodb_connection_string_here
+JWT_SECRET=your_jwt_secret_key_here
 ```
+
+Note: Generate a strong random string for JWT_SECRET (you can use any random string generator).
 
 3. Start the server:
 ```bash

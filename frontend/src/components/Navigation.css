@@ -1,0 +1,114 @@
+.app-header {
+  background-color: #2c1810;
+  color: #f5f1eb;
+  padding: 1rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.app-header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #d4a574;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.logo:hover {
+  color: #f5c896;
+}
+
+.main-nav {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav-link {
+  color: #f5f1eb;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 400;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: #d4a574;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #d4a574;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-info {
+  color: #d4a574;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.btn-logout {
+  background-color: transparent;
+  color: #f5f1eb;
+  border: 1px solid #d4a574;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+  background-color: #d4a574;
+  color: #2c1810;
+}
+
+.btn-small {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .app-header .container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .main-nav {
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .user-menu {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
