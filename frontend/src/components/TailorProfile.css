@@ -391,6 +391,12 @@
   color: #9a8a7a;
 }
 
+.pricing-tab-content {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 @media (max-width: 768px) {
   .profile-header {
     flex-direction: column;

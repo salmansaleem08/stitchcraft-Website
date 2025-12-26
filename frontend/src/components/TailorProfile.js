@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import PricingDisplay from "./PricingDisplay";
 import "./TailorProfile.css";
 
 const TailorProfile = () => {
@@ -167,6 +168,12 @@ const TailorProfile = () => {
           >
             Reviews ({reviews.length})
           </button>
+          <button
+            className={`tab-btn ${activeTab === "pricing" ? "active" : ""}`}
+            onClick={() => setActiveTab("pricing")}
+          >
+            Pricing
+          </button>
         </div>
 
         <div className="profile-content">
@@ -323,6 +330,12 @@ const TailorProfile = () => {
                   <p>No reviews yet</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === "pricing" && (
+            <div className="tab-content pricing-tab-content">
+              <PricingDisplay tailorId={tailor._id} />
             </div>
           )}
         </div>
