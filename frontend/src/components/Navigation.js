@@ -40,6 +40,9 @@ const Navigation = () => {
           </Link>
           {user ? (
             <>
+              <Link to="/orders" className="nav-link">
+                My Orders
+              </Link>
               <div className="user-menu">
                 <span className="user-info">
                   {user.name} ({getRoleDisplayName(user.role)})

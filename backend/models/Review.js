@@ -59,8 +59,9 @@ const reviewSchema = mongoose.Schema(
   }
 );
 
-// Prevent duplicate reviews from same customer for same tailor
-reviewSchema.index({ tailor: 1, customer: 1 }, { unique: true });
+// Prevent duplicate reviews from same customer for same tailor on the same order
+// This allows multiple reviews from same customer for same tailor if they're for different orders
+reviewSchema.index({ tailor: 1, customer: 1, order: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model("Review", reviewSchema);
 

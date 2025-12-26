@@ -77,6 +77,11 @@ const orderSchema = mongoose.Schema(
       },
     },
     // Pricing
+    quantity: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
     basePrice: {
       type: Number,
       required: true,

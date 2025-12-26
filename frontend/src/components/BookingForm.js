@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import MeasurementForm from "./MeasurementForm";
+import { getDefaultPricing } from "../utils/pricingDefaults";
 import "./BookingForm.css";
 
 const BookingForm = () => {
@@ -19,12 +20,17 @@ const BookingForm = () => {
     serviceType: "",
     garmentType: "",
     description: "",
-    basePrice: "",
-    fabricCost: "",
-    additionalCharges: "",
-    discount: "",
+    quantity: 1,
     consultationDate: "",
     estimatedCompletionDate: "",
+  });
+
+  const [calculatedPricing, setCalculatedPricing] = useState({
+    basePrice: 0,
+    fabricCost: 0,
+    additionalCharges: 0,
+    discount: 0,
+    totalPrice: 0,
   });
 
   const [measurements, setMeasurements] = useState(null);
@@ -62,15 +68,60 @@ const BookingForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
+    const updatedFormData = {
       ...formData,
       [name]: value,
+    };
+    setFormData(updatedFormData);
+
+    // Recalculate pricing when service type or garment type changes
+    if (name === "serviceType" || name === "garmentType" || name === "quantity") {
+      calculatePricing(updatedFormData);
+    }
+  };
+
+  const calculatePricing = (data) => {
+    if (!data.serviceType || !data.garmentType) {
+      setCalculatedPricing({
+        basePrice: 0,
+        fabricCost: 0,
+        additionalCharges: 0,
+        discount: 0,
+        totalPrice: 0,
+      });
+      return;
+    }
+
+    const basePrice = getDefaultPricing(data.serviceType, data.garmentType);
+    const quantity = parseInt(data.quantity) || 1;
+    const subtotal = basePrice * quantity;
+
+    // Apply discount for multiple garments (2+ garments get 10% discount, 3+ get 15%, 4+ get 20%)
+    let discountPercentage = 0;
+    if (quantity >= 4) {
+      discountPercentage = 20;
+    } else if (quantity >= 3) {
+      discountPercentage = 15;
+    } else if (quantity >= 2) {
+      discountPercentage = 10;
+    }
+
+    const discount = (subtotal * discountPercentage) / 100;
+    const totalPrice = subtotal - discount;
+
+    setCalculatedPricing({
+      basePrice: basePrice,
+      quantity: quantity,
+      subtotal: subtotal,
+      discount: discount,
+      discountPercentage: discountPercentage,
+      totalPrice: totalPrice,
     });
   };
 
   const handleNext = () => {
     if (step === 1) {
-      if (!formData.serviceType || !formData.garmentType || !formData.basePrice) {
+      if (!formData.serviceType || !formData.garmentType) {
         setError("Please fill in all required fields");
         return;
       }
@@ -93,13 +144,6 @@ const BookingForm = () => {
     setUseExistingMeasurements(true);
   };
 
-  const calculateTotal = () => {
-    const base = parseFloat(formData.basePrice) || 0;
-    const fabric = parseFloat(formData.fabricCost) || 0;
-    const additional = parseFloat(formData.additionalCharges) || 0;
-    const discount = parseFloat(formData.discount) || 0;
-    return base + fabric + additional - discount;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,10 +176,12 @@ const BookingForm = () => {
         description: formData.description,
         measurements: measurementId,
         consultationDate: formData.consultationDate || undefined,
-        basePrice: parseFloat(formData.basePrice),
-        fabricCost: parseFloat(formData.fabricCost) || 0,
-        additionalCharges: parseFloat(formData.additionalCharges) || 0,
-        discount: parseFloat(formData.discount) || 0,
+        basePrice: calculatedPricing.basePrice,
+        quantity: formData.quantity || 1,
+        fabricCost: 0, // Will be set by tailor
+        additionalCharges: 0, // Will be set by tailor
+        discount: calculatedPricing.discount || 0,
+        totalPrice: calculatedPricing.totalPrice,
         estimatedCompletionDate: formData.estimatedCompletionDate || undefined,
       };
 
@@ -244,6 +290,20 @@ const BookingForm = () => {
               </div>
 
               <div className="form-group">
+                <label htmlFor="quantity">Quantity *</label>
+                <input
+                  type="number"
+                  id="quantity"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  min="1"
+                  required
+                />
+                <small>Discount applied: 2+ items (10%), 3+ items (15%), 4+ items (20%)</small>
+              </div>
+
+              <div className="form-group">
                 <label htmlFor="description">Description</label>
                 <textarea
                   id="description"
@@ -255,62 +315,40 @@ const BookingForm = () => {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="basePrice">Base Price (PKR) *</label>
-                  <input
-                    type="number"
-                    id="basePrice"
-                    name="basePrice"
-                    value={formData.basePrice}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                    required
-                  />
+              {formData.serviceType && formData.garmentType && (
+                <div className="pricing-preview">
+                  <h3>Pricing Preview</h3>
+                  <div className="pricing-details">
+                    <div className="pricing-row">
+                      <span>Base Price (per item):</span>
+                      <span>PKR {calculatedPricing.basePrice.toLocaleString()}</span>
+                    </div>
+                    {calculatedPricing.quantity > 1 && (
+                      <>
+                        <div className="pricing-row">
+                          <span>Quantity:</span>
+                          <span>{calculatedPricing.quantity}</span>
+                        </div>
+                        <div className="pricing-row">
+                          <span>Subtotal:</span>
+                          <span>PKR {calculatedPricing.subtotal?.toLocaleString() || 0}</span>
+                        </div>
+                        <div className="pricing-row discount">
+                          <span>Discount ({calculatedPricing.discountPercentage}%):</span>
+                          <span>- PKR {calculatedPricing.discount.toLocaleString()}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="pricing-row total">
+                      <span>Total Price:</span>
+                      <span>PKR {calculatedPricing.totalPrice.toLocaleString()}</span>
+                    </div>
+                    <small className="pricing-note">
+                      Note: Final pricing may be adjusted by the tailor. Fabric cost and additional charges will be added separately.
+                    </small>
+                  </div>
                 </div>
-
-                <div className="form-group">
-                  <label htmlFor="fabricCost">Fabric Cost (PKR)</label>
-                  <input
-                    type="number"
-                    id="fabricCost"
-                    name="fabricCost"
-                    value={formData.fabricCost}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="additionalCharges">Additional Charges (PKR)</label>
-                  <input
-                    type="number"
-                    id="additionalCharges"
-                    name="additionalCharges"
-                    value={formData.additionalCharges}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="discount">Discount (PKR)</label>
-                  <input
-                    type="number"
-                    id="discount"
-                    name="discount"
-                    value={formData.discount}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
+              )}
 
               <div className="form-row">
                 <div className="form-group">
@@ -421,31 +459,32 @@ const BookingForm = () => {
               <div className="review-section">
                 <h3>Pricing</h3>
                 <div className="review-item">
-                  <span className="review-label">Base Price:</span>
-                  <span className="review-value">PKR {formData.basePrice}</span>
+                  <span className="review-label">Base Price (per item):</span>
+                  <span className="review-value">PKR {calculatedPricing.basePrice.toLocaleString()}</span>
                 </div>
-                {formData.fabricCost && (
-                  <div className="review-item">
-                    <span className="review-label">Fabric Cost:</span>
-                    <span className="review-value">PKR {formData.fabricCost}</span>
-                  </div>
-                )}
-                {formData.additionalCharges && (
-                  <div className="review-item">
-                    <span className="review-label">Additional Charges:</span>
-                    <span className="review-value">PKR {formData.additionalCharges}</span>
-                  </div>
-                )}
-                {formData.discount && (
-                  <div className="review-item">
-                    <span className="review-label">Discount:</span>
-                    <span className="review-value">- PKR {formData.discount}</span>
-                  </div>
+                <div className="review-item">
+                  <span className="review-label">Quantity:</span>
+                  <span className="review-value">{formData.quantity || 1}</span>
+                </div>
+                {calculatedPricing.quantity > 1 && (
+                  <>
+                    <div className="review-item">
+                      <span className="review-label">Subtotal:</span>
+                      <span className="review-value">PKR {calculatedPricing.subtotal?.toLocaleString() || 0}</span>
+                    </div>
+                    <div className="review-item">
+                      <span className="review-label">Discount ({calculatedPricing.discountPercentage}%):</span>
+                      <span className="review-value">- PKR {calculatedPricing.discount.toLocaleString()}</span>
+                    </div>
+                  </>
                 )}
                 <div className="review-item total">
                   <span className="review-label">Total Price:</span>
-                  <span className="review-value">PKR {calculateTotal().toFixed(2)}</span>
+                  <span className="review-value">PKR {calculatedPricing.totalPrice.toLocaleString()}</span>
                 </div>
+                <small className="pricing-note">
+                  Note: Final pricing may be adjusted by the tailor. Fabric cost and additional charges will be added separately.
+                </small>
               </div>
 
               {measurements && (

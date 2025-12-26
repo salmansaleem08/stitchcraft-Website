@@ -1,6 +1,7 @@
 const Order = require("../models/Order");
 const Measurement = require("../models/Measurement");
 const User = require("../models/User");
+const { assignBadges } = require("../utils/badgeAssignment");
 
 // @desc    Create a new order
 // @route   POST /api/orders
@@ -11,6 +12,7 @@ exports.createOrder = async (req, res) => {
       tailor,
       serviceType,
       garmentType,
+      quantity,
       description,
       measurements,
       consultationDate,
@@ -18,6 +20,7 @@ exports.createOrder = async (req, res) => {
       fabricCost,
       additionalCharges,
       discount,
+      totalPrice,
       estimatedCompletionDate,
     } = req.body;
 
@@ -34,17 +37,20 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: "Invalid tailor" });
     }
 
-    const totalPrice =
-      (basePrice || 0) +
+    const orderQuantity = quantity || 1;
+    const calculatedTotalPrice = totalPrice || (
+      (basePrice || 0) * orderQuantity +
       (fabricCost || 0) +
       (additionalCharges || 0) -
-      (discount || 0);
+      (discount || 0)
+    );
 
     const order = await Order.create({
       customer: req.user._id,
       tailor,
       serviceType,
       garmentType,
+      quantity: orderQuantity,
       description,
       measurements,
       consultationDate,
@@ -145,6 +151,40 @@ exports.getOrder = async (req, res) => {
   }
 };
 
+// @desc    Update order
+// @route   PUT /api/orders/:id
+// @access  Private
+exports.updateOrder = async (req, res) => {
+  try {
+    const { fabricCost, additionalCharges, discount, totalPrice } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update pricing
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to update this order" });
+    }
+
+    if (fabricCost !== undefined) order.fabricCost = fabricCost;
+    if (additionalCharges !== undefined) order.additionalCharges = additionalCharges;
+    if (discount !== undefined) order.discount = discount;
+    if (totalPrice !== undefined) order.totalPrice = totalPrice;
+
+    const updatedOrder = await order.save();
+
+    res.json({
+      success: true,
+      data: updatedOrder,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Update order status
 // @route   PUT /api/orders/:id/status
 // @access  Private
@@ -170,9 +210,21 @@ exports.updateOrderStatus = async (req, res) => {
     // Status-specific validations
     if (status === "completed") {
       order.actualCompletionDate = new Date();
-      await User.findByIdAndUpdate(order.tailor, {
-        $inc: { completedOrders: 1 },
-      });
+      const tailor = await User.findById(order.tailor);
+      if (tailor) {
+        tailor.completedOrders = (tailor.completedOrders || 0) + 1;
+        tailor.totalOrders = tailor.totalOrders || 0;
+        
+        // Calculate completion rate
+        if (tailor.totalOrders > 0) {
+          tailor.completionRate = (tailor.completedOrders / tailor.totalOrders) * 100;
+        }
+        
+        await tailor.save();
+        
+        // Assign badges based on performance
+        await assignBadges(order.tailor);
+      }
     }
 
     if (status) {

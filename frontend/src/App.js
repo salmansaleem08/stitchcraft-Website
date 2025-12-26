@@ -10,6 +10,7 @@ import TailorProfile from "./components/TailorProfile";
 import TailorProfileEdit from "./components/TailorProfileEdit";
 import BookingForm from "./components/BookingForm";
 import OrderTracking from "./components/OrderTracking";
+import OrderDashboard from "./components/OrderDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -39,6 +40,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="customer">
                     <BookingForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/orders"
+                element={
+                  <ProtectedRoute>
+                    <OrderDashboard />
                   </ProtectedRoute>
                 }
               />
