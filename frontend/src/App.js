@@ -7,6 +7,7 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import TailorListing from "./components/TailorListing";
 import TailorProfile from "./components/TailorProfile";
+import TailorProfileEdit from "./components/TailorProfileEdit";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -23,6 +24,14 @@ function App() {
               <Route path="/signup" element={<Signup />} />
               <Route path="/tailors" element={<TailorListing />} />
               <Route path="/tailors/:id" element={<TailorProfile />} />
+              <Route
+                path="/tailors/:id/edit"
+                element={
+                  <ProtectedRoute requiredRole="tailor">
+                    <TailorProfileEdit />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/materials"
                 element={

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import "./TailorProfile.css";
 
 const TailorProfile = () => {
   const { id } = useParams();
+  const { user } = useContext(AuthContext);
   const [tailor, setTailor] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +108,11 @@ const TailorProfile = () => {
             </div>
 
             {tailor.bio && <p className="profile-bio">{tailor.bio}</p>}
+            {user && user._id === tailor._id && (
+              <Link to={`/tailors/${tailor._id}/edit`} className="btn btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
+                Edit Profile
+              </Link>
+            )}
           </div>
         </div>
 
