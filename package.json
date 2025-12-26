@@ -1,0 +1,19 @@
+{
+  "name": "stitchcraft",
+  "version": "1.0.0",
+  "description": "StitchCraft - Digital Tailoring Marketplace",
+  "scripts": {
+    "dev": "cd backend && npm run dev",
+    "start": "cd backend && npm start",
+    "server": "cd backend && node server.js",
+    "client": "cd frontend && npm start",
+    "install-all": "cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "tailoring",
+    "marketplace",
+    "mern"
+  ],
+  "author": "",
+  "license": "ISC"
+}
