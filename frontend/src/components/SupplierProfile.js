@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import "./SupplierProfile.css";
 
 const SupplierProfile = () => {
   const { id } = useParams();
+  const { user } = useContext(AuthContext);
   const [supplier, setSupplier] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -79,6 +81,9 @@ const SupplierProfile = () => {
               </div>
             )}
             {getVerificationBadge()}
+            {supplier.qualityRating >= 4.5 && supplier.totalQualityReviews >= 10 && (
+              <span className="quality-badge">Quality Guaranteed</span>
+            )}
           </div>
 
           <div className="profile-info">
@@ -208,6 +213,15 @@ const SupplierProfile = () => {
                   </div>
                 ))}
               </div>
+              {user && user.role === "customer" && (
+                <Link
+                  to={`/suppliers/${supplier._id}/bulk-order`}
+                  className="btn btn-primary"
+                  style={{ marginTop: "1rem", display: "inline-block" }}
+                >
+                  Place Bulk Order
+                </Link>
+              )}
             </div>
           )}
         </div>

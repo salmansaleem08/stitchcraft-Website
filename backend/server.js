@@ -18,6 +18,8 @@ app.use("/api/suppliers", require("./routes/supplierRoutes"));
 app.use("/api/fabrics", require("./routes/fabricRoutes"));
 app.use("/api/fabrics/recommendations", require("./routes/fabricRecommendationRoutes"));
 app.use("/api/sample-orders", require("./routes/sampleOrderRoutes"));
+app.use("/api/bulk-orders", require("./routes/bulkOrderRoutes"));
+app.use("/api/inventory", require("./routes/inventoryRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/measurements", require("./routes/measurementRoutes"));
 app.use("/api/pricing", require("./routes/pricingRoutes"));
