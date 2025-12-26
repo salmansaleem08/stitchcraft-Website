@@ -107,13 +107,13 @@ const SupplierDashboard = () => {
             )}
           </div>
 
-          <div className="action-card">
-            <h3>Products</h3>
-            <p>Manage your fabric and supplies inventory</p>
-            <Link to="/materials" className="btn btn-primary">
-              Manage Products
-            </Link>
-          </div>
+            <div className="action-card">
+              <h3>Fabrics</h3>
+              <p>Manage your fabric inventory</p>
+              <Link to="/fabrics/me/list" className="btn btn-primary">
+                Manage Fabrics
+              </Link>
+            </div>
 
           <div className="action-card">
             <h3>Orders</h3>

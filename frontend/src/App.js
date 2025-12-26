@@ -15,6 +15,10 @@ import PackageBuilder from "./components/PackageBuilder";
 import SupplierProfile from "./components/SupplierProfile";
 import SupplierProfileEdit from "./components/SupplierProfileEdit";
 import DashboardRouter from "./components/DashboardRouter";
+import FabricListing from "./components/FabricListing";
+import FabricDetail from "./components/FabricDetail";
+import FabricForm from "./components/FabricForm";
+import MyFabrics from "./components/MyFabrics";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -86,6 +90,32 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <DashboardRouter />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/fabrics" element={<FabricListing />} />
+              <Route path="/fabrics/:id" element={<FabricDetail />} />
+              <Route
+                path="/fabrics/new"
+                element={
+                  <ProtectedRoute requiredRole="supplier">
+                    <FabricForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/fabrics/:id/edit"
+                element={
+                  <ProtectedRoute requiredRole="supplier">
+                    <FabricForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/fabrics/me/list"
+                element={
+                  <ProtectedRoute requiredRole="supplier">
+                    <MyFabrics />
                   </ProtectedRoute>
                 }
               />

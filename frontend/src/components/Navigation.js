@@ -35,6 +35,9 @@ const Navigation = () => {
           <Link to="/tailors" className="nav-link">
             Find Tailors
           </Link>
+          <Link to="/fabrics" className="nav-link">
+            Fabrics
+          </Link>
           <Link to="/materials" className="nav-link">
             Materials
           </Link>
