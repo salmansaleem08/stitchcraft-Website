@@ -1,0 +1,165 @@
+.my-supplies-container {
+  min-height: calc(100vh - 80px);
+  padding: 2rem 0;
+  background: linear-gradient(135deg, #f5f1eb 0%, #e8e0d6 100%);
+}
+
+.my-supplies-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.my-supplies-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c1810;
+  margin: 0;
+}
+
+.no-supplies {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.no-supplies p {
+  font-size: 1.1rem;
+  color: #5a4a3a;
+  margin-bottom: 1.5rem;
+}
+
+.supplies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.supply-card {
+  background: #ffffff;
+  border: 1px solid #e8e0d6;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.supply-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
+}
+
+.supply-image {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: #e8e0d6;
+}
+
+.supply-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.supply-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d4a574;
+  color: #2c1810;
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.inactive-badge,
+.featured-badge {
+  position: absolute;
+  top: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.inactive-badge {
+  left: 0.5rem;
+  background: #dc3545;
+  color: white;
+}
+
+.featured-badge {
+  right: 0.5rem;
+  background: #ffc107;
+  color: #2c1810;
+}
+
+.supply-info {
+  padding: 1rem;
+}
+
+.supply-info h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+}
+
+.supply-category {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+  margin-bottom: 0.5rem;
+}
+
+.supply-brand {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+  margin-bottom: 0.5rem;
+}
+
+.supply-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #8b4513;
+  margin-bottom: 1rem;
+}
+
+.supply-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+@media (max-width: 768px) {
+  .my-supplies-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .supplies-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

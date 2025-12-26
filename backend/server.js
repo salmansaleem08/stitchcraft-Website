@@ -17,6 +17,7 @@ app.use("/api/tailors", require("./routes/tailorRoutes"));
 app.use("/api/suppliers", require("./routes/supplierRoutes"));
 app.use("/api/fabrics", require("./routes/fabricRoutes"));
 app.use("/api/fabrics/recommendations", require("./routes/fabricRecommendationRoutes"));
+app.use("/api/supplies", require("./routes/supplyRoutes"));
 app.use("/api/sample-orders", require("./routes/sampleOrderRoutes"));
 app.use("/api/bulk-orders", require("./routes/bulkOrderRoutes"));
 app.use("/api/inventory", require("./routes/inventoryRoutes"));

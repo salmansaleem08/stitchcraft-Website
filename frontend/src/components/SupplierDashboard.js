@@ -116,6 +116,14 @@ const SupplierDashboard = () => {
           </div>
 
           <div className="action-card">
+            <h3>Supplies</h3>
+            <p>Manage your supplies inventory</p>
+            <Link to="/supplies/me/list" className="btn btn-primary">
+              Manage Supplies
+            </Link>
+          </div>
+
+          <div className="action-card">
             <h3>Inventory</h3>
             <p>View inventory summary and low stock alerts</p>
             <Link to="/inventory" className="btn btn-primary">

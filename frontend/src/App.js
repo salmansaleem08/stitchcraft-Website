@@ -22,6 +22,10 @@ import MyFabrics from "./components/MyFabrics";
 import SampleOrderForm from "./components/SampleOrderForm";
 import InventoryManagement from "./components/InventoryManagement";
 import BulkOrderForm from "./components/BulkOrderForm";
+import SupplyListing from "./components/SupplyListing";
+import SupplyDetail from "./components/SupplyDetail";
+import SupplyForm from "./components/SupplyForm";
+import MySupplies from "./components/MySupplies";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -143,6 +147,32 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="customer">
                     <BulkOrderForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/supplies" element={<SupplyListing />} />
+              <Route path="/supplies/:id" element={<SupplyDetail />} />
+              <Route
+                path="/supplies/new"
+                element={
+                  <ProtectedRoute requiredRole="supplier">
+                    <SupplyForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/supplies/:id/edit"
+                element={
+                  <ProtectedRoute requiredRole="supplier">
+                    <SupplyForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/supplies/me/list"
+                element={
+                  <ProtectedRoute requiredRole="supplier">
+                    <MySupplies />
                   </ProtectedRoute>
                 }
               />

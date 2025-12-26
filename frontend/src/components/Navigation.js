@@ -38,6 +38,9 @@ const Navigation = () => {
           <Link to="/fabrics" className="nav-link">
             Fabrics
           </Link>
+          <Link to="/supplies" className="nav-link">
+            Supplies
+          </Link>
           <Link to="/materials" className="nav-link">
             Materials
           </Link>
@@ -64,8 +67,11 @@ const Navigation = () => {
                   <Link to={`/suppliers/${user._id}/edit`} className="nav-link">
                     My Profile
                   </Link>
-                  <Link to="/materials" className="nav-link">
-                    Materials
+                  <Link to="/fabrics/me/list" className="nav-link">
+                    My Fabrics
+                  </Link>
+                  <Link to="/supplies/me/list" className="nav-link">
+                    My Supplies
                   </Link>
                 </>
               )}

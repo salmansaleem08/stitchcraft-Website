@@ -1,4 +1,5 @@
 const Fabric = require("../models/Fabric");
+const Supply = require("../models/Supply");
 const User = require("../models/User");
 
 // @desc    Get inventory summary for supplier
@@ -12,7 +13,10 @@ exports.getInventorySummary = async (req, res) => {
       return res.status(403).json({ message: "Only suppliers can access inventory" });
     }
 
-    const fabrics = await Fabric.find({ supplier: req.user._id });
+    const [fabrics, supplies] = await Promise.all([
+      Fabric.find({ supplier: req.user._id }),
+      Supply.find({ supplier: req.user._id }),
+    ]);
 
     const summary = {
       totalFabrics: fabrics.length,
@@ -20,6 +24,11 @@ exports.getInventorySummary = async (req, res) => {
       lowStockFabrics: fabrics.filter((f) => f.stockQuantity < 10 && f.stockQuantity > 0).length,
       outOfStockFabrics: fabrics.filter((f) => f.stockQuantity === 0).length,
       totalStockValue: fabrics.reduce((sum, f) => sum + f.pricePerMeter * f.stockQuantity, 0),
+      totalSupplies: supplies.length,
+      activeSupplies: supplies.filter((s) => s.isActive).length,
+      lowStockSupplies: supplies.filter((s) => s.stockQuantity < 10 && s.stockQuantity > 0).length,
+      outOfStockSupplies: supplies.filter((s) => s.stockQuantity === 0).length,
+      totalSuppliesValue: supplies.reduce((sum, s) => sum + s.price * s.stockQuantity, 0),
       byType: {},
       byStatus: {
         active: 0,
@@ -35,6 +44,7 @@ exports.getInventorySummary = async (req, res) => {
           count: 0,
           totalStock: 0,
           totalValue: 0,
+          type: "fabric",
         };
       }
       summary.byType[fabric.fabricType].count++;
@@ -43,11 +53,33 @@ exports.getInventorySummary = async (req, res) => {
         (fabric.pricePerMeter || 0) * (fabric.stockQuantity || 0);
     });
 
+    // Group by supply category
+    supplies.forEach((supply) => {
+      if (!summary.byType[supply.category]) {
+        summary.byType[supply.category] = {
+          count: 0,
+          totalStock: 0,
+          totalValue: 0,
+          type: "supply",
+        };
+      }
+      summary.byType[supply.category].count++;
+      summary.byType[supply.category].totalStock += supply.stockQuantity || 0;
+      summary.byType[supply.category].totalValue +=
+        (supply.price || 0) * (supply.stockQuantity || 0);
+    });
+
     // Count by status
     fabrics.forEach((fabric) => {
       if (fabric.isActive) summary.byStatus.active++;
       else summary.byStatus.inactive++;
       if (fabric.isFeatured) summary.byStatus.featured++;
+    });
+
+    supplies.forEach((supply) => {
+      if (supply.isActive) summary.byStatus.active++;
+      else summary.byStatus.inactive++;
+      if (supply.isFeatured) summary.byStatus.featured++;
     });
 
     res.json({
@@ -97,24 +129,49 @@ exports.updateFabricStock = async (req, res) => {
   }
 };
 
-// @desc    Get low stock fabrics
+// @desc    Get low stock items (fabrics and supplies)
 // @route   GET /api/inventory/low-stock
 // @access  Private (Supplier only)
-exports.getLowStockFabrics = async (req, res) => {
+exports.getLowStockItems = async (req, res) => {
   try {
-    const { threshold = 10 } = req.query;
+    const { threshold = 10, type } = req.query;
 
-    const fabrics = await Fabric.find({
+    const filter = {
       supplier: req.user._id,
       stockQuantity: { $lte: parseInt(threshold), $gte: 0 },
       isActive: true,
-    }).sort({ stockQuantity: 1 });
+    };
 
-    res.json({
-      success: true,
-      count: fabrics.length,
-      data: fabrics,
-    });
+    if (type === "fabric") {
+      const fabrics = await Fabric.find(filter).sort({ stockQuantity: 1 });
+      return res.json({
+        success: true,
+        count: fabrics.length,
+        type: "fabric",
+        data: fabrics,
+      });
+    } else if (type === "supply") {
+      const supplies = await Supply.find(filter).sort({ stockQuantity: 1 });
+      return res.json({
+        success: true,
+        count: supplies.length,
+        type: "supply",
+        data: supplies,
+      });
+    } else {
+      // Get both
+      const [fabrics, supplies] = await Promise.all([
+        Fabric.find(filter).sort({ stockQuantity: 1 }),
+        Supply.find(filter).sort({ stockQuantity: 1 }),
+      ]);
+
+      res.json({
+        success: true,
+        count: fabrics.length + supplies.length,
+        fabrics: fabrics,
+        supplies: supplies,
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
