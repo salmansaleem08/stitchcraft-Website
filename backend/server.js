@@ -16,6 +16,8 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/tailors", require("./routes/tailorRoutes"));
 app.use("/api/suppliers", require("./routes/supplierRoutes"));
 app.use("/api/fabrics", require("./routes/fabricRoutes"));
+app.use("/api/fabrics/recommendations", require("./routes/fabricRecommendationRoutes"));
+app.use("/api/sample-orders", require("./routes/sampleOrderRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/measurements", require("./routes/measurementRoutes"));
 app.use("/api/pricing", require("./routes/pricingRoutes"));

@@ -1,0 +1,140 @@
+.fabric-recommendations {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e8e0d6;
+}
+
+.fabric-recommendations h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 1.5rem;
+}
+
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.recommendation-card {
+  display: flex;
+  flex-direction: column;
+  background: #f5f1eb;
+  border: 1px solid #e8e0d6;
+  border-radius: 8px;
+  overflow: hidden;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.recommendation-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
+  border-color: #8b4513;
+}
+
+.recommendation-image {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background: #e8e0d6;
+}
+
+.recommendation-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d4a574;
+  color: #2c1810;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.verified-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: #28a745;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.recommendation-info {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.recommendation-info h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.recommendation-supplier {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+  margin: 0;
+}
+
+.recommendation-details {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.fabric-type,
+.fabric-color {
+  padding: 0.25rem 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e8e0d6;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: #2c1810;
+}
+
+.recommendation-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #8b4513;
+  margin-top: 0.5rem;
+}
+
+.recommendation-rating {
+  font-size: 0.85rem;
+  color: #ffc107;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .recommendations-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .recommendation-image {
+    height: 150px;
+  }
+}
+

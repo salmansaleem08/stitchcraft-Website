@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import FabricRecommendations from "./FabricRecommendations";
 import "./FabricDetail.css";
 
 const FabricDetail = () => {
@@ -281,8 +282,21 @@ const FabricDetail = () => {
                 </Link>
               </div>
             )}
+
+            {user && user.role === "customer" && (
+              <div className="customer-actions">
+                <Link
+                  to={`/fabrics/${fabric._id}/sample-order`}
+                  className="btn btn-primary"
+                >
+                  Order Sample
+                </Link>
+              </div>
+            )}
           </div>
         </div>
+
+        <FabricRecommendations fabricId={fabric._id} />
       </div>
     </div>
   );

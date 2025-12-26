@@ -19,6 +19,7 @@ import FabricListing from "./components/FabricListing";
 import FabricDetail from "./components/FabricDetail";
 import FabricForm from "./components/FabricForm";
 import MyFabrics from "./components/MyFabrics";
+import SampleOrderForm from "./components/SampleOrderForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -95,6 +96,14 @@ function App() {
               />
               <Route path="/fabrics" element={<FabricListing />} />
               <Route path="/fabrics/:id" element={<FabricDetail />} />
+              <Route
+                path="/fabrics/:fabricId/sample-order"
+                element={
+                  <ProtectedRoute requiredRole="customer">
+                    <SampleOrderForm />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/fabrics/new"
                 element={

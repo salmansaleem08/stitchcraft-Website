@@ -357,7 +357,8 @@
   font-size: 0.95rem;
 }
 
-.supplier-actions {
+.supplier-actions,
+.customer-actions {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 2px solid #e8e0d6;
