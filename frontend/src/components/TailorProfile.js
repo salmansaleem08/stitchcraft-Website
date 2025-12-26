@@ -108,11 +108,18 @@ const TailorProfile = () => {
             </div>
 
             {tailor.bio && <p className="profile-bio">{tailor.bio}</p>}
-            {user && user._id === tailor._id && (
-              <Link to={`/tailors/${tailor._id}/edit`} className="btn btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
-                Edit Profile
-              </Link>
-            )}
+            <div className="profile-actions">
+              {user && user._id === tailor._id && (
+                <Link to={`/tailors/${tailor._id}/edit`} className="btn btn-primary">
+                  Edit Profile
+                </Link>
+              )}
+              {user && user.role === "customer" && user._id !== tailor._id && (
+                <Link to={`/tailors/${tailor._id}/book`} className="btn btn-primary">
+                  Book Service
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 

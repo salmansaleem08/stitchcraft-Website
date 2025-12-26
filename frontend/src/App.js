@@ -8,6 +8,8 @@ import Signup from "./components/Signup";
 import TailorListing from "./components/TailorListing";
 import TailorProfile from "./components/TailorProfile";
 import TailorProfileEdit from "./components/TailorProfileEdit";
+import BookingForm from "./components/BookingForm";
+import OrderTracking from "./components/OrderTracking";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -29,6 +31,22 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="tailor">
                     <TailorProfileEdit />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tailors/:id/book"
+                element={
+                  <ProtectedRoute requiredRole="customer">
+                    <BookingForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/orders/:id"
+                element={
+                  <ProtectedRoute>
+                    <OrderTracking />
                   </ProtectedRoute>
                 }
               />

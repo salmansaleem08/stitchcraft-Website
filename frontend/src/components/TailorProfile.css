@@ -126,6 +126,12 @@
   margin-top: 1rem;
 }
 
+.profile-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

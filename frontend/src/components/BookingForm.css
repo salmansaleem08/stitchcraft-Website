@@ -1,0 +1,268 @@
+.booking-form-container {
+  min-height: calc(100vh - 80px);
+  padding: 2rem 0;
+  background: linear-gradient(135deg, #f5f1eb 0%, #e8e0d6 100%);
+}
+
+.booking-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.booking-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+}
+
+.booking-header p {
+  font-size: 1.1rem;
+  color: #5a4a3a;
+}
+
+.booking-steps {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  padding: 0 1rem;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  flex: 1;
+  max-width: 200px;
+}
+
+.step::after {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 60%;
+  width: 80%;
+  height: 2px;
+  background: #e8e0d6;
+  z-index: 0;
+}
+
+.step:last-child::after {
+  display: none;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e8e0d6;
+  color: #9a8a7a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+}
+
+.step.active .step-number {
+  background: #8b4513;
+  color: #f5f1eb;
+}
+
+.step-label {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+  text-align: center;
+}
+
+.step.active .step-label {
+  color: #2c1810;
+  font-weight: 500;
+}
+
+.booking-form {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 2.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-step {
+  min-height: 400px;
+}
+
+.form-step h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d4a574;
+  border-radius: 4px;
+  font-size: 1rem;
+  color: #2c1810;
+  background-color: #ffffff;
+  transition: border-color 0.3s ease;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #8b4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.existing-measurements {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f5f1eb;
+  border-radius: 8px;
+}
+
+.existing-measurements h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 1rem;
+}
+
+.measurements-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.measurement-card {
+  background: #ffffff;
+  padding: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.measurement-card:hover {
+  border-color: #8b4513;
+  transform: translateY(-2px);
+}
+
+.measurement-card h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+}
+
+.measurement-card p {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+  margin: 0.25rem 0;
+}
+
+.review-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f5f1eb;
+  border-radius: 8px;
+}
+
+.review-section h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 1rem;
+}
+
+.review-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e8e0d6;
+}
+
+.review-item:last-child {
+  border-bottom: none;
+}
+
+.review-item.total {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #8b4513;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid #8b4513;
+}
+
+.review-label {
+  color: #5a4a3a;
+}
+
+.review-value {
+  color: #2c1810;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .booking-steps {
+    gap: 1rem;
+  }
+
+  .step-label {
+    font-size: 0.75rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-form {
+    padding: 1.5rem;
+  }
+
+  .measurements-list {
+    grid-template-columns: 1fr;
+  }
+}
+
