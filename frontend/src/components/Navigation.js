@@ -40,9 +40,24 @@ const Navigation = () => {
           </Link>
           {user ? (
             <>
-              <Link to="/orders" className="nav-link">
-                My Orders
-              </Link>
+              {user.role === "tailor" && (
+                <>
+                  <Link to="/dashboard" className="nav-link">
+                    Dashboard
+                  </Link>
+                  <Link to={`/tailors/${user._id}/edit`} className="nav-link">
+                    My Profile
+                  </Link>
+                  <Link to="/packages/manage" className="nav-link">
+                    Packages
+                  </Link>
+                </>
+              )}
+              {user.role === "customer" && (
+                <Link to="/orders" className="nav-link">
+                  My Orders
+                </Link>
+              )}
               <div className="user-menu">
                 <span className="user-info">
                   {user.name} ({getRoleDisplayName(user.role)})

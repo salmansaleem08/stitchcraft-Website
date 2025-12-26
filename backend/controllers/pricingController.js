@@ -73,28 +73,41 @@ exports.updatePricingTier = async (req, res) => {
   }
 };
 
-// @desc    Get packages for a tailor
-// @route   GET /api/pricing/packages/:tailorId
-// @access  Public
+// @desc    Get packages for a tailor (or logged-in tailor if no ID)
+// @route   GET /api/pricing/packages/:tailorId?
+// @access  Public (or Private for own packages)
 exports.getPackages = async (req, res) => {
   try {
     const { tailorId } = req.params;
     const { packageType } = req.query;
 
+    // If no tailorId and user is logged in as tailor, get their packages
+    let filterTailor = tailorId;
+    if (!tailorId && req.user && req.user.role === "tailor") {
+      filterTailor = req.user._id;
+    }
+
+    if (!filterTailor) {
+      return res.status(400).json({ message: "Tailor ID required" });
+    }
+
     let filter = {
-      tailor: tailorId,
-      isActive: true,
+      tailor: filterTailor,
     };
+
+    // For public requests, only show active packages
+    if (!req.user || req.user._id.toString() !== filterTailor.toString()) {
+      filter.isActive = true;
+      // Check if package is still valid
+      filter.$or = [
+        { validUntil: { $gte: new Date() } },
+        { validUntil: null },
+      ];
+    }
 
     if (packageType) {
       filter.packageType = packageType;
     }
-
-    // Check if package is still valid
-    filter.$or = [
-      { validUntil: { $gte: new Date() } },
-      { validUntil: null },
-    ];
 
     const packages = await Package.find(filter).sort({ packagePrice: 1 });
 
@@ -186,6 +199,32 @@ exports.updatePackage = async (req, res) => {
     res.json({
       success: true,
       data: updatedPackage,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete package
+// @route   DELETE /api/pricing/packages/:id
+// @access  Private (Tailor only)
+exports.deletePackage = async (req, res) => {
+  try {
+    const packageData = await Package.findById(req.params.id);
+
+    if (!packageData) {
+      return res.status(404).json({ message: "Package not found" });
+    }
+
+    if (packageData.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    await Package.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: "Package deleted successfully",
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

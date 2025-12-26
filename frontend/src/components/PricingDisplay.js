@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import { useParams, Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import "./PricingDisplay.css";
 
 const PricingDisplay = ({ tailorId: propTailorId }) => {
   const { id: paramTailorId } = useParams();
   const tailorId = propTailorId || paramTailorId;
+  const { user } = useContext(AuthContext);
   const [tiers, setTiers] = useState([]);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -194,6 +196,14 @@ const PricingDisplay = ({ tailorId: propTailorId }) => {
                       <p className="package-limited">
                         Limited: {pkg.maxOrders - pkg.currentOrders} remaining
                       </p>
+                    )}
+                    {user && user.role === "customer" && user._id !== tailorId && (
+                      <Link
+                        to={`/tailors/${tailorId}/book?package=${pkg._id}`}
+                        className="btn btn-primary package-order-btn"
+                      >
+                        Order This Package
+                      </Link>
                     )}
                   </div>
                 ))}

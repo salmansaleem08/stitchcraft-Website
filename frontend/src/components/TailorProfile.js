@@ -76,8 +76,8 @@ const TailorProfile = () => {
             {tailor.badges?.length > 0 && (
               <div className="profile-badges">
                 {tailor.badges.map((badge, idx) => (
-                  <span key={idx} className="badge-large">
-                    {badge.type}
+                  <span key={idx} className="badge-large" title={typeof badge === 'object' ? badge.name : badge}>
+                    {typeof badge === 'object' ? badge.name || badge.type : badge}
                   </span>
                 ))}
               </div>

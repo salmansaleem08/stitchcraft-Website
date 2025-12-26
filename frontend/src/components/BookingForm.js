@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import MeasurementForm from "./MeasurementForm";
@@ -8,9 +8,12 @@ import "./BookingForm.css";
 
 const BookingForm = () => {
   const { id: tailorId } = useParams();
+  const [searchParams] = useSearchParams();
+  const packageId = searchParams.get("package");
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [tailor, setTailor] = useState(null);
+  const [selectedPackage, setSelectedPackage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -44,7 +47,10 @@ const BookingForm = () => {
     }
     fetchTailor();
     fetchMeasurementHistory();
-  }, [tailorId]);
+    if (packageId) {
+      fetchPackage();
+    }
+  }, [tailorId, packageId]);
 
   const fetchTailor = async () => {
     try {
@@ -54,6 +60,34 @@ const BookingForm = () => {
       setError("Failed to load tailor information");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPackage = async () => {
+    try {
+      const response = await api.get(`/pricing/packages/single/${packageId}`);
+      const pkg = response.data.data;
+      setSelectedPackage(pkg);
+      // Pre-fill form with package data
+      if (pkg.garments && pkg.garments.length > 0) {
+        setFormData({
+          ...formData,
+          serviceType: "premium", // Default for packages
+          garmentType: pkg.garments[0].garmentType,
+          quantity: pkg.garments.reduce((sum, g) => sum + g.quantity, 0),
+        });
+      }
+      setCalculatedPricing({
+        basePrice: pkg.packagePrice / (pkg.garments?.reduce((sum, g) => sum + g.quantity, 0) || 1),
+        quantity: pkg.garments?.reduce((sum, g) => sum + g.quantity, 0) || 1,
+        subtotal: pkg.packagePrice,
+        discount: pkg.discount || 0,
+        discountPercentage: pkg.discountPercentage || 0,
+        totalPrice: pkg.packagePrice,
+      });
+    } catch (error) {
+      console.error("Error fetching package:", error);
+      setError("Failed to load package information");
     }
   };
 
@@ -171,18 +205,21 @@ const BookingForm = () => {
       // Create order
       const orderData = {
         tailor: tailorId,
-        serviceType: formData.serviceType,
+        serviceType: formData.serviceType || "premium",
         garmentType: formData.garmentType,
-        description: formData.description,
+        description: selectedPackage 
+          ? `Package: ${selectedPackage.name}. ${formData.description || ""}`
+          : formData.description,
         measurements: measurementId,
         consultationDate: formData.consultationDate || undefined,
         basePrice: calculatedPricing.basePrice,
         quantity: formData.quantity || 1,
-        fabricCost: 0, // Will be set by tailor
+        fabricCost: selectedPackage?.fabricIncluded ? (selectedPackage.fabricDetails?.cost || 0) : 0,
         additionalCharges: 0, // Will be set by tailor
         discount: calculatedPricing.discount || 0,
         totalPrice: calculatedPricing.totalPrice,
         estimatedCompletionDate: formData.estimatedCompletionDate || undefined,
+        package: selectedPackage?._id || undefined,
       };
 
       const response = await api.post("/orders", orderData);
@@ -228,8 +265,25 @@ const BookingForm = () => {
     <div className="booking-form-container">
       <div className="container">
         <div className="booking-header">
-          <h1>Book Service with {tailor.shopName || tailor.name}</h1>
-          <p>Fill in the details to place your order</p>
+          <h1>
+            {selectedPackage 
+              ? `Order Package: ${selectedPackage.name}`
+              : `Book Service with ${tailor.shopName || tailor.name}`
+            }
+          </h1>
+          <p>
+            {selectedPackage 
+              ? "Review package details and complete your order"
+              : "Fill in the details to place your order"
+            }
+          </p>
+          {selectedPackage && (
+            <div className="package-info-banner">
+              <h3>{selectedPackage.name}</h3>
+              <p className="package-price-banner">PKR {selectedPackage.packagePrice.toLocaleString()}</p>
+              {selectedPackage.description && <p>{selectedPackage.description}</p>}
+            </div>
+          )}
         </div>
 
         <div className="booking-steps">
