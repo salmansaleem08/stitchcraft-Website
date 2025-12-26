@@ -53,6 +53,19 @@ const Navigation = () => {
                   </Link>
                 </>
               )}
+              {user.role === "supplier" && (
+                <>
+                  <Link to="/dashboard" className="nav-link">
+                    Dashboard
+                  </Link>
+                  <Link to={`/suppliers/${user._id}/edit`} className="nav-link">
+                    My Profile
+                  </Link>
+                  <Link to="/materials" className="nav-link">
+                    Materials
+                  </Link>
+                </>
+              )}
               {user.role === "customer" && (
                 <Link to="/orders" className="nav-link">
                   My Orders

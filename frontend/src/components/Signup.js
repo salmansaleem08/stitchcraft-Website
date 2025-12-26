@@ -22,6 +22,12 @@ const Signup = () => {
     // Supplier fields
     businessName: "",
     businessType: "",
+    businessDescription: "",
+    businessRegistrationNumber: "",
+    taxId: "",
+    cnic: "",
+    yearsInBusiness: "",
+    productCategories: [],
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,6 +45,14 @@ const Signup = () => {
       setFormData({
         ...formData,
         specialization: updatedSpecializations,
+      });
+    } else if (name === "productCategories") {
+      const updatedCategories = checked
+        ? [...formData.productCategories, value]
+        : formData.productCategories.filter((item) => item !== value);
+      setFormData({
+        ...formData,
+        productCategories: updatedCategories,
       });
     } else {
       setFormData({
@@ -97,6 +111,12 @@ const Signup = () => {
     if (formData.role === "supplier") {
       userData.businessName = formData.businessName || undefined;
       userData.businessType = formData.businessType || undefined;
+      userData.businessDescription = formData.businessDescription || undefined;
+      userData.businessRegistrationNumber = formData.businessRegistrationNumber || undefined;
+      userData.taxId = formData.taxId || undefined;
+      userData.cnic = formData.cnic || undefined;
+      userData.yearsInBusiness = formData.yearsInBusiness ? parseInt(formData.yearsInBusiness) : 0;
+      userData.productCategories = formData.productCategories || [];
     }
 
     const result = await register(userData);
@@ -222,7 +242,7 @@ const Signup = () => {
           {formData.role === "supplier" && (
             <>
               <div className="form-group">
-                <label htmlFor="businessName">Business Name</label>
+                <label htmlFor="businessName">Business Name *</label>
                 <input
                   type="text"
                   id="businessName"
@@ -230,16 +250,18 @@ const Signup = () => {
                   value={formData.businessName}
                   onChange={handleChange}
                   placeholder="Enter your business name"
+                  required
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="businessType">Business Type</label>
+                <label htmlFor="businessType">Business Type *</label>
                 <select
                   id="businessType"
                   name="businessType"
                   value={formData.businessType}
                   onChange={handleChange}
+                  required
                 >
                   <option value="">Select business type</option>
                   <option value="fabric">Fabric</option>
@@ -247,6 +269,102 @@ const Signup = () => {
                   <option value="equipment">Equipment</option>
                   <option value="mixed">Mixed</option>
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="businessDescription">Business Description</label>
+                <textarea
+                  id="businessDescription"
+                  name="businessDescription"
+                  value={formData.businessDescription}
+                  onChange={handleChange}
+                  placeholder="Describe your business and products..."
+                  rows="3"
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="businessRegistrationNumber">Business Registration Number</label>
+                  <input
+                    type="text"
+                    id="businessRegistrationNumber"
+                    name="businessRegistrationNumber"
+                    value={formData.businessRegistrationNumber}
+                    onChange={handleChange}
+                    placeholder="Registration number"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="taxId">Tax ID</label>
+                  <input
+                    type="text"
+                    id="taxId"
+                    name="taxId"
+                    value={formData.taxId}
+                    onChange={handleChange}
+                    placeholder="Tax identification number"
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="cnic">CNIC</label>
+                  <input
+                    type="text"
+                    id="cnic"
+                    name="cnic"
+                    value={formData.cnic}
+                    onChange={handleChange}
+                    placeholder="CNIC number"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="yearsInBusiness">Years in Business</label>
+                  <input
+                    type="number"
+                    id="yearsInBusiness"
+                    name="yearsInBusiness"
+                    value={formData.yearsInBusiness}
+                    onChange={handleChange}
+                    placeholder="Years"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Product Categories (Select all that apply)</label>
+                <div className="checkbox-group">
+                  {[
+                    "Fabric",
+                    "Textiles",
+                    "Threads",
+                    "Needles",
+                    "Buttons",
+                    "Zippers",
+                    "Sewing Machines",
+                    "Embroidery Materials",
+                    "Mannequins",
+                    "Measuring Tools",
+                    "Packaging Materials",
+                    "Other",
+                  ].map((category) => (
+                    <label key={category} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="productCategories"
+                        value={category}
+                        checked={formData.productCategories.includes(category)}
+                        onChange={handleChange}
+                      />
+                      <span>{category}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </>
           )}

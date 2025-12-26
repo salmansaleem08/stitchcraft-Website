@@ -12,6 +12,9 @@ import BookingForm from "./components/BookingForm";
 import OrderTracking from "./components/OrderTracking";
 import OrderDashboard from "./components/OrderDashboard";
 import PackageBuilder from "./components/PackageBuilder";
+import SupplierProfile from "./components/SupplierProfile";
+import SupplierProfileEdit from "./components/SupplierProfileEdit";
+import DashboardRouter from "./components/DashboardRouter";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -65,6 +68,24 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="tailor">
                     <PackageBuilder />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/suppliers" element={<div className="container"><h2>Suppliers</h2><p>Suppliers listing coming soon...</p></div>} />
+              <Route path="/suppliers/:id" element={<SupplierProfile />} />
+              <Route
+                path="/suppliers/:id/edit"
+                element={
+                  <ProtectedRoute requiredRole="supplier">
+                    <SupplierProfileEdit />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardRouter />
                   </ProtectedRoute>
                 }
               />

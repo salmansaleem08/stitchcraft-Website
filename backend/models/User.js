@@ -155,6 +155,110 @@ const userSchema = mongoose.Schema(
       type: String,
       enum: ["fabric", "supplies", "equipment", "mixed"],
     },
+    businessDescription: {
+      type: String,
+      maxlength: 2000,
+    },
+    businessRegistrationNumber: {
+      type: String,
+      trim: true,
+    },
+    taxId: {
+      type: String,
+      trim: true,
+    },
+    cnic: {
+      type: String,
+      trim: true,
+    },
+    yearsInBusiness: {
+      type: Number,
+      default: 0,
+    },
+    productCategories: {
+      type: [String],
+      default: [],
+      enum: [
+        "Fabric",
+        "Textiles",
+        "Threads",
+        "Needles",
+        "Buttons",
+        "Zippers",
+        "Sewing Machines",
+        "Embroidery Materials",
+        "Mannequins",
+        "Measuring Tools",
+        "Packaging Materials",
+        "Other",
+      ],
+    },
+    distributionCenters: {
+      type: [
+        {
+          name: String,
+          address: {
+            street: String,
+            city: String,
+            province: String,
+            postalCode: String,
+          },
+          phone: String,
+          isActive: { type: Boolean, default: true },
+        },
+      ],
+      default: [],
+    },
+    qualityRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    totalQualityReviews: {
+      type: Number,
+      default: 0,
+    },
+    verificationDocuments: {
+      type: [
+        {
+          documentType: {
+            type: String,
+            enum: ["business_license", "tax_certificate", "cnic", "other"],
+          },
+          documentUrl: String,
+          uploadedAt: { type: Date, default: Date.now },
+          verified: { type: Boolean, default: false },
+        },
+      ],
+      default: [],
+    },
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "under_review", "verified", "rejected"],
+      default: "pending",
+    },
+    verificationNotes: {
+      type: String,
+      maxlength: 1000,
+    },
+    minimumOrderQuantity: {
+      type: Number,
+      default: 1,
+    },
+    bulkDiscountEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    bulkDiscountTiers: {
+      type: [
+        {
+          minQuantity: Number,
+          discountPercentage: Number,
+        },
+      ],
+      default: [],
+    },
     // Common fields
     isVerified: {
       type: Boolean,

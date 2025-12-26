@@ -17,6 +17,12 @@ exports.register = async (req, res) => {
       experience,
       businessName,
       businessType,
+      businessDescription,
+      businessRegistrationNumber,
+      taxId,
+      cnic,
+      yearsInBusiness,
+      productCategories,
     } = req.body;
 
     // Validation
@@ -39,18 +45,33 @@ exports.register = async (req, res) => {
     }
 
     // Create user
-    const user = await User.create({
+    const userData = {
       name,
       email,
       password,
       role,
       phone,
       address,
-      specialization: role === "tailor" ? specialization || [] : undefined,
-      experience: role === "tailor" ? experience || 0 : undefined,
-      businessName: role === "supplier" ? businessName : undefined,
-      businessType: role === "supplier" ? businessType : undefined,
-    });
+    };
+
+    if (role === "tailor") {
+      userData.specialization = specialization || [];
+      userData.experience = experience || 0;
+    }
+
+    if (role === "supplier") {
+      userData.businessName = businessName;
+      userData.businessType = businessType;
+      userData.businessDescription = businessDescription;
+      userData.businessRegistrationNumber = businessRegistrationNumber;
+      userData.taxId = taxId;
+      userData.cnic = cnic;
+      userData.yearsInBusiness = yearsInBusiness || 0;
+      userData.productCategories = productCategories || [];
+      userData.verificationStatus = "pending";
+    }
+
+    const user = await User.create(userData);
 
     if (user) {
       res.status(201).json({
@@ -119,24 +140,36 @@ exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
 
-    res.json({
+    const userData = {
       _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
       phone: user.phone,
       address: user.address,
-      specialization: user.specialization,
-      experience: user.experience,
-      portfolio: user.portfolio,
-      rating: user.rating,
-      totalOrders: user.totalOrders,
-      businessName: user.businessName,
-      businessType: user.businessType,
       isVerified: user.isVerified,
       avatar: user.avatar,
       createdAt: user.createdAt,
-    });
+    };
+
+    // Add role-specific fields
+    if (user.role === "tailor") {
+      userData.specialization = user.specialization;
+      userData.experience = user.experience;
+      userData.portfolio = user.portfolio;
+      userData.rating = user.rating;
+      userData.totalOrders = user.totalOrders;
+      userData.shopName = user.shopName;
+    }
+
+    if (user.role === "supplier") {
+      userData.businessName = user.businessName;
+      userData.businessType = user.businessType;
+      userData.verificationStatus = user.verificationStatus;
+      userData.qualityRating = user.qualityRating;
+    }
+
+    res.json(userData);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
