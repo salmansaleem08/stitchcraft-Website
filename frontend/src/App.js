@@ -5,6 +5,8 @@ import Navigation from "./components/Navigation";
 import Home from "./components/Home";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
+import TailorListing from "./components/TailorListing";
+import TailorProfile from "./components/TailorProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -19,15 +21,8 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route
-                path="/tailors"
-                element={
-                  <div className="container">
-                    <h2>Find Tailors</h2>
-                    <p>Tailor search functionality coming soon...</p>
-                  </div>
-                }
-              />
+              <Route path="/tailors" element={<TailorListing />} />
+              <Route path="/tailors/:id" element={<TailorProfile />} />
               <Route
                 path="/materials"
                 element={

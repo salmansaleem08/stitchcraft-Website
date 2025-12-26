@@ -48,13 +48,39 @@ const userSchema = mongoose.Schema(
     specialization: {
       type: [String],
       default: [],
+      enum: [
+        "Traditional Wear",
+        "Western Wear",
+        "Bridal Wear",
+        "Embroidery",
+        "Alterations",
+        "Custom Design",
+      ],
+    },
+    fabricExpertise: {
+      type: [String],
+      default: [],
+      enum: ["Cotton", "Silk", "Linen", "Wool", "Synthetic", "Mixed"],
     },
     experience: {
       type: Number,
       default: 0,
     },
     portfolio: {
-      type: [String],
+      type: [
+        {
+          imageUrl: String,
+          title: String,
+          description: String,
+          category: String,
+          beforeImage: String,
+          afterImage: String,
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
       default: [],
     },
     rating: {
@@ -63,9 +89,62 @@ const userSchema = mongoose.Schema(
       min: 0,
       max: 5,
     },
+    totalReviews: {
+      type: Number,
+      default: 0,
+    },
     totalOrders: {
       type: Number,
       default: 0,
+    },
+    completedOrders: {
+      type: Number,
+      default: 0,
+    },
+    averageResponseTime: {
+      type: Number, // in hours
+      default: 0,
+    },
+    completionRate: {
+      type: Number, // percentage
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    badges: {
+      type: [
+        {
+          name: String,
+          type: {
+            type: String,
+            enum: ["Master Tailor", "Speed Stitching", "Quality Expert", "Customer Favorite"],
+          },
+          earnedAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
+    bio: {
+      type: String,
+      maxlength: 1000,
+    },
+    shopName: {
+      type: String,
+      trim: true,
+    },
+    workingHours: {
+      type: {
+        monday: { open: String, close: String, isOpen: Boolean },
+        tuesday: { open: String, close: String, isOpen: Boolean },
+        wednesday: { open: String, close: String, isOpen: Boolean },
+        thursday: { open: String, close: String, isOpen: Boolean },
+        friday: { open: String, close: String, isOpen: Boolean },
+        saturday: { open: String, close: String, isOpen: Boolean },
+        sunday: { open: String, close: String, isOpen: Boolean },
+      },
     },
     // Supplier-specific fields
     businessName: {
