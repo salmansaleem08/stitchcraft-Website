@@ -644,10 +644,6 @@ const OrderTracking = () => {
       setUpdatingEmergencyContact(false);
     }
   };
-    } catch (error) {
-      setError(error.response?.data?.message || "Failed to start revision");
-    }
-  };
 
   const handleCompleteRevision = async (revisionId) => {
     const notes = prompt("Add any notes about the completed revision (optional):");

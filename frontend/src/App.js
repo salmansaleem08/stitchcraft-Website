@@ -31,6 +31,7 @@ import SupplyOrderForm from "./components/SupplyOrderForm";
 import SupplyOrderTracking from "./components/SupplyOrderTracking";
 import SupplierAnalytics from "./components/SupplierAnalytics";
 import SupplierOrders from "./components/SupplierOrders";
+import TailorOrders from "./components/TailorOrders";
 import AdminDashboard from "./components/AdminDashboard";
 import AdminVerifications from "./components/AdminVerifications";
 import SearchPage from "./components/SearchPage";
@@ -106,6 +107,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <OrderTracking />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tailor-orders"
+                element={
+                  <ProtectedRoute requiredRole="tailor">
+                    <TailorOrders />
                   </ProtectedRoute>
                 }
               />

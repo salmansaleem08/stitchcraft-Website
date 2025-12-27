@@ -1,0 +1,373 @@
+import React, { useState, useEffect, useContext } from "react";
+import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import api from "../utils/api";
+import "./TailorOrders.css";
+
+const TailorOrders = () => {
+  const { user } = useContext(AuthContext);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showStatusUpdate, setShowStatusUpdate] = useState(false);
+  const [newStatus, setNewStatus] = useState("");
+  const [statusNotes, setStatusNotes] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (user && user.role === "tailor") {
+      fetchOrders();
+    }
+  }, [user, statusFilter, sortBy]);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      let params = [];
+      if (statusFilter) params.push(`status=${statusFilter}`);
+      // Note: Backend doesn't support sort parameter yet, will sort client-side
+      
+      const queryString = params.length > 0 ? `?${params.join("&")}` : "";
+      const response = await api.get(`/orders${queryString}`);
+      setOrders(response.data.data || []);
+      setError("");
+    } catch (error) {
+      setError("Failed to load orders");
+      console.error("Error fetching orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (e) => {
+    e.preventDefault();
+    if (!newStatus || !selectedOrder) return;
+
+    setUpdatingStatus(true);
+    setError("");
+    setSuccess("");
+    try {
+      await api.put(`/orders/${selectedOrder._id}/status`, {
+        status: newStatus,
+        notes: statusNotes,
+      });
+      setSuccess("Order status updated successfully");
+      setShowStatusUpdate(false);
+      setNewStatus("");
+      setStatusNotes("");
+      setSelectedOrder(null);
+      fetchOrders();
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to update order status");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const getStatusBadgeClass = (status) => {
+    const statusClasses = {
+      pending: "status-pending",
+      consultation_scheduled: "status-scheduled",
+      consultation_completed: "status-scheduled",
+      fabric_selected: "status-progress",
+      in_progress: "status-progress",
+      revision_requested: "status-revision",
+      quality_check: "status-progress",
+      completed: "status-completed",
+      cancelled: "status-cancelled",
+    };
+    return statusClasses[status] || "status-pending";
+  };
+
+  const formatStatus = (status) => {
+    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  const filteredOrders = orders
+    .filter((order) => {
+      if (!searchTerm) return true;
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        order.orderNumber?.toLowerCase().includes(searchLower) ||
+        order.customer?.name?.toLowerCase().includes(searchLower) ||
+        order.garmentType?.toLowerCase().includes(searchLower) ||
+        order.serviceType?.toLowerCase().includes(searchLower)
+      );
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        case "oldest":
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        case "price-high":
+          return (b.totalPrice || 0) - (a.totalPrice || 0);
+        case "price-low":
+          return (a.totalPrice || 0) - (b.totalPrice || 0);
+        default:
+          return 0;
+      }
+    });
+
+  const statusCounts = {
+    all: orders.length,
+    pending: orders.filter((o) => o.status === "pending").length,
+    in_progress: orders.filter((o) => o.status === "in_progress").length,
+    revision_requested: orders.filter((o) => o.status === "revision_requested").length,
+    quality_check: orders.filter((o) => o.status === "quality_check").length,
+    completed: orders.filter((o) => o.status === "completed").length,
+    cancelled: orders.filter((o) => o.status === "cancelled").length,
+  };
+
+  if (loading) {
+    return (
+      <div className="tailor-orders-container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading orders...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="tailor-orders-container">
+      <div className="container">
+        <div className="page-header">
+          <h1>Order Management</h1>
+          <p>Manage and track all your orders</p>
+        </div>
+
+        {error && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
+
+        <div className="orders-filters">
+          <div className="filter-group">
+            <label>Search Orders</label>
+            <input
+              type="text"
+              placeholder="Search by order number, customer, or garment type..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+
+          <div className="filter-group">
+            <label>Filter by Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="">All Orders ({statusCounts.all})</option>
+              <option value="pending">Pending ({statusCounts.pending})</option>
+              <option value="in_progress">In Progress ({statusCounts.in_progress})</option>
+              <option value="revision_requested">Revision Requested ({statusCounts.revision_requested})</option>
+              <option value="quality_check">Quality Check ({statusCounts.quality_check})</option>
+              <option value="completed">Completed ({statusCounts.completed})</option>
+              <option value="cancelled">Cancelled ({statusCounts.cancelled})</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Sort By</label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="filter-select"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="price-low">Price: Low to High</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="orders-grid">
+          {filteredOrders.length > 0 ? (
+            filteredOrders.map((order) => (
+              <div key={order._id} className="order-card">
+                <div className="order-card-header">
+                  <div>
+                    <h3>Order #{order.orderNumber || order._id.toString().slice(-6)}</h3>
+                    <p className="order-date">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                    {formatStatus(order.status)}
+                  </span>
+                </div>
+
+                <div className="order-card-body">
+                  <div className="order-info-row">
+                    <span className="info-label">Customer:</span>
+                    <span className="info-value">{order.customer?.name || "N/A"}</span>
+                  </div>
+                  <div className="order-info-row">
+                    <span className="info-label">Service:</span>
+                    <span className="info-value">{order.serviceType}</span>
+                  </div>
+                  <div className="order-info-row">
+                    <span className="info-label">Garment:</span>
+                    <span className="info-value">{order.garmentType}</span>
+                  </div>
+                  <div className="order-info-row">
+                    <span className="info-label">Quantity:</span>
+                    <span className="info-value">{order.quantity || 1}</span>
+                  </div>
+                  <div className="order-info-row">
+                    <span className="info-label">Total Price:</span>
+                    <span className="info-value price">PKR {order.totalPrice?.toLocaleString() || 0}</span>
+                  </div>
+                  {order.estimatedCompletionDate && (
+                    <div className="order-info-row">
+                      <span className="info-label">Est. Completion:</span>
+                      <span className="info-value">
+                        {new Date(order.estimatedCompletionDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="order-card-actions">
+                  <Link
+                    to={`/orders/${order._id}`}
+                    className="btn btn-primary btn-sm"
+                  >
+                    View Details
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setNewStatus(order.status);
+                      setShowStatusUpdate(true);
+                    }}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    Update Status
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="no-orders">
+              <p>No orders found</p>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="btn btn-secondary"
+                >
+                  Clear Search
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {showStatusUpdate && selectedOrder && (
+          <div className="modal-overlay" onClick={() => setShowStatusUpdate(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Update Order Status</h2>
+                <button
+                  className="modal-close"
+                  onClick={() => {
+                    setShowStatusUpdate(false);
+                    setSelectedOrder(null);
+                    setNewStatus("");
+                    setStatusNotes("");
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              <form onSubmit={handleStatusUpdate} className="status-update-form">
+                <div className="form-group">
+                  <label>Order Number</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.orderNumber || selectedOrder._id.toString().slice(-6)}
+                    disabled
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Current Status</label>
+                  <input
+                    type="text"
+                    value={formatStatus(selectedOrder.status)}
+                    disabled
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>New Status *</label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    required
+                    className="form-input"
+                  >
+                    <option value="">Select Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="consultation_scheduled">Consultation Scheduled</option>
+                    <option value="consultation_completed">Consultation Completed</option>
+                    <option value="fabric_selected">Fabric Selected</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="revision_requested">Revision Requested</option>
+                    <option value="quality_check">Quality Check</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Notes (Optional)</label>
+                  <textarea
+                    value={statusNotes}
+                    onChange={(e) => setStatusNotes(e.target.value)}
+                    rows="4"
+                    className="form-input"
+                    placeholder="Add any notes about this status update..."
+                  />
+                </div>
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowStatusUpdate(false);
+                      setSelectedOrder(null);
+                      setNewStatus("");
+                      setStatusNotes("");
+                    }}
+                    className="btn btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={updatingStatus || !newStatus}
+                  >
+                    {updatingStatus ? "Updating..." : "Update Status"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default TailorOrders;
+

@@ -340,18 +340,84 @@ exports.getTailorStats = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
+    const Order = require("../models/Order");
     const reviews = await Review.find({ tailor: req.user._id });
 
+    // Get all orders for this tailor
+    const orders = await Order.find({ tailor: req.user._id });
+
+    // Calculate revenue
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+    const completedRevenue = orders
+      .filter((o) => o.status === "completed")
+      .reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+    const pendingRevenue = orders
+      .filter((o) => o.status !== "completed" && o.status !== "cancelled")
+      .reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+
+    // Order status breakdown
+    const ordersByStatus = {
+      pending: orders.filter((o) => o.status === "pending").length,
+      consultation_scheduled: orders.filter((o) => o.status === "consultation_scheduled").length,
+      consultation_completed: orders.filter((o) => o.status === "consultation_completed").length,
+      fabric_selected: orders.filter((o) => o.status === "fabric_selected").length,
+      in_progress: orders.filter((o) => o.status === "in_progress").length,
+      revision_requested: orders.filter((o) => o.status === "revision_requested").length,
+      quality_check: orders.filter((o) => o.status === "quality_check").length,
+      completed: orders.filter((o) => o.status === "completed").length,
+      cancelled: orders.filter((o) => o.status === "cancelled").length,
+    };
+
+    // Recent orders (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentOrders = orders.filter((o) => new Date(o.createdAt) >= thirtyDaysAgo).length;
+
+    // Average order value
+    const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
+
+    // Calculate average response time from messages
+    let avgResponseTime = tailor.averageResponseTime || 0;
+    if (orders.length > 0) {
+      const allMessages = orders.flatMap((o) => o.messages || []);
+      if (allMessages.length > 1) {
+        // Calculate time between customer message and tailor response
+        const responseTimes = [];
+        for (let i = 0; i < allMessages.length - 1; i++) {
+          const currentMsg = allMessages[i];
+          const nextMsg = allMessages[i + 1];
+          if (
+            currentMsg.sender.toString() !== req.user._id.toString() &&
+            nextMsg.sender.toString() === req.user._id.toString()
+          ) {
+            const timeDiff = new Date(nextMsg.sentAt) - new Date(currentMsg.sentAt);
+            responseTimes.push(timeDiff / (1000 * 60 * 60)); // Convert to hours
+          }
+        }
+        if (responseTimes.length > 0) {
+          avgResponseTime =
+            responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
+        }
+      }
+    }
+
     const stats = {
-      totalOrders: tailor.totalOrders,
-      completedOrders: tailor.completedOrders,
-      pendingOrders: tailor.totalOrders - tailor.completedOrders,
-      rating: tailor.rating,
-      totalReviews: tailor.totalReviews,
-      averageResponseTime: tailor.averageResponseTime,
-      completionRate: tailor.completionRate,
-      portfolioItems: tailor.portfolio.length,
-      badges: tailor.badges.length,
+      totalOrders: tailor.totalOrders || orders.length,
+      completedOrders: tailor.completedOrders || ordersByStatus.completed,
+      pendingOrders: ordersByStatus.pending + ordersByStatus.in_progress + ordersByStatus.revision_requested,
+      rating: tailor.rating || 0,
+      totalReviews: tailor.totalReviews || reviews.length,
+      averageResponseTime: avgResponseTime,
+      completionRate: tailor.completionRate || 0,
+      portfolioItems: tailor.portfolio?.length || 0,
+      badges: tailor.badges?.length || 0,
+      totalRevenue: totalRevenue,
+      completedRevenue: completedRevenue,
+      pendingRevenue: pendingRevenue,
+      averageOrderValue: averageOrderValue,
+      recentOrders: recentOrders,
+      ordersByStatus: ordersByStatus,
+      totalCustomers: new Set(orders.map((o) => o.customer.toString())).size,
     };
 
     res.json({
