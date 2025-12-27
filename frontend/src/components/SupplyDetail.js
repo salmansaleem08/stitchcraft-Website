@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import SupplyReviews from "./SupplyReviews";
 import "./SupplyDetail.css";
 
 const SupplyDetail = () => {
@@ -239,18 +240,33 @@ const SupplyDetail = () => {
               </div>
             )}
 
-            {isSupplier && (
-              <div className="supplier-actions">
+            <div className="supply-actions">
+              {isSupplier ? (
                 <Link
                   to={`/supplies/${supply._id}/edit`}
                   className="btn btn-primary"
                 >
                   Edit Supply
                 </Link>
-              </div>
-            )}
+              ) : user?.role === "customer" && supply.stockQuantity > 0 ? (
+                <Link
+                  to={`/supply-order/${supply.supplier._id}`}
+                  className="btn btn-primary"
+                >
+                  Order from Supplier
+                </Link>
+              ) : null}
+            </div>
           </div>
         </div>
+
+        <SupplyReviews
+          supplyId={supply._id}
+          onReviewSubmit={() => {
+            // Refresh supply data to update rating
+            fetchSupply();
+          }}
+        />
       </div>
     </div>
   );

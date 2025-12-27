@@ -13,6 +13,34 @@
   gap: 1rem;
 }
 
+.order-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #e8e0d6;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #5a4a3a;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  color: #2c1810;
+}
+
+.tab-btn.active {
+  color: #8b4513;
+  border-bottom-color: #8b4513;
+}
+
 .dashboard-header h1 {
   font-size: 2.5rem;
   font-weight: 700;

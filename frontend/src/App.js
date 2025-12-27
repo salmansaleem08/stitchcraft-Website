@@ -12,6 +12,7 @@ import BookingForm from "./components/BookingForm";
 import OrderTracking from "./components/OrderTracking";
 import OrderDashboard from "./components/OrderDashboard";
 import PackageBuilder from "./components/PackageBuilder";
+import SupplierListing from "./components/SupplierListing";
 import SupplierProfile from "./components/SupplierProfile";
 import SupplierProfileEdit from "./components/SupplierProfileEdit";
 import DashboardRouter from "./components/DashboardRouter";
@@ -26,6 +27,10 @@ import SupplyListing from "./components/SupplyListing";
 import SupplyDetail from "./components/SupplyDetail";
 import SupplyForm from "./components/SupplyForm";
 import MySupplies from "./components/MySupplies";
+import SupplyOrderForm from "./components/SupplyOrderForm";
+import SupplyOrderTracking from "./components/SupplyOrderTracking";
+import SupplierAnalytics from "./components/SupplierAnalytics";
+import SearchPage from "./components/SearchPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -37,9 +42,10 @@ function App() {
           <Navigation />
           <main className="main-content">
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
+                      <Route path="/" element={<Home />} />
+                      <Route path="/search" element={<SearchPage />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/signup" element={<Signup />} />
               <Route path="/tailors" element={<TailorListing />} />
               <Route path="/tailors/:id" element={<TailorProfile />} />
               <Route
@@ -82,7 +88,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/suppliers" element={<div className="container"><h2>Suppliers</h2><p>Suppliers listing coming soon...</p></div>} />
+              <Route path="/suppliers" element={<SupplierListing />} />
               <Route path="/suppliers/:id" element={<SupplierProfile />} />
               <Route
                 path="/suppliers/:id/edit"
@@ -143,6 +149,14 @@ function App() {
                 }
               />
               <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute requiredRole="supplier">
+                    <SupplierAnalytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/suppliers/:supplierId/bulk-order"
                 element={
                   <ProtectedRoute requiredRole="customer">
@@ -173,6 +187,22 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="supplier">
                     <MySupplies />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/supply-order/:supplierId"
+                element={
+                  <ProtectedRoute requiredRole="customer">
+                    <SupplyOrderForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/supply-orders/:id"
+                element={
+                  <ProtectedRoute>
+                    <SupplyOrderTracking />
                   </ProtectedRoute>
                 }
               />

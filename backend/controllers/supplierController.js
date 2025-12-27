@@ -29,9 +29,12 @@ exports.getSuppliers = async (req, res) => {
       businessType,
       productCategory,
       verified,
+      verificationStatus,
       city,
       province,
       search,
+      minRating,
+      sort,
     } = req.query;
 
     let filter = { role: "supplier", isActive: true };
@@ -44,8 +47,14 @@ exports.getSuppliers = async (req, res) => {
       filter.productCategories = productCategory;
     }
 
-    if (verified === "true") {
+    if (verified === "true" || verificationStatus === "verified") {
       filter.verificationStatus = "verified";
+    } else if (verificationStatus) {
+      filter.verificationStatus = verificationStatus;
+    }
+
+    if (minRating) {
+      filter.qualityRating = { $gte: parseFloat(minRating) };
     }
 
     if (city) {
@@ -64,9 +73,18 @@ exports.getSuppliers = async (req, res) => {
       ];
     }
 
+    let sortOption = { qualityRating: -1, createdAt: -1 };
+    if (sort === "newest") {
+      sortOption = { createdAt: -1 };
+    } else if (sort === "name") {
+      sortOption = { businessName: 1, name: 1 };
+    } else if (sort === "rating") {
+      sortOption = { qualityRating: -1, createdAt: -1 };
+    }
+
     const suppliers = await User.find(filter)
       .select("-password")
-      .sort({ qualityRating: -1, createdAt: -1 });
+      .sort(sortOption);
 
     res.json({
       success: true,

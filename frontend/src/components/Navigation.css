@@ -1,25 +1,35 @@
 .app-header {
   background-color: #2c1810;
   color: #f5f1eb;
-  padding: 1rem 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 1000;
+  border-bottom: 2px solid #3d2817;
 }
 
 .app-header .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.header-top {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  flex-wrap: wrap;
 }
 
 .logo {
-  font-size: 1.8rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   letter-spacing: 1px;
   color: #d4a574;
   text-decoration: none;
+  white-space: nowrap;
   transition: color 0.3s ease;
 }
 
@@ -27,30 +37,51 @@
   color: #f5c896;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
 .main-nav {
   display: flex;
-  gap: 2rem;
   align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid #3d2817;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.main-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-link {
+  padding: 0.5rem 0.75rem;
   color: #f5f1eb;
   text-decoration: none;
-  font-size: 1rem;
-  font-weight: 400;
-  transition: color 0.3s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  border-radius: 4px;
+  transition: all 0.3s ease;
   position: relative;
 }
 
 .nav-link:hover {
   color: #d4a574;
+  background: rgba(212, 165, 116, 0.1);
 }
 
 .nav-link::after {
   content: '';
   position: absolute;
-  bottom: -5px;
-  left: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 0;
   height: 2px;
   background-color: #d4a574;
@@ -58,19 +89,21 @@
 }
 
 .nav-link:hover::after {
-  width: 100%;
+  width: 80%;
 }
 
 .user-menu {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .user-info {
   color: #d4a574;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .btn-logout {
@@ -78,10 +111,12 @@
   color: #f5f1eb;
   border: 1px solid #d4a574;
   padding: 0.5rem 1rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
 .btn-logout:hover {
@@ -89,26 +124,99 @@
   color: #2c1810;
 }
 
-.btn-small {
-  padding: 0.5rem 1.5rem;
-  font-size: 0.9rem;
+.btn-primary.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+  .header-top {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .search-bar-container {
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+  }
+
+  .header-actions {
+    flex-shrink: 0;
+  }
 }
 
 @media (max-width: 768px) {
-  .app-header .container {
+  .header-top {
     flex-direction: column;
-    gap: 1rem;
+    align-items: stretch;
+    padding: 0.5rem 0;
+  }
+
+  .logo {
+    font-size: 1.3rem;
+    text-align: center;
+  }
+
+  .search-bar-container {
+    order: 2;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .header-actions {
+    order: 3;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .main-nav {
-    gap: 1rem;
-    flex-wrap: wrap;
-    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0;
+  }
+
+  .nav-link {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .user-info {
+    font-size: 0.8rem;
   }
 
   .user-menu {
-    flex-direction: column;
-    gap: 0.5rem;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .btn-logout {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
   }
 }
 
+@media (max-width: 480px) {
+  .app-header .container {
+    padding: 0 0.5rem;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+  }
+
+  .nav-link {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .user-info {
+    display: none;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

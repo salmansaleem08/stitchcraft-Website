@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import SupplierReviews from "./SupplierReviews";
 import "./SupplierProfile.css";
 
 const SupplierProfile = () => {
@@ -225,6 +226,8 @@ const SupplierProfile = () => {
             </div>
           )}
         </div>
+
+        <SupplierReviews supplierId={supplier._id} />
       </div>
     </div>
   );

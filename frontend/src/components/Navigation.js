@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import SearchBar from "./SearchBar";
 import "../App.css";
 import "./Navigation.css";
 
@@ -25,9 +26,35 @@ const Navigation = () => {
   return (
     <header className="app-header">
       <div className="container">
-        <Link to="/" className="logo">
-          StitchCraft
-        </Link>
+        <div className="header-top">
+          <Link to="/" className="logo">
+            StitchCraft
+          </Link>
+          <SearchBar />
+          <div className="header-actions">
+            {user ? (
+              <>
+                <div className="user-menu">
+                  <span className="user-info">
+                    {user.name} ({getRoleDisplayName(user.role)})
+                  </span>
+                  <button onClick={handleLogout} className="btn btn-logout">
+                    Logout
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="nav-link">
+                  Login
+                </Link>
+                <Link to="/signup" className="btn btn-primary btn-small">
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
         <nav className="main-nav">
           <Link to="/" className="nav-link">
             Home
@@ -41,63 +68,39 @@ const Navigation = () => {
           <Link to="/supplies" className="nav-link">
             Supplies
           </Link>
-          <Link to="/materials" className="nav-link">
-            Materials
-          </Link>
-          {user ? (
+          {user && user.role === "tailor" && (
             <>
-              {user.role === "tailor" && (
-                <>
-                  <Link to="/dashboard" className="nav-link">
-                    Dashboard
-                  </Link>
-                  <Link to={`/tailors/${user._id}/edit`} className="nav-link">
-                    My Profile
-                  </Link>
-                  <Link to="/packages/manage" className="nav-link">
-                    Packages
-                  </Link>
-                </>
-              )}
-              {user.role === "supplier" && (
-                <>
-                  <Link to="/dashboard" className="nav-link">
-                    Dashboard
-                  </Link>
-                  <Link to={`/suppliers/${user._id}/edit`} className="nav-link">
-                    My Profile
-                  </Link>
-                  <Link to="/fabrics/me/list" className="nav-link">
-                    My Fabrics
-                  </Link>
-                  <Link to="/supplies/me/list" className="nav-link">
-                    My Supplies
-                  </Link>
-                </>
-              )}
-              {user.role === "customer" && (
-                <Link to="/orders" className="nav-link">
-                  My Orders
-                </Link>
-              )}
-              <div className="user-menu">
-                <span className="user-info">
-                  {user.name} ({getRoleDisplayName(user.role)})
-                </span>
-                <button onClick={handleLogout} className="btn btn-logout">
-                  Logout
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="nav-link">
-                Login
+              <Link to="/dashboard" className="nav-link">
+                Dashboard
               </Link>
-              <Link to="/signup" className="btn btn-primary btn-small">
-                Sign Up
+              <Link to={`/tailors/${user._id}/edit`} className="nav-link">
+                My Profile
+              </Link>
+              <Link to="/packages/manage" className="nav-link">
+                Packages
               </Link>
             </>
+          )}
+          {user && user.role === "supplier" && (
+            <>
+              <Link to="/dashboard" className="nav-link">
+                Dashboard
+              </Link>
+              <Link to={`/suppliers/${user._id}/edit`} className="nav-link">
+                My Profile
+              </Link>
+              <Link to="/fabrics/me/list" className="nav-link">
+                My Fabrics
+              </Link>
+              <Link to="/supplies/me/list" className="nav-link">
+                My Supplies
+              </Link>
+            </>
+          )}
+          {user && user.role === "customer" && (
+            <Link to="/orders" className="nav-link">
+              My Orders
+            </Link>
           )}
         </nav>
       </div>
