@@ -57,6 +57,83 @@ const OrderTracking = () => {
   });
   const [updatingPricing, setUpdatingPricing] = useState(false);
 
+  // Payment Schedule
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [paymentData, setPaymentData] = useState({
+    milestone: "deposit",
+    amount: "",
+    dueDate: "",
+    paymentMethod: "",
+    transactionId: "",
+  });
+  const [markingPaymentPaid, setMarkingPaymentPaid] = useState(false);
+
+  // Delivery
+  const [showDeliveryForm, setShowDeliveryForm] = useState(false);
+  const [deliveryData, setDeliveryData] = useState({
+    deliveryAddress: {
+      street: "",
+      city: "",
+      province: "",
+      postalCode: "",
+      phone: "",
+      specialInstructions: "",
+    },
+    deliveryMethod: "pickup",
+    estimatedDeliveryDate: "",
+    deliveryTrackingNumber: "",
+    deliveryProvider: "",
+  });
+  const [updatingDelivery, setUpdatingDelivery] = useState(false);
+
+  // Disputes
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [disputeData, setDisputeData] = useState({
+    reason: "",
+    description: "",
+    attachments: [],
+  });
+  const [disputeAttachmentFiles, setDisputeAttachmentFiles] = useState([]);
+  const [submittingDispute, setSubmittingDispute] = useState(false);
+  const [resolvingDispute, setResolvingDispute] = useState(false);
+  const [disputeResolution, setDisputeResolution] = useState("");
+
+  // Alterations
+  const [showAlterationForm, setShowAlterationForm] = useState(false);
+  const [alterationData, setAlterationData] = useState({
+    description: "",
+    urgency: "medium",
+  });
+  const [submittingAlteration, setSubmittingAlteration] = useState(false);
+  const [updatingAlteration, setUpdatingAlteration] = useState(false);
+  const [alterationUpdate, setAlterationUpdate] = useState({
+    status: "",
+    estimatedCost: "",
+    estimatedTime: "",
+  });
+
+  // Refunds
+  const [showRefundForm, setShowRefundForm] = useState(false);
+  const [refundData, setRefundData] = useState({
+    reason: "",
+    description: "",
+    requestedAmount: "",
+  });
+  const [submittingRefund, setSubmittingRefund] = useState(false);
+  const [processingRefund, setProcessingRefund] = useState(false);
+  const [refundStatus, setRefundStatus] = useState("");
+  const [refundTransactionId, setRefundTransactionId] = useState("");
+
+  // Emergency Contact
+  const [showEmergencyContactForm, setShowEmergencyContactForm] = useState(false);
+  const [emergencyContactData, setEmergencyContactData] = useState({
+    name: "",
+    phone: "",
+    relationship: "",
+    availableHours: "",
+  });
+  const [updatingEmergencyContact, setUpdatingEmergencyContact] = useState(false);
+
   useEffect(() => {
     fetchOrder();
     if (user && order?.status === "completed" && user.role === "customer") {
@@ -350,6 +427,223 @@ const OrderTracking = () => {
       await api.put(`/orders/${id}/revisions/${revisionId}/in-progress`);
       setSuccess("Revision started");
       fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to start revision");
+    }
+  };
+
+  // Payment handlers
+  const handleAddPayment = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post(`/orders/${id}/payments`, paymentData);
+      setSuccess("Payment milestone added successfully");
+      setShowPaymentForm(false);
+      setPaymentData({
+        milestone: "deposit",
+        amount: "",
+        dueDate: "",
+        paymentMethod: "",
+        transactionId: "",
+      });
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to add payment milestone");
+    }
+  };
+
+  const handleMarkPaymentPaid = async (paymentId) => {
+    const transactionId = prompt("Enter transaction ID (optional):");
+    setMarkingPaymentPaid(true);
+    try {
+      await api.put(`/orders/${id}/payments/${paymentId}/paid`, {
+        transactionId: transactionId || undefined,
+      });
+      setSuccess("Payment marked as paid");
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to mark payment as paid");
+    } finally {
+      setMarkingPaymentPaid(false);
+    }
+  };
+
+  // Delivery handlers
+  const handleUpdateDelivery = async (e) => {
+    e.preventDefault();
+    setUpdatingDelivery(true);
+    setError("");
+    setSuccess("");
+    try {
+      await api.put(`/orders/${id}/delivery`, deliveryData);
+      setSuccess("Delivery information updated successfully");
+      setShowDeliveryForm(false);
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to update delivery information");
+    } finally {
+      setUpdatingDelivery(false);
+    }
+  };
+
+  // Dispute handlers
+  const handleDisputeAttachmentChange = (e) => {
+    setDisputeAttachmentFiles(Array.from(e.target.files));
+  };
+
+  const handleRaiseDispute = async (e) => {
+    e.preventDefault();
+    setSubmittingDispute(true);
+    setError("");
+    setSuccess("");
+    try {
+      let attachments = [];
+      if (disputeAttachmentFiles.length > 0) {
+        const formData = new FormData();
+        disputeAttachmentFiles.forEach((file) => {
+          formData.append("images", file);
+        });
+        const response = await api.post("/upload/images", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        attachments = response.data.fileUrls || [];
+      }
+      await api.post(`/orders/${id}/disputes`, {
+        ...disputeData,
+        attachments,
+      });
+      setSuccess("Dispute raised successfully");
+      setShowDisputeForm(false);
+      setDisputeData({ reason: "", description: "", attachments: [] });
+      setDisputeAttachmentFiles([]);
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to raise dispute");
+    } finally {
+      setSubmittingDispute(false);
+    }
+  };
+
+  const handleResolveDispute = async (disputeId, status) => {
+    if (!disputeResolution.trim()) {
+      setError("Please enter a resolution");
+      return;
+    }
+    setResolvingDispute(true);
+    try {
+      await api.put(`/orders/${id}/disputes/${disputeId}/resolve`, {
+        status,
+        resolution: disputeResolution,
+      });
+      setSuccess(`Dispute ${status} successfully`);
+      setDisputeResolution("");
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to resolve dispute");
+    } finally {
+      setResolvingDispute(false);
+    }
+  };
+
+  // Alteration handlers
+  const handleRequestAlteration = async (e) => {
+    e.preventDefault();
+    setSubmittingAlteration(true);
+    setError("");
+    setSuccess("");
+    try {
+      await api.post(`/orders/${id}/alterations`, alterationData);
+      setSuccess("Alteration request submitted successfully");
+      setShowAlterationForm(false);
+      setAlterationData({ description: "", urgency: "medium" });
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to request alteration");
+    } finally {
+      setSubmittingAlteration(false);
+    }
+  };
+
+  const handleUpdateAlterationStatus = async (alterationId, statusOverride) => {
+    setUpdatingAlteration(true);
+    try {
+      const status = statusOverride || alterationUpdate.status;
+      await api.put(`/orders/${id}/alterations/${alterationId}`, {
+        status,
+        estimatedCost: alterationUpdate.estimatedCost || undefined,
+        estimatedTime: alterationUpdate.estimatedTime || undefined,
+      });
+      setSuccess("Alteration status updated successfully");
+      setAlterationUpdate({ status: "", estimatedCost: "", estimatedTime: "" });
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to update alteration status");
+    } finally {
+      setUpdatingAlteration(false);
+    }
+  };
+
+  // Refund handlers
+  const handleRequestRefund = async (e) => {
+    e.preventDefault();
+    setSubmittingRefund(true);
+    setError("");
+    setSuccess("");
+    try {
+      await api.post(`/orders/${id}/refunds`, {
+        ...refundData,
+        requestedAmount: parseFloat(refundData.requestedAmount),
+      });
+      setSuccess("Refund request submitted successfully");
+      setShowRefundForm(false);
+      setRefundData({ reason: "", description: "", requestedAmount: "" });
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to request refund");
+    } finally {
+      setSubmittingRefund(false);
+    }
+  };
+
+  const handleProcessRefund = async (refundId) => {
+    if (!refundStatus) {
+      setError("Please select a status");
+      return;
+    }
+    setProcessingRefund(true);
+    try {
+      await api.put(`/orders/${id}/refunds/${refundId}/process`, {
+        status: refundStatus,
+        transactionId: refundTransactionId || undefined,
+      });
+      setSuccess(`Refund ${refundStatus} successfully`);
+      setRefundStatus("");
+      setRefundTransactionId("");
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to process refund");
+    } finally {
+      setProcessingRefund(false);
+    }
+  };
+
+  // Emergency contact handlers
+  const handleUpdateEmergencyContact = async (e) => {
+    e.preventDefault();
+    setUpdatingEmergencyContact(true);
+    setError("");
+    setSuccess("");
+    try {
+      await api.put(`/orders/${id}/emergency-contact`, emergencyContactData);
+      setSuccess("Emergency contact updated successfully");
+      setShowEmergencyContactForm(false);
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to update emergency contact");
+    } finally {
+      setUpdatingEmergencyContact(false);
+    }
+  };
     } catch (error) {
       setError(error.response?.data?.message || "Failed to start revision");
     }
@@ -1187,40 +1481,43 @@ const OrderTracking = () => {
                     rows="3"
                   />
                 </div>
-                <div className="form-group">
-                  <label>Attach Files (Optional, max 5)</label>
-                  <input
-                    type="file"
-                    accept="image/*,application/pdf,.doc,.docx"
-                    multiple
-                    onChange={handleMessageAttachmentChange}
-                    className="file-input"
-                  />
-                  {messageAttachments.length > 0 && (
-                    <div className="attachment-preview-list">
-                      {messageAttachments.map((att, idx) => (
-                        <div key={idx} className="attachment-preview-item">
-                          <span className="attachment-name">{att.name}</span>
-                          {att.size && (
-                            <span className="attachment-size">
-                              ({(att.size / 1024).toFixed(1)} KB)
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => removeMessageAttachment(idx)}
-                            className="remove-attachment-btn"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                {messageAttachments.length > 0 && (
+                  <div className="attachment-preview-list">
+                    {messageAttachments.map((att, idx) => (
+                      <div key={idx} className="attachment-preview-item">
+                        <span className="attachment-name">{att.name}</span>
+                        {att.size && (
+                          <span className="attachment-size">
+                            ({(att.size / 1024).toFixed(1)} KB)
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeMessageAttachment(idx)}
+                          className="remove-attachment-btn"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="message-form-actions">
+                  <label className="file-attachment-btn">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf,.doc,.docx"
+                      multiple
+                      onChange={handleMessageAttachmentChange}
+                      className="file-input-hidden"
+                    />
+                    <span className="attachment-icon">📎</span>
+                    <span className="attachment-label">Attach Files</span>
+                  </label>
+                  <button type="submit" className="btn btn-primary" disabled={sendingMessage}>
+                    {sendingMessage ? "Sending..." : "Send Message"}
+                  </button>
                 </div>
-                <button type="submit" className="btn btn-primary" disabled={sendingMessage}>
-                  {sendingMessage ? "Sending..." : "Send Message"}
-                </button>
               </form>
             </div>
           </div>
@@ -1434,6 +1731,903 @@ const OrderTracking = () => {
                             consultationDuration: 30,
                             notes: "",
                           });
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "payments" && (
+          <div className="tab-content">
+            <div className="payments-section">
+              <div className="section-header">
+                <h3>Payment Schedule</h3>
+                {(user?.role === "customer" || user?.role === "tailor") && (
+                  <button
+                    onClick={() => setShowPaymentForm(true)}
+                    className="btn btn-primary"
+                  >
+                    Add Payment Milestone
+                  </button>
+                )}
+              </div>
+
+              {order.paymentSchedule && order.paymentSchedule.length > 0 ? (
+                <div className="payment-list">
+                  {order.paymentSchedule.map((payment, index) => (
+                    <div key={index} className="payment-item">
+                      <div className="payment-header">
+                        <h4>{payment.milestone.replace("_", " ").toUpperCase()}</h4>
+                        <span className={`payment-status ${payment.paid ? "paid" : "pending"}`}>
+                          {payment.paid ? "Paid" : "Pending"}
+                        </span>
+                      </div>
+                      <div className="payment-details">
+                        <p><strong>Amount:</strong> PKR {payment.amount.toLocaleString()}</p>
+                        {payment.dueDate && (
+                          <p><strong>Due Date:</strong> {new Date(payment.dueDate).toLocaleDateString()}</p>
+                        )}
+                        {payment.paid && payment.paidAt && (
+                          <p><strong>Paid On:</strong> {new Date(payment.paidAt).toLocaleDateString()}</p>
+                        )}
+                        {payment.paymentMethod && (
+                          <p><strong>Payment Method:</strong> {payment.paymentMethod}</p>
+                        )}
+                        {payment.transactionId && (
+                          <p><strong>Transaction ID:</strong> {payment.transactionId}</p>
+                        )}
+                      </div>
+                      {!payment.paid && (user?.role === "customer" || user?.role === "tailor") && (
+                        <button
+                          onClick={() => handleMarkPaymentPaid(payment._id)}
+                          className="btn btn-primary"
+                          disabled={markingPaymentPaid}
+                        >
+                          {markingPaymentPaid ? "Marking..." : "Mark as Paid"}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No payment milestones added yet.</p>
+              )}
+
+              <div className="payment-summary">
+                <p><strong>Total Price:</strong> PKR {order.totalPrice?.toLocaleString() || 0}</p>
+                <p><strong>Total Paid:</strong> PKR {(order.totalPaid || 0).toLocaleString()}</p>
+                <p><strong>Remaining:</strong> PKR {((order.totalPrice || 0) - (order.totalPaid || 0)).toLocaleString()}</p>
+              </div>
+
+              {showPaymentForm && (
+                <div className="payment-form-section">
+                  <h4>Add Payment Milestone</h4>
+                  <form onSubmit={handleAddPayment} className="payment-form">
+                    <div className="form-group">
+                      <label>Milestone *</label>
+                      <select
+                        value={paymentData.milestone}
+                        onChange={(e) => setPaymentData({ ...paymentData, milestone: e.target.value })}
+                        required
+                      >
+                        <option value="deposit">Deposit</option>
+                        <option value="fabric_payment">Fabric Payment</option>
+                        <option value="progress_payment">Progress Payment</option>
+                        <option value="final_payment">Final Payment</option>
+                        <option value="delivery_payment">Delivery Payment</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Amount (PKR) *</label>
+                      <input
+                        type="number"
+                        value={paymentData.amount}
+                        onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                        required
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Due Date</label>
+                      <input
+                        type="date"
+                        value={paymentData.dueDate}
+                        onChange={(e) => setPaymentData({ ...paymentData, dueDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Payment Method</label>
+                      <input
+                        type="text"
+                        value={paymentData.paymentMethod}
+                        onChange={(e) => setPaymentData({ ...paymentData, paymentMethod: e.target.value })}
+                        placeholder="e.g., Bank Transfer, Cash, etc."
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="btn btn-primary">Add Payment</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowPaymentForm(false);
+                          setPaymentData({
+                            milestone: "deposit",
+                            amount: "",
+                            dueDate: "",
+                            paymentMethod: "",
+                            transactionId: "",
+                          });
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "delivery" && (
+          <div className="tab-content">
+            <div className="delivery-section">
+              <div className="section-header">
+                <h3>Delivery Information</h3>
+                {(user?.role === "customer" || user?.role === "tailor") && (
+                  <button
+                    onClick={() => {
+                      if (order.deliveryAddress) {
+                        setDeliveryData({
+                          deliveryAddress: order.deliveryAddress,
+                          deliveryMethod: order.deliveryMethod || "pickup",
+                          estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate).toISOString().split('T')[0] : "",
+                          deliveryTrackingNumber: order.deliveryTrackingNumber || "",
+                          deliveryProvider: order.deliveryProvider || "",
+                        });
+                      }
+                      setShowDeliveryForm(true);
+                    }}
+                    className="btn btn-primary"
+                  >
+                    {order.deliveryAddress ? "Update Delivery" : "Set Delivery"}
+                  </button>
+                )}
+              </div>
+
+              {order.deliveryAddress ? (
+                <div className="delivery-info">
+                  <h4>Delivery Address</h4>
+                  <p>{order.deliveryAddress.street}</p>
+                  <p>{order.deliveryAddress.city}, {order.deliveryAddress.province}</p>
+                  <p>Postal Code: {order.deliveryAddress.postalCode}</p>
+                  {order.deliveryAddress.phone && <p>Phone: {order.deliveryAddress.phone}</p>}
+                  {order.deliveryAddress.specialInstructions && (
+                    <p><strong>Special Instructions:</strong> {order.deliveryAddress.specialInstructions}</p>
+                  )}
+                  <p><strong>Delivery Method:</strong> {order.deliveryMethod?.replace("_", " ").toUpperCase() || "Pickup"}</p>
+                  {order.estimatedDeliveryDate && (
+                    <p><strong>Estimated Delivery:</strong> {new Date(order.estimatedDeliveryDate).toLocaleDateString()}</p>
+                  )}
+                  {order.deliveryTrackingNumber && (
+                    <p><strong>Tracking Number:</strong> {order.deliveryTrackingNumber}</p>
+                  )}
+                  {order.deliveryProvider && (
+                    <p><strong>Delivery Provider:</strong> {order.deliveryProvider}</p>
+                  )}
+                </div>
+              ) : (
+                <p>No delivery information set yet.</p>
+              )}
+
+              {showDeliveryForm && (
+                <div className="delivery-form-section">
+                  <h4>{order.deliveryAddress ? "Update Delivery Information" : "Set Delivery Information"}</h4>
+                  <form onSubmit={handleUpdateDelivery} className="delivery-form">
+                    <div className="form-group">
+                      <label>Delivery Method *</label>
+                      <select
+                        value={deliveryData.deliveryMethod}
+                        onChange={(e) => setDeliveryData({ ...deliveryData, deliveryMethod: e.target.value })}
+                        required
+                      >
+                        <option value="pickup">Pickup</option>
+                        <option value="home_delivery">Home Delivery</option>
+                        <option value="courier">Courier</option>
+                      </select>
+                    </div>
+                    {deliveryData.deliveryMethod !== "pickup" && (
+                      <>
+                        <div className="form-group">
+                          <label>Street Address *</label>
+                          <input
+                            type="text"
+                            value={deliveryData.deliveryAddress.street}
+                            onChange={(e) => setDeliveryData({
+                              ...deliveryData,
+                              deliveryAddress: { ...deliveryData.deliveryAddress, street: e.target.value }
+                            })}
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>City *</label>
+                          <input
+                            type="text"
+                            value={deliveryData.deliveryAddress.city}
+                            onChange={(e) => setDeliveryData({
+                              ...deliveryData,
+                              deliveryAddress: { ...deliveryData.deliveryAddress, city: e.target.value }
+                            })}
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Province *</label>
+                          <input
+                            type="text"
+                            value={deliveryData.deliveryAddress.province}
+                            onChange={(e) => setDeliveryData({
+                              ...deliveryData,
+                              deliveryAddress: { ...deliveryData.deliveryAddress, province: e.target.value }
+                            })}
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Postal Code</label>
+                          <input
+                            type="text"
+                            value={deliveryData.deliveryAddress.postalCode}
+                            onChange={(e) => setDeliveryData({
+                              ...deliveryData,
+                              deliveryAddress: { ...deliveryData.deliveryAddress, postalCode: e.target.value }
+                            })}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Phone *</label>
+                          <input
+                            type="tel"
+                            value={deliveryData.deliveryAddress.phone}
+                            onChange={(e) => setDeliveryData({
+                              ...deliveryData,
+                              deliveryAddress: { ...deliveryData.deliveryAddress, phone: e.target.value }
+                            })}
+                            required
+                          />
+                        </div>
+                      </>
+                    )}
+                    <div className="form-group">
+                      <label>Estimated Delivery Date</label>
+                      <input
+                        type="date"
+                        value={deliveryData.estimatedDeliveryDate}
+                        onChange={(e) => setDeliveryData({ ...deliveryData, estimatedDeliveryDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Tracking Number</label>
+                      <input
+                        type="text"
+                        value={deliveryData.deliveryTrackingNumber}
+                        onChange={(e) => setDeliveryData({ ...deliveryData, deliveryTrackingNumber: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Delivery Provider</label>
+                      <input
+                        type="text"
+                        value={deliveryData.deliveryProvider}
+                        onChange={(e) => setDeliveryData({ ...deliveryData, deliveryProvider: e.target.value })}
+                        placeholder="e.g., TCS, Leopards, etc."
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Special Instructions</label>
+                      <textarea
+                        value={deliveryData.deliveryAddress.specialInstructions}
+                        onChange={(e) => setDeliveryData({
+                          ...deliveryData,
+                          deliveryAddress: { ...deliveryData.deliveryAddress, specialInstructions: e.target.value }
+                        })}
+                        rows="3"
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="btn btn-primary" disabled={updatingDelivery}>
+                        {updatingDelivery ? "Updating..." : "Update Delivery"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDeliveryForm(false);
+                          setDeliveryData({
+                            deliveryAddress: {
+                              street: "",
+                              city: "",
+                              province: "",
+                              postalCode: "",
+                              phone: "",
+                              specialInstructions: "",
+                            },
+                            deliveryMethod: "pickup",
+                            estimatedDeliveryDate: "",
+                            deliveryTrackingNumber: "",
+                            deliveryProvider: "",
+                          });
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "disputes" && (
+          <div className="tab-content">
+            <div className="disputes-section">
+              <div className="section-header">
+                <h3>Disputes</h3>
+                {(user?.role === "customer" || user?.role === "tailor") && (
+                  <button
+                    onClick={() => setShowDisputeForm(true)}
+                    className="btn btn-primary"
+                  >
+                    Raise Dispute
+                  </button>
+                )}
+              </div>
+
+              {order.disputes && order.disputes.length > 0 ? (
+                <div className="disputes-list">
+                  {order.disputes.map((dispute) => (
+                    <div key={dispute._id} className="dispute-item">
+                      <div className="dispute-header">
+                        <h4>Dispute #{dispute._id.toString().slice(-6)}</h4>
+                        <span className={`dispute-status ${dispute.status}`}>
+                          {dispute.status.replace("_", " ").toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="dispute-details">
+                        <p><strong>Reason:</strong> {dispute.reason.replace("_", " ").toUpperCase()}</p>
+                        <p><strong>Description:</strong> {dispute.description}</p>
+                        <p><strong>Raised On:</strong> {new Date(dispute.createdAt).toLocaleDateString()}</p>
+                        {dispute.resolution && (
+                          <p><strong>Resolution:</strong> {dispute.resolution}</p>
+                        )}
+                        {dispute.resolvedAt && (
+                          <p><strong>Resolved On:</strong> {new Date(dispute.resolvedAt).toLocaleDateString()}</p>
+                        )}
+                        {dispute.attachments && dispute.attachments.length > 0 && (
+                          <div className="dispute-attachments">
+                            <strong>Attachments:</strong>
+                            {dispute.attachments.map((att, idx) => (
+                              <a key={idx} href={att} target="_blank" rel="noopener noreferrer">
+                                Attachment {idx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {dispute.status === "open" && (
+                        <div className="dispute-actions">
+                          {(user?.role === "admin" || 
+                            (user?._id !== dispute.raisedBy && (user?.role === "customer" || user?.role === "tailor"))) && (
+                            <div className="resolve-dispute-form">
+                              <textarea
+                                placeholder="Enter resolution..."
+                                value={disputeResolution}
+                                onChange={(e) => setDisputeResolution(e.target.value)}
+                                rows="3"
+                              />
+                              <div className="resolve-actions">
+                                <button
+                                  onClick={() => handleResolveDispute(dispute._id, "resolved")}
+                                  className="btn btn-primary"
+                                  disabled={resolvingDispute || !disputeResolution}
+                                >
+                                  Resolve
+                                </button>
+                                <button
+                                  onClick={() => handleResolveDispute(dispute._id, "rejected")}
+                                  className="btn btn-secondary"
+                                  disabled={resolvingDispute || !disputeResolution}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No disputes raised yet.</p>
+              )}
+
+              {showDisputeForm && (
+                <div className="dispute-form-section">
+                  <h4>Raise a Dispute</h4>
+                  <form onSubmit={handleRaiseDispute} className="dispute-form">
+                    <div className="form-group">
+                      <label>Reason *</label>
+                      <select
+                        value={disputeData.reason}
+                        onChange={(e) => setDisputeData({ ...disputeData, reason: e.target.value })}
+                        required
+                      >
+                        <option value="">Select a reason</option>
+                        <option value="quality_issue">Quality Issue</option>
+                        <option value="delivery_delay">Delivery Delay</option>
+                        <option value="wrong_item">Wrong Item</option>
+                        <option value="damage">Damage</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Description *</label>
+                      <textarea
+                        value={disputeData.description}
+                        onChange={(e) => setDisputeData({ ...disputeData, description: e.target.value })}
+                        required
+                        rows="5"
+                        placeholder="Please describe the issue in detail..."
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Attachments (Optional)</label>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.doc,.docx"
+                        onChange={handleDisputeAttachmentChange}
+                      />
+                      {disputeAttachmentFiles.length > 0 && (
+                        <div className="attachment-preview">
+                          {disputeAttachmentFiles.map((file, idx) => (
+                            <span key={idx}>{file.name}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="btn btn-primary" disabled={submittingDispute}>
+                        {submittingDispute ? "Submitting..." : "Raise Dispute"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDisputeForm(false);
+                          setDisputeData({ reason: "", description: "", attachments: [] });
+                          setDisputeAttachmentFiles([]);
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "alterations" && (
+          <div className="tab-content">
+            <div className="alterations-section">
+              <div className="section-header">
+                <h3>Alteration Requests</h3>
+                {user?.role === "customer" && (
+                  <button
+                    onClick={() => setShowAlterationForm(true)}
+                    className="btn btn-primary"
+                  >
+                    Request Alteration
+                  </button>
+                )}
+              </div>
+
+              {order.alterationRequests && order.alterationRequests.length > 0 ? (
+                <div className="alterations-list">
+                  {order.alterationRequests.map((alteration) => (
+                    <div key={alteration._id} className="alteration-item">
+                      <div className="alteration-header">
+                        <h4>Alteration Request #{alteration._id.toString().slice(-6)}</h4>
+                        <span className={`alteration-status ${alteration.status}`}>
+                          {alteration.status.replace("_", " ").toUpperCase()}
+                        </span>
+                        <span className={`urgency-badge ${alteration.urgency}`}>
+                          {alteration.urgency.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="alteration-details">
+                        <p><strong>Description:</strong> {alteration.description}</p>
+                        <p><strong>Requested On:</strong> {new Date(alteration.createdAt).toLocaleDateString()}</p>
+                        {alteration.estimatedCost && (
+                          <p><strong>Estimated Cost:</strong> PKR {alteration.estimatedCost.toLocaleString()}</p>
+                        )}
+                        {alteration.estimatedTime && (
+                          <p><strong>Estimated Time:</strong> {alteration.estimatedTime} days</p>
+                        )}
+                        {alteration.completedAt && (
+                          <p><strong>Completed On:</strong> {new Date(alteration.completedAt).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                      {user?.role === "tailor" && alteration.status === "pending" && (
+                        <div className="alteration-actions">
+                          <div className="alteration-update-form">
+                            <div className="form-group">
+                              <label>Status *</label>
+                              <select
+                                value={alterationUpdate.status}
+                                onChange={(e) => setAlterationUpdate({ ...alterationUpdate, status: e.target.value })}
+                              >
+                                <option value="">Select status</option>
+                                <option value="approved">Approve</option>
+                                <option value="rejected">Reject</option>
+                              </select>
+                            </div>
+                            {alterationUpdate.status === "approved" && (
+                              <>
+                                <div className="form-group">
+                                  <label>Estimated Cost (PKR)</label>
+                                  <input
+                                    type="number"
+                                    value={alterationUpdate.estimatedCost}
+                                    onChange={(e) => setAlterationUpdate({ ...alterationUpdate, estimatedCost: e.target.value })}
+                                    min="0"
+                                    step="0.01"
+                                  />
+                                </div>
+                                <div className="form-group">
+                                  <label>Estimated Time (days)</label>
+                                  <input
+                                    type="number"
+                                    value={alterationUpdate.estimatedTime}
+                                    onChange={(e) => setAlterationUpdate({ ...alterationUpdate, estimatedTime: e.target.value })}
+                                    min="1"
+                                  />
+                                </div>
+                              </>
+                            )}
+                            <button
+                              onClick={() => handleUpdateAlterationStatus(alteration._id)}
+                              className="btn btn-primary"
+                              disabled={updatingAlteration || !alterationUpdate.status}
+                            >
+                              {updatingAlteration ? "Updating..." : "Update Status"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {user?.role === "tailor" && alteration.status === "approved" && (
+                        <button
+                          onClick={() => handleUpdateAlterationStatus(alteration._id, "in_progress")}
+                          className="btn btn-primary"
+                          disabled={updatingAlteration}
+                        >
+                          Mark as In Progress
+                        </button>
+                      )}
+                      {user?.role === "tailor" && alteration.status === "in_progress" && (
+                        <button
+                          onClick={() => handleUpdateAlterationStatus(alteration._id, "completed")}
+                          className="btn btn-primary"
+                          disabled={updatingAlteration}
+                        >
+                          Mark as Completed
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No alteration requests yet.</p>
+              )}
+
+              {showAlterationForm && (
+                <div className="alteration-form-section">
+                  <h4>Request Alteration</h4>
+                  <form onSubmit={handleRequestAlteration} className="alteration-form">
+                    <div className="form-group">
+                      <label>Description *</label>
+                      <textarea
+                        value={alterationData.description}
+                        onChange={(e) => setAlterationData({ ...alterationData, description: e.target.value })}
+                        required
+                        rows="5"
+                        placeholder="Describe the alteration you need..."
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Urgency</label>
+                      <select
+                        value={alterationData.urgency}
+                        onChange={(e) => setAlterationData({ ...alterationData, urgency: e.target.value })}
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="btn btn-primary" disabled={submittingAlteration}>
+                        {submittingAlteration ? "Submitting..." : "Request Alteration"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAlterationForm(false);
+                          setAlterationData({ description: "", urgency: "medium" });
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "refunds" && (
+          <div className="tab-content">
+            <div className="refunds-section">
+              <div className="section-header">
+                <h3>Refund Requests</h3>
+                {user?.role === "customer" && (
+                  <button
+                    onClick={() => {
+                      setRefundData({
+                        reason: "",
+                        description: "",
+                        requestedAmount: (order.totalPrice - (order.totalPaid || 0)).toString(),
+                      });
+                      setShowRefundForm(true);
+                    }}
+                    className="btn btn-primary"
+                  >
+                    Request Refund
+                  </button>
+                )}
+              </div>
+
+              {order.refundRequests && order.refundRequests.length > 0 ? (
+                <div className="refunds-list">
+                  {order.refundRequests.map((refund) => (
+                    <div key={refund._id} className="refund-item">
+                      <div className="refund-header">
+                        <h4>Refund Request #{refund._id.toString().slice(-6)}</h4>
+                        <span className={`refund-status ${refund.status}`}>
+                          {refund.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="refund-details">
+                        <p><strong>Reason:</strong> {refund.reason.replace("_", " ").toUpperCase()}</p>
+                        <p><strong>Description:</strong> {refund.description}</p>
+                        <p><strong>Requested Amount:</strong> PKR {refund.requestedAmount.toLocaleString()}</p>
+                        <p><strong>Requested On:</strong> {new Date(refund.createdAt).toLocaleDateString()}</p>
+                        {refund.processedAt && (
+                          <p><strong>Processed On:</strong> {new Date(refund.processedAt).toLocaleDateString()}</p>
+                        )}
+                        {refund.transactionId && (
+                          <p><strong>Transaction ID:</strong> {refund.transactionId}</p>
+                        )}
+                      </div>
+                      {user?.role === "tailor" && refund.status === "pending" && (
+                        <div className="refund-actions">
+                          <div className="refund-process-form">
+                            <div className="form-group">
+                              <label>Status *</label>
+                              <select
+                                value={refundStatus}
+                                onChange={(e) => setRefundStatus(e.target.value)}
+                              >
+                                <option value="">Select status</option>
+                                <option value="approved">Approve</option>
+                                <option value="rejected">Reject</option>
+                              </select>
+                            </div>
+                            {refundStatus === "approved" && (
+                              <div className="form-group">
+                                <label>Transaction ID</label>
+                                <input
+                                  type="text"
+                                  value={refundTransactionId}
+                                  onChange={(e) => setRefundTransactionId(e.target.value)}
+                                  placeholder="Enter refund transaction ID"
+                                />
+                              </div>
+                            )}
+                            <button
+                              onClick={() => handleProcessRefund(refund._id)}
+                              className="btn btn-primary"
+                              disabled={processingRefund || !refundStatus}
+                            >
+                              {processingRefund ? "Processing..." : "Process Refund"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No refund requests yet.</p>
+              )}
+
+              {showRefundForm && (
+                <div className="refund-form-section">
+                  <h4>Request Refund</h4>
+                  <form onSubmit={handleRequestRefund} className="refund-form">
+                    <div className="form-group">
+                      <label>Reason *</label>
+                      <select
+                        value={refundData.reason}
+                        onChange={(e) => setRefundData({ ...refundData, reason: e.target.value })}
+                        required
+                      >
+                        <option value="">Select a reason</option>
+                        <option value="defective">Defective</option>
+                        <option value="wrong_item">Wrong Item</option>
+                        <option value="not_as_described">Not as Described</option>
+                        <option value="customer_change_mind">Change of Mind</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Description *</label>
+                      <textarea
+                        value={refundData.description}
+                        onChange={(e) => setRefundData({ ...refundData, description: e.target.value })}
+                        required
+                        rows="5"
+                        placeholder="Please describe why you need a refund..."
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Requested Amount (PKR) *</label>
+                      <input
+                        type="number"
+                        value={refundData.requestedAmount}
+                        onChange={(e) => setRefundData({ ...refundData, requestedAmount: e.target.value })}
+                        required
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="btn btn-primary" disabled={submittingRefund}>
+                        {submittingRefund ? "Submitting..." : "Request Refund"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowRefundForm(false);
+                          setRefundData({ reason: "", description: "", requestedAmount: "" });
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "emergency" && (
+          <div className="tab-content">
+            <div className="emergency-section">
+              <div className="section-header">
+                <h3>Emergency Contact</h3>
+                {(user?.role === "customer" || user?.role === "tailor") && (
+                  <button
+                    onClick={() => {
+                      if (order.emergencyContact) {
+                        setEmergencyContactData({
+                          name: order.emergencyContact.name || "",
+                          phone: order.emergencyContact.phone || "",
+                          relationship: order.emergencyContact.relationship || "",
+                          availableHours: order.emergencyContact.availableHours || "",
+                        });
+                      }
+                      setShowEmergencyContactForm(true);
+                    }}
+                    className="btn btn-primary"
+                  >
+                    {order.emergencyContact ? "Update Contact" : "Add Contact"}
+                  </button>
+                )}
+              </div>
+
+              {order.emergencyContact ? (
+                <div className="emergency-contact-info">
+                  <p><strong>Name:</strong> {order.emergencyContact.name}</p>
+                  <p><strong>Phone:</strong> {order.emergencyContact.phone}</p>
+                  {order.emergencyContact.relationship && (
+                    <p><strong>Relationship:</strong> {order.emergencyContact.relationship}</p>
+                  )}
+                  {order.emergencyContact.availableHours && (
+                    <p><strong>Available Hours:</strong> {order.emergencyContact.availableHours}</p>
+                  )}
+                </div>
+              ) : (
+                <p>No emergency contact set yet.</p>
+              )}
+
+              {showEmergencyContactForm && (
+                <div className="emergency-contact-form-section">
+                  <h4>{order.emergencyContact ? "Update Emergency Contact" : "Add Emergency Contact"}</h4>
+                  <form onSubmit={handleUpdateEmergencyContact} className="emergency-contact-form">
+                    <div className="form-group">
+                      <label>Name *</label>
+                      <input
+                        type="text"
+                        value={emergencyContactData.name}
+                        onChange={(e) => setEmergencyContactData({ ...emergencyContactData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Phone *</label>
+                      <input
+                        type="tel"
+                        value={emergencyContactData.phone}
+                        onChange={(e) => setEmergencyContactData({ ...emergencyContactData, phone: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Relationship</label>
+                      <input
+                        type="text"
+                        value={emergencyContactData.relationship}
+                        onChange={(e) => setEmergencyContactData({ ...emergencyContactData, relationship: e.target.value })}
+                        placeholder="e.g., Spouse, Parent, Friend, etc."
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Available Hours</label>
+                      <input
+                        type="text"
+                        value={emergencyContactData.availableHours}
+                        onChange={(e) => setEmergencyContactData({ ...emergencyContactData, availableHours: e.target.value })}
+                        placeholder="e.g., 9 AM - 5 PM, Monday to Friday"
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="btn btn-primary" disabled={updatingEmergencyContact}>
+                        {updatingEmergencyContact ? "Updating..." : "Save Contact"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowEmergencyContactForm(false);
+                          setEmergencyContactData({ name: "", phone: "", relationship: "", availableHours: "" });
                         }}
                         className="btn btn-secondary"
                       >

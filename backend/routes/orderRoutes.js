@@ -19,6 +19,16 @@ const {
   completeRevision,
   customerApproveRevision,
   customerRejectRevision,
+  addPayment,
+  markPaymentAsPaid,
+  updateDelivery,
+  raiseDispute,
+  resolveDispute,
+  requestAlteration,
+  updateAlterationStatus,
+  requestRefund,
+  processRefund,
+  updateEmergencyContact,
 } = require("../controllers/orderController");
 const { protect } = require("../middleware/auth");
 
@@ -40,6 +50,16 @@ router.put("/:id/messages/:messageId/read", protect, markMessageAsRead);
 router.post("/:id/consultation", protect, scheduleConsultation);
 router.put("/:id/consultation/status", protect, updateConsultationStatus);
 router.put("/:id/consultation/reschedule", protect, rescheduleConsultation);
+router.post("/:id/payments", protect, addPayment);
+router.put("/:id/payments/:paymentId/paid", protect, markPaymentAsPaid);
+router.put("/:id/delivery", protect, updateDelivery);
+router.post("/:id/disputes", protect, raiseDispute);
+router.put("/:id/disputes/:disputeId/resolve", protect, resolveDispute);
+router.post("/:id/alterations", protect, requestAlteration);
+router.put("/:id/alterations/:alterationId", protect, updateAlterationStatus);
+router.post("/:id/refunds", protect, requestRefund);
+router.put("/:id/refunds/:refundId/process", protect, processRefund);
+router.put("/:id/emergency-contact", protect, updateEmergencyContact);
 
 module.exports = router;
 

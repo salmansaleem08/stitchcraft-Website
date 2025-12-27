@@ -924,6 +924,45 @@
   flex: 1;
 }
 
+.message-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.file-attachment-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f5f1eb;
+  border: 2px dashed #d4a574;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  color: #2c1810;
+  font-weight: 500;
+}
+
+.file-attachment-btn:hover {
+  background: #e8e0d6;
+  border-color: #8b4513;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.attachment-icon {
+  font-size: 1.2rem;
+}
+
+.attachment-label {
+  user-select: none;
+}
+
 .success-message {
   background: #efe;
   color: #3c3;
@@ -1092,5 +1131,302 @@
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* Section Headers */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-header h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0;
+}
+
+/* Payment Section */
+.payments-section,
+.delivery-section,
+.disputes-section,
+.alterations-section,
+.refunds-section,
+.emergency-section {
+  padding: 1rem 0;
+}
+
+.payment-list,
+.disputes-list,
+.alterations-list,
+.refunds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.payment-item,
+.dispute-item,
+.alteration-item,
+.refund-item {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-left: 4px solid #8b4513;
+}
+
+.payment-header,
+.dispute-header,
+.alteration-header,
+.refund-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.payment-header h4,
+.dispute-header h4,
+.alteration-header h4,
+.refund-header h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0;
+}
+
+.payment-status,
+.dispute-status,
+.alteration-status,
+.refund-status {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.payment-status.paid {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.payment-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.dispute-status.open {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.dispute-status.under_review {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.dispute-status.resolved {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.dispute-status.rejected {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.alteration-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.alteration-status.approved,
+.alteration-status.in_progress {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.alteration-status.completed {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.alteration-status.rejected {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.refund-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.refund-status.processed {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.refund-status.rejected {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.urgency-badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.urgency-badge.low {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.urgency-badge.medium {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.urgency-badge.high {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.payment-details,
+.dispute-details,
+.alteration-details,
+.refund-details {
+  margin-bottom: 1rem;
+}
+
+.payment-details p,
+.dispute-details p,
+.alteration-details p,
+.refund-details p {
+  margin: 0.5rem 0;
+  color: #5a4a3a;
+}
+
+.payment-summary {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+  border: 2px solid #e8e0d6;
+}
+
+.payment-summary p {
+  font-size: 1.1rem;
+  margin: 0.75rem 0;
+  color: #2c1810;
+}
+
+.payment-form-section,
+.delivery-form-section,
+.dispute-form-section,
+.alteration-form-section,
+.refund-form-section,
+.emergency-contact-form-section {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-top: 2rem;
+  border: 2px solid #e8e0d6;
+}
+
+.payment-form-section h4,
+.delivery-form-section h4,
+.dispute-form-section h4,
+.alteration-form-section h4,
+.refund-form-section h4,
+.emergency-contact-form-section h4 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 1.5rem;
+}
+
+.delivery-info,
+.emergency-contact-info {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.delivery-info h4,
+.emergency-contact-info h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 1rem;
+}
+
+.delivery-info p,
+.emergency-contact-info p {
+  margin: 0.5rem 0;
+  color: #5a4a3a;
+}
+
+.dispute-attachments {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dispute-attachments a {
+  color: #8b4513;
+  text-decoration: underline;
+}
+
+.dispute-actions,
+.alteration-actions,
+.refund-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.resolve-dispute-form,
+.alteration-update-form,
+.refund-process-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.attachment-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.attachment-preview span {
+  background: #e8e0d6;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #5a4a3a;
+}
+
+.order-tabs {
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  white-space: nowrap;
 }
 

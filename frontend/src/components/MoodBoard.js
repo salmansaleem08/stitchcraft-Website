@@ -34,7 +34,7 @@ const MoodBoard = () => {
   const fetchMoodBoard = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/mood-boards/${id}`);
+      const response = await api.get(`/moodboards/${id}`);
       setMoodBoard(response.data.data);
       setError("");
     } catch (error) {
@@ -48,11 +48,11 @@ const MoodBoard = () => {
   const createMoodBoardForOrder = async () => {
     try {
       setLoading(true);
-      const response = await api.post("/mood-boards", {
+      const response = await api.post("/moodboards", {
         title: `Design Board for Order`,
         order: orderId,
       });
-      navigate(`/mood-boards/${response.data.data._id}`);
+      navigate(`/moodboards/${response.data.data._id}`);
     } catch (error) {
       setError("Failed to create mood board");
       console.error("Error creating mood board:", error);
@@ -62,7 +62,7 @@ const MoodBoard = () => {
 
   const handleSave = async () => {
     try {
-      await api.put(`/mood-boards/${id}`, {
+      await api.put(`/moodboards/${id}`, {
         title: moodBoard.title,
         description: moodBoard.description,
         items: moodBoard.items,
@@ -78,7 +78,7 @@ const MoodBoard = () => {
 
   const handleAddItem = async () => {
     try {
-      const response = await api.post(`/mood-boards/${id}/items`, newItem);
+      const response = await api.post(`/moodboards/${id}/items`, newItem);
       setMoodBoard({
         ...moodBoard,
         items: [...moodBoard.items, response.data.data],
@@ -98,7 +98,7 @@ const MoodBoard = () => {
 
   const handleRemoveItem = async (itemId) => {
     try {
-      await api.delete(`/mood-boards/${id}/items/${itemId}`);
+      await api.delete(`/moodboards/${id}/items/${itemId}`);
       setMoodBoard({
         ...moodBoard,
         items: moodBoard.items.filter((item) => item._id !== itemId),

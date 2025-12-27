@@ -230,12 +230,184 @@ const orderSchema = mongoose.Schema(
       ],
       default: [],
     },
+    // Payment Schedule
+    paymentSchedule: {
+      type: [
+        {
+          milestone: {
+            type: String,
+            enum: ["deposit", "fabric_payment", "progress_payment", "final_payment", "delivery_payment"],
+            required: true,
+          },
+          amount: {
+            type: Number,
+            required: true,
+            min: 0,
+          },
+          dueDate: Date,
+          paid: {
+            type: Boolean,
+            default: false,
+          },
+          paidAt: Date,
+          paymentMethod: String,
+          transactionId: String,
+        },
+      ],
+      default: [],
+    },
+    totalPaid: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    // Delivery Coordination
+    deliveryAddress: {
+      street: String,
+      city: String,
+      province: String,
+      postalCode: String,
+      country: {
+        type: String,
+        default: "Pakistan",
+      },
+      phone: String,
+      specialInstructions: String,
+    },
+    deliveryMethod: {
+      type: String,
+      enum: ["pickup", "home_delivery", "courier"],
+      default: "pickup",
+    },
+    deliveryTrackingNumber: String,
+    deliveryProvider: String,
+    estimatedDeliveryDate: Date,
+    // Dispute Resolution
+    disputes: {
+      type: [
+        {
+          raisedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+          },
+          reason: {
+            type: String,
+            enum: ["quality_issue", "delivery_delay", "wrong_item", "damage", "other"],
+            required: true,
+          },
+          description: {
+            type: String,
+            required: true,
+            maxlength: 2000,
+          },
+          status: {
+            type: String,
+            enum: ["open", "under_review", "resolved", "rejected"],
+            default: "open",
+          },
+          resolution: String,
+          resolvedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+          resolvedAt: Date,
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+          attachments: [String],
+        },
+      ],
+      default: [],
+    },
+    // Alteration Requests
+    alterationRequests: {
+      type: [
+        {
+          requestedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+          },
+          description: {
+            type: String,
+            required: true,
+            maxlength: 1000,
+          },
+          urgency: {
+            type: String,
+            enum: ["low", "medium", "high"],
+            default: "medium",
+          },
+          status: {
+            type: String,
+            enum: ["pending", "approved", "in_progress", "completed", "rejected"],
+            default: "pending",
+          },
+          estimatedCost: Number,
+          estimatedTime: Number, // in days
+          completedAt: Date,
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
+    // Refund & Return
+    refundRequests: {
+      type: [
+        {
+          requestedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+          },
+          reason: {
+            type: String,
+            enum: ["defective", "wrong_item", "not_as_described", "customer_change_mind", "other"],
+            required: true,
+          },
+          description: {
+            type: String,
+            required: true,
+            maxlength: 1000,
+          },
+          requestedAmount: Number,
+          status: {
+            type: String,
+            enum: ["pending", "approved", "rejected", "processed"],
+            default: "pending",
+          },
+          processedAt: Date,
+          transactionId: String,
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
+      default: [],
+    },
+    // Emergency Contact
+    emergencyContact: {
+      name: String,
+      phone: String,
+      relationship: String,
+      availableHours: String,
+    },
     // Tracking
     timeline: {
       type: [
         {
           status: String,
           description: String,
+          milestone: {
+            type: String,
+            enum: ["order_placed", "consultation", "fabric_selected", "production_started", "quality_check", "ready_for_delivery", "delivered", "completed"],
+          },
           updatedAt: {
             type: Date,
             default: Date.now,

@@ -83,6 +83,448 @@ exports.createOrder = async (req, res) => {
   }
 };
 
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get all orders for user
 // @route   GET /api/orders
 // @access  Private
@@ -112,6 +554,448 @@ exports.getOrders = async (req, res) => {
       success: true,
       count: orders.length,
       data: orders,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -151,6 +1035,448 @@ exports.getOrder = async (req, res) => {
   }
 };
 
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Update order
 // @route   PUT /api/orders/:id
 // @access  Private
@@ -179,6 +1505,448 @@ exports.updateOrder = async (req, res) => {
     res.json({
       success: true,
       data: updatedOrder,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -250,6 +2018,448 @@ exports.updateOrderStatus = async (req, res) => {
   }
 };
 
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Add revision request
 // @route   POST /api/orders/:id/revisions
 // @access  Private
@@ -286,6 +2496,448 @@ exports.addRevision = async (req, res) => {
     res.json({
       success: true,
       data: updatedOrder,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -332,6 +2984,448 @@ exports.approveRevision = async (req, res) => {
     res.json({
       success: true,
       data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -394,6 +3488,448 @@ exports.rejectRevision = async (req, res) => {
   }
 };
 
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Mark revision as in progress
 // @route   PUT /api/orders/:id/revisions/:revisionId/in-progress
 // @access  Private (Tailor only)
@@ -428,6 +3964,448 @@ exports.startRevision = async (req, res) => {
     res.json({
       success: true,
       data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -487,6 +4465,448 @@ exports.completeRevision = async (req, res) => {
   }
 };
 
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Customer approve completed revision
 // @route   PUT /api/orders/:id/revisions/:revisionId/customer-approve
 // @access  Private (Customer only)
@@ -533,6 +4953,448 @@ exports.customerApproveRevision = async (req, res) => {
     res.json({
       success: true,
       data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -593,6 +5455,448 @@ exports.customerRejectRevision = async (req, res) => {
   }
 };
 
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Update fabric selection
 // @route   PUT /api/orders/:id/fabric
 // @access  Private
@@ -625,6 +5929,448 @@ exports.updateFabric = async (req, res) => {
     res.json({
       success: true,
       data: updatedOrder,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -674,6 +6420,448 @@ exports.addMessage = async (req, res) => {
   }
 };
 
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Mark message as read
 // @route   PUT /api/orders/:id/messages/:messageId/read
 // @access  Private
@@ -709,6 +6897,448 @@ exports.markMessageAsRead = async (req, res) => {
     res.json({
       success: true,
       data: message,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -764,6 +7394,448 @@ exports.scheduleConsultation = async (req, res) => {
   }
 };
 
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Update consultation status
 // @route   PUT /api/orders/:id/consultation/status
 // @access  Private
@@ -807,6 +7879,448 @@ exports.updateConsultationStatus = async (req, res) => {
   }
 };
 
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Reschedule consultation
 // @route   PUT /api/orders/:id/consultation/reschedule
 // @access  Private
@@ -842,6 +8356,448 @@ exports.rescheduleConsultation = async (req, res) => {
     res.json({
       success: true,
       data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add payment milestone
+// @route   POST /api/orders/:id/payments
+// @access  Private
+exports.addPayment = async (req, res) => {
+  try {
+    const { milestone, amount, dueDate, paymentMethod, transactionId } = req.body;
+
+    if (!milestone || !amount) {
+      return res.status(400).json({ message: "Milestone and amount are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = {
+      milestone,
+      amount,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      paymentMethod,
+      transactionId,
+      paid: false,
+    };
+
+    order.paymentSchedule.push(payment);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.paymentSchedule[order.paymentSchedule.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark payment as paid
+// @route   PUT /api/orders/:id/payments/:paymentId/paid
+// @access  Private
+exports.markPaymentAsPaid = async (req, res) => {
+  try {
+    const { transactionId } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const payment = order.paymentSchedule.id(req.params.paymentId);
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    payment.paid = true;
+    payment.paidAt = new Date();
+    if (transactionId) payment.transactionId = transactionId;
+
+    order.totalPaid = order.paymentSchedule
+      .filter((p) => p.paid)
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update delivery information
+// @route   PUT /api/orders/:id/delivery
+// @access  Private
+exports.updateDelivery = async (req, res) => {
+  try {
+    const { deliveryAddress, deliveryMethod, estimatedDeliveryDate, deliveryTrackingNumber, deliveryProvider, specialInstructions } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (deliveryAddress) order.deliveryAddress = deliveryAddress;
+    if (deliveryMethod) order.deliveryMethod = deliveryMethod;
+    if (estimatedDeliveryDate) order.estimatedDeliveryDate = new Date(estimatedDeliveryDate);
+    if (deliveryTrackingNumber) order.deliveryTrackingNumber = deliveryTrackingNumber;
+    if (deliveryProvider) order.deliveryProvider = deliveryProvider;
+    if (specialInstructions) order.deliveryAddress.specialInstructions = specialInstructions;
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Raise a dispute
+// @route   POST /api/orders/:id/disputes
+// @access  Private
+exports.raiseDispute = async (req, res) => {
+  try {
+    const { reason, description, attachments } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can raise disputes
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const dispute = {
+      raisedBy: req.user._id,
+      reason,
+      description,
+      status: "open",
+      attachments: attachments || [],
+    };
+
+    order.disputes.push(dispute);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.disputes[order.disputes.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Resolve a dispute
+// @route   PUT /api/orders/:id/disputes/:disputeId/resolve
+// @access  Private (Admin or opposite party)
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { resolution, status } = req.body;
+
+    if (!status || !["resolved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (resolved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const dispute = order.disputes.id(req.params.disputeId);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    // Check authorization - admin, customer, or tailor (opposite party)
+    const isAdmin = req.user.role === "admin";
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+    const isOppositeParty = (dispute.raisedBy.toString() !== req.user._id.toString()) && (isCustomer || isTailor);
+
+    if (!isAdmin && !isOppositeParty) {
+      return res.status(403).json({ message: "Not authorized to resolve this dispute" });
+    }
+
+    dispute.status = status;
+    if (resolution) dispute.resolution = resolution;
+    dispute.resolvedBy = req.user._id;
+    dispute.resolvedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: dispute,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request alteration
+// @route   POST /api/orders/:id/alterations
+// @access  Private
+exports.requestAlteration = async (req, res) => {
+  try {
+    const { description, urgency } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request alterations
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request alterations" });
+    }
+
+    const alteration = {
+      requestedBy: req.user._id,
+      description,
+      urgency: urgency || "medium",
+      status: "pending",
+    };
+
+    order.alterationRequests.push(alteration);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.alterationRequests[order.alterationRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update alteration status
+// @route   PUT /api/orders/:id/alterations/:alterationId
+// @access  Private (Tailor)
+exports.updateAlterationStatus = async (req, res) => {
+  try {
+    const { status, estimatedCost, estimatedTime } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can update alteration status
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can update alteration status" });
+    }
+
+    const alteration = order.alterationRequests.id(req.params.alterationId);
+
+    if (!alteration) {
+      return res.status(404).json({ message: "Alteration request not found" });
+    }
+
+    alteration.status = status;
+    if (estimatedCost) alteration.estimatedCost = estimatedCost;
+    if (estimatedTime) alteration.estimatedTime = estimatedTime;
+
+    if (status === "completed") {
+      alteration.completedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: alteration,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Request refund
+// @route   POST /api/orders/:id/refunds
+// @access  Private
+exports.requestRefund = async (req, res) => {
+  try {
+    const { reason, description, requestedAmount } = req.body;
+
+    if (!reason || !description) {
+      return res.status(400).json({ message: "Reason and description are required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can request refunds
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can request refunds" });
+    }
+
+    const refund = {
+      requestedBy: req.user._id,
+      reason,
+      description,
+      requestedAmount: requestedAmount || order.totalPrice - order.totalPaid,
+      status: "pending",
+    };
+
+    order.refundRequests.push(refund);
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.refundRequests[order.refundRequests.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Process refund
+// @route   PUT /api/orders/:id/refunds/:refundId/process
+// @access  Private (Admin or Tailor)
+exports.processRefund = async (req, res) => {
+  try {
+    const { status, transactionId } = req.body;
+
+    if (!status || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Valid status (approved or rejected) is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const refund = order.refundRequests.id(req.params.refundId);
+
+    if (!refund) {
+      return res.status(404).json({ message: "Refund request not found" });
+    }
+
+    // Check authorization - admin or tailor
+    const isAdmin = req.user.role === "admin";
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isTailor) {
+      return res.status(403).json({ message: "Not authorized to process refunds" });
+    }
+
+    refund.status = status === "approved" ? "processed" : "rejected";
+    if (status === "approved" && transactionId) {
+      refund.transactionId = transactionId;
+      refund.processedAt = new Date();
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: refund,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update emergency contact
+// @route   PUT /api/orders/:id/emergency-contact
+// @access  Private
+exports.updateEmergencyContact = async (req, res) => {
+  try {
+    const { name, phone, relationship, availableHours } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.emergencyContact = {
+      name: name || order.emergencyContact?.name,
+      phone: phone || order.emergencyContact?.phone,
+      relationship: relationship || order.emergencyContact?.relationship,
+      availableHours: availableHours || order.emergencyContact?.availableHours,
+    };
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order.emergencyContact,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

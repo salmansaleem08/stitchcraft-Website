@@ -110,7 +110,7 @@ function App() {
                 }
               />
               <Route
-                path="/mood-boards/:id"
+                path="/moodboards/:id"
                 element={
                   <ProtectedRoute>
                     <MoodBoard />
@@ -206,6 +206,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="supplier">
                     <SupplierAnalytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/supplier-orders"
+                element={
+                  <ProtectedRoute requiredRole="supplier">
+                    <SupplierOrders />
                   </ProtectedRoute>
                 }
               />
