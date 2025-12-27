@@ -1,0 +1,389 @@
+.pattern-detail {
+  padding: 2rem 0;
+  min-height: calc(100vh - 80px);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: #8b4513;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.back-link:hover {
+  color: #6b3410;
+}
+
+.pattern-detail-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.pattern-images {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.main-image {
+  width: 100%;
+  height: 500px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e8e0d6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.main-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5a4a3a;
+  font-size: 1.1rem;
+}
+
+.image-thumbnails {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.thumbnail {
+  width: 80px;
+  height: 80px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #e8e0d6;
+  padding: 0;
+}
+
+.thumbnail.active {
+  border-color: #8b4513;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pattern-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pattern-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.pattern-header h1 {
+  font-size: 2rem;
+  color: #2c1810;
+  margin: 0;
+  flex: 1;
+}
+
+.pattern-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge.free {
+  background: #4caf50;
+  color: #fff;
+}
+
+.badge.featured {
+  background: #ff9800;
+  color: #fff;
+}
+
+.badge.difficulty {
+  background: #f5f1eb;
+  color: #8b4513;
+}
+
+.pattern-meta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f5f1eb;
+  border-radius: 8px;
+}
+
+.meta-item {
+  font-size: 0.95rem;
+  color: #2c1810;
+}
+
+.meta-item strong {
+  color: #8b4513;
+  margin-right: 0.5rem;
+}
+
+.rating {
+  color: #ff9800;
+  font-weight: 600;
+}
+
+.pattern-price-section {
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #8b4513;
+}
+
+.free-price {
+  color: #4caf50;
+}
+
+.pattern-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pattern-actions .btn {
+  flex: 1;
+  min-width: 150px;
+}
+
+.pattern-description,
+.pattern-fabric-requirements,
+.pattern-care-instructions,
+.pattern-copyright {
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pattern-description h3,
+.pattern-fabric-requirements h3,
+.pattern-care-instructions h3,
+.pattern-copyright h3 {
+  font-size: 1.2rem;
+  color: #2c1810;
+  margin-bottom: 1rem;
+}
+
+.pattern-description p,
+.pattern-fabric-requirements ul,
+.pattern-care-instructions ul,
+.pattern-copyright p {
+  color: #5a4a3a;
+  line-height: 1.6;
+}
+
+.pattern-fabric-requirements ul,
+.pattern-care-instructions ul {
+  list-style: none;
+  padding: 0;
+}
+
+.pattern-fabric-requirements li,
+.pattern-care-instructions li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e8e0d6;
+}
+
+.pattern-fabric-requirements li:last-child,
+.pattern-care-instructions li:last-child {
+  border-bottom: none;
+}
+
+.pattern-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tag {
+  padding: 0.4rem 0.8rem;
+  background: #f5f1eb;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: #8b4513;
+}
+
+.pattern-reviews-section {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pattern-reviews-section h2 {
+  font-size: 1.5rem;
+  color: #2c1810;
+  margin-bottom: 1.5rem;
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.review-item {
+  padding: 1.5rem;
+  background: #f5f1eb;
+  border-radius: 8px;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.reviewer-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.verified-badge {
+  padding: 0.2rem 0.5rem;
+  background: #4caf50;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.review-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #ff9800;
+  font-size: 1.1rem;
+}
+
+.rating-number {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+  margin-left: 0.5rem;
+}
+
+.review-comment {
+  color: #2c1810;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.review-images {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.review-images img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+}
+
+.modal-content h3 {
+  margin-bottom: 1rem;
+  color: #2c1810;
+}
+
+.modal-content textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d4a574;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 968px) {
+  .pattern-detail-content {
+    grid-template-columns: 1fr;
+  }
+
+  .main-image {
+    height: 400px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pattern-header {
+    flex-direction: column;
+  }
+
+  .pattern-actions {
+    flex-direction: column;
+  }
+
+  .pattern-actions .btn {
+    width: 100%;
+  }
+}
+

@@ -36,6 +36,9 @@ import AdminVerifications from "./components/AdminVerifications";
 import SearchPage from "./components/SearchPage";
 import Cart from "./components/Cart";
 import Checkout from "./components/Checkout";
+import PatternLibrary from "./components/PatternLibrary";
+import PatternDetail from "./components/PatternDetail";
+import PatternTools from "./components/PatternTools";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -243,6 +246,9 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/patterns" element={<PatternLibrary />} />
+              <Route path="/patterns/:id" element={<PatternDetail />} />
+              <Route path="/pattern-tools" element={<PatternTools />} />
               <Route
                 path="/materials"
                 element={

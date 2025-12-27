@@ -13,6 +13,8 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/patterns", require("./routes/patternRoutes"));
+app.use("/api/pattern-tools", require("./routes/patternToolsRoutes"));
 app.use("/api/tailors", require("./routes/tailorRoutes"));
 app.use("/api/suppliers", require("./routes/supplierRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));

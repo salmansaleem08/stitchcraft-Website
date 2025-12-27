@@ -68,6 +68,12 @@ const Navigation = () => {
           <Link to="/supplies" className="nav-link">
             Supplies
           </Link>
+          <Link to="/patterns" className="nav-link">
+            Patterns
+          </Link>
+          <Link to="/pattern-tools" className="nav-link">
+            Pattern Tools
+          </Link>
           {user && user.role === "tailor" && (
             <>
               <Link to="/dashboard" className="nav-link">
