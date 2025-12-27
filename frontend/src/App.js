@@ -42,6 +42,8 @@ import PatternTools from "./components/PatternTools";
 import PatternForm from "./components/PatternForm";
 import PatternCollaboration from "./components/PatternCollaboration";
 import PatternDesigner from "./components/PatternDesigner";
+import MoodBoard from "./components/MoodBoard";
+import DesignAnnotationTool from "./components/DesignAnnotationTool";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -104,6 +106,30 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <OrderTracking />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mood-boards/:id"
+                element={
+                  <ProtectedRoute>
+                    <MoodBoard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/orders/:orderId/mood-board"
+                element={
+                  <ProtectedRoute>
+                    <MoodBoard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/orders/:orderId/annotate"
+                element={
+                  <ProtectedRoute>
+                    <DesignAnnotationTool />
                   </ProtectedRoute>
                 }
               />

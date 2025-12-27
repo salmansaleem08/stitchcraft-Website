@@ -275,10 +275,28 @@ const OrderTracking = () => {
               Placed on {new Date(order.createdAt).toLocaleDateString()}
             </p>
           </div>
-          <div className="order-status-badge">
-            <span className={`status ${order.status}`}>
-              {order.status.replace(/_/g, " ").toUpperCase()}
-            </span>
+          <div className="order-header-actions">
+            <div className="order-status-badge">
+              <span className={`status ${order.status}`}>
+                {order.status.replace(/_/g, " ").toUpperCase()}
+              </span>
+            </div>
+            <div className="design-tools-links">
+              <Link
+                to={`/orders/${order._id}/mood-board`}
+                className="btn btn-secondary btn-sm"
+              >
+                Mood Board
+              </Link>
+              {order.designReference && order.designReference.length > 0 && (
+                <Link
+                  to={`/orders/${order._id}/annotate`}
+                  className="btn btn-secondary btn-sm"
+                >
+                  Annotate Design
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 
