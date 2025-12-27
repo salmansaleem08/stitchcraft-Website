@@ -142,25 +142,25 @@ const TailorDashboard = () => {
             </div>
             <div className="action-cards">
               <Link to="/tailor-orders" className="action-card">
-                <div className="action-icon">📋</div>
+                <div className="action-icon">Orders</div>
                 <h3>View All Orders</h3>
                 <p>Manage and track all your orders</p>
               </Link>
 
               <Link to={`/tailors/${user?._id}/edit`} className="action-card">
-                <div className="action-icon">✏️</div>
+                <div className="action-icon">Edit</div>
                 <h3>Edit Profile</h3>
                 <p>Update your profile and portfolio</p>
               </Link>
 
               <Link to="/packages/manage" className="action-card">
-                <div className="action-icon">📦</div>
+                <div className="action-icon">Packages</div>
                 <h3>Manage Packages</h3>
                 <p>Create and manage service packages</p>
               </Link>
 
               <Link to="/patterns/new" className="action-card">
-                <div className="action-icon">🎨</div>
+                <div className="action-icon">Design</div>
                 <h3>Create Pattern</h3>
                 <p>Design and publish new patterns</p>
               </Link>

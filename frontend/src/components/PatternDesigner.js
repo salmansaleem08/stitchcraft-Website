@@ -264,35 +264,35 @@ const PatternDesigner = () => {
                 onClick={() => setTool("pen")}
                 title="Pen"
               >
-                ✏️
+                Pen
               </button>
               <button
                 className={`tool-btn ${tool === "line" ? "active" : ""}`}
                 onClick={() => setTool("line")}
                 title="Line"
               >
-                ➖
+                Line
               </button>
               <button
                 className={`tool-btn ${tool === "rectangle" ? "active" : ""}`}
                 onClick={() => setTool("rectangle")}
                 title="Rectangle"
               >
-                ▭
+                Rect
               </button>
               <button
                 className={`tool-btn ${tool === "circle" ? "active" : ""}`}
                 onClick={() => setTool("circle")}
                 title="Circle"
               >
-                ⭕
+                Circle
               </button>
               <button
                 className={`tool-btn ${tool === "eraser" ? "active" : ""}`}
                 onClick={() => setTool("eraser")}
                 title="Eraser"
               >
-                🧹
+                Erase
               </button>
             </div>
           </div>
