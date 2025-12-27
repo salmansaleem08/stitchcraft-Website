@@ -153,6 +153,19 @@ const fabricSchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
+    bulkDiscountEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    bulkDiscountTiers: {
+      type: [
+        {
+          minMeters: { type: Number, required: true },
+          discountPercentage: { type: Number, required: true, min: 0, max: 100 },
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,

@@ -82,7 +82,7 @@ const SupplierProfile = () => {
               </div>
             )}
             {getVerificationBadge()}
-            {supplier.qualityRating >= 4.5 && supplier.totalQualityReviews >= 10 && (
+            {supplier.qualityGuarantee?.enabled && (
               <span className="quality-badge">Quality Guaranteed</span>
             )}
           </div>
@@ -200,6 +200,28 @@ const SupplierProfile = () => {
                     {!center.isActive && <span className="inactive-badge">Inactive</span>}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {supplier.qualityGuarantee?.enabled && (
+            <div className="detail-section">
+              <h3>Quality Guarantee</h3>
+              <div className="quality-guarantee-info">
+                {supplier.qualityGuarantee.description && (
+                  <p className="guarantee-description">{supplier.qualityGuarantee.description}</p>
+                )}
+                {supplier.qualityGuarantee.warrantyPeriod && (
+                  <div className="guarantee-item">
+                    <strong>Warranty Period:</strong> {supplier.qualityGuarantee.warrantyPeriod}
+                  </div>
+                )}
+                {supplier.qualityGuarantee.returnPolicy && (
+                  <div className="guarantee-item">
+                    <strong>Return Policy:</strong>
+                    <p>{supplier.qualityGuarantee.returnPolicy}</p>
+                  </div>
+                )}
               </div>
             </div>
           )}

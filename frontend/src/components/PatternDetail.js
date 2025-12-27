@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import { AuthContext } from "../context/AuthContext";
+import GarmentPreview3D from "./GarmentPreview3D";
 import "./PatternDetail.css";
 
 const PatternDetail = () => {
@@ -287,6 +288,13 @@ const PatternDetail = () => {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="pattern-3d-preview-section">
+          <GarmentPreview3D
+            pattern={pattern}
+            measurements={pattern.measurements}
+          />
         </div>
 
         {reviews.length > 0 && (

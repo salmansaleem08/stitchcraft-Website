@@ -193,6 +193,15 @@ const userSchema = mongoose.Schema(
         "Other",
       ],
     },
+    qualityGuarantee: {
+      type: {
+        enabled: { type: Boolean, default: false },
+        description: { type: String, maxlength: 500 },
+        warrantyPeriod: { type: String }, // e.g., "30 days", "6 months", "1 year"
+        returnPolicy: { type: String, maxlength: 1000 },
+      },
+      default: {},
+    },
     distributionCenters: {
       type: [
         {

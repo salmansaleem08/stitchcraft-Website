@@ -61,19 +61,37 @@ exports.createBulkOrder = async (req, res) => {
       let itemDiscount = 0;
       let itemDiscountPercentage = 0;
 
-      // Get supplier's bulk discount tiers
-      const supplier = await User.findById(fabric.supplier);
-      if (supplier && supplier.bulkDiscountEnabled && supplier.bulkDiscountTiers) {
-        // Sort tiers by minQuantity descending to find the best match
-        const sortedTiers = [...supplier.bulkDiscountTiers].sort(
-          (a, b) => b.minQuantity - a.minQuantity
+      // First check fabric-level bulk discounts
+      if (fabric.bulkDiscountEnabled && fabric.bulkDiscountTiers && fabric.bulkDiscountTiers.length > 0) {
+        // Sort tiers by minMeters descending to find the best match
+        const sortedTiers = [...fabric.bulkDiscountTiers].sort(
+          (a, b) => b.minMeters - a.minMeters
         );
 
         for (const tier of sortedTiers) {
-          if (item.quantity >= tier.minQuantity) {
+          if (item.quantity >= tier.minMeters) {
             itemDiscountPercentage = tier.discountPercentage;
             itemDiscount = (itemSubtotal * itemDiscountPercentage) / 100;
             break;
+          }
+        }
+      }
+
+      // If no fabric discount, check supplier-level bulk discount tiers
+      if (itemDiscount === 0) {
+        const supplier = await User.findById(fabric.supplier);
+        if (supplier && supplier.bulkDiscountEnabled && supplier.bulkDiscountTiers) {
+          // Sort tiers by minQuantity descending to find the best match
+          const sortedTiers = [...supplier.bulkDiscountTiers].sort(
+            (a, b) => b.minQuantity - a.minQuantity
+          );
+
+          for (const tier of sortedTiers) {
+            if (item.quantity >= tier.minQuantity) {
+              itemDiscountPercentage = tier.discountPercentage;
+              itemDiscount = (itemSubtotal * itemDiscountPercentage) / 100;
+              break;
+            }
           }
         }
       }
