@@ -655,15 +655,193 @@ exports.addMessage = async (req, res) => {
 
     order.messages.push({
       sender: req.user._id,
-      message,
+      message: message || "",
       attachments: attachments || [],
+      read: false,
     });
 
-    const updatedOrder = await order.save();
+    await order.save();
+
+    const populatedOrder = await Order.findById(order._id)
+      .populate("messages.sender", "name avatar");
 
     res.json({
       success: true,
-      data: updatedOrder,
+      data: populatedOrder.messages[populatedOrder.messages.length - 1],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark message as read
+// @route   PUT /api/orders/:id/messages/:messageId/read
+// @access  Private
+exports.markMessageAsRead = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const message = order.messages.id(req.params.messageId);
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Only mark as read if message is not from current user
+    if (message.sender.toString() !== req.user._id.toString()) {
+      message.read = true;
+      message.readAt = new Date();
+      await order.save();
+    }
+
+    res.json({
+      success: true,
+      data: message,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Schedule video consultation
+// @route   POST /api/orders/:id/consultation
+// @access  Private
+exports.scheduleConsultation = async (req, res) => {
+  try {
+    const { consultationDate, consultationType, consultationLink, consultationDuration, notes } = req.body;
+
+    if (!consultationDate) {
+      return res.status(400).json({ message: "Consultation date is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization - both customer and tailor can schedule
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.consultationDate = new Date(consultationDate);
+    order.consultationType = consultationType || "video";
+    order.consultationLink = consultationLink || "";
+    order.consultationDuration = consultationDuration || 30;
+    order.consultationNotes = notes || order.consultationNotes || "";
+    order.consultationStatus = "scheduled";
+    order.consultationRequestedBy = req.user._id;
+    order.consultationRequestedAt = new Date();
+
+    if (order.status === "pending") {
+      order.status = "consultation_scheduled";
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update consultation status
+// @route   PUT /api/orders/:id/consultation/status
+// @access  Private
+exports.updateConsultationStatus = async (req, res) => {
+  try {
+    const { status, notes } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ message: "Status is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.consultationStatus = status;
+    if (notes) order.consultationNotes = notes;
+
+    if (status === "completed" && order.status === "consultation_scheduled") {
+      order.status = "consultation_completed";
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reschedule consultation
+// @route   PUT /api/orders/:id/consultation/reschedule
+// @access  Private
+exports.rescheduleConsultation = async (req, res) => {
+  try {
+    const { consultationDate, consultationLink, notes } = req.body;
+
+    if (!consultationDate) {
+      return res.status(400).json({ message: "New consultation date is required" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Check authorization
+    const isCustomer = order.customer.toString() === req.user._id.toString();
+    const isTailor = order.tailor.toString() === req.user._id.toString();
+
+    if (!isCustomer && !isTailor) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.consultationDate = new Date(consultationDate);
+    if (consultationLink) order.consultationLink = consultationLink;
+    if (notes) order.consultationNotes = notes;
+    order.consultationStatus = "rescheduled";
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

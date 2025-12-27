@@ -58,6 +58,30 @@ const orderSchema = mongoose.Schema(
       type: String,
       maxlength: 1000,
     },
+    consultationType: {
+      type: String,
+      enum: ["in_person", "video", "phone"],
+      default: "in_person",
+    },
+    consultationLink: {
+      type: String, // Video call link (Zoom, Google Meet, etc.)
+    },
+    consultationStatus: {
+      type: String,
+      enum: ["pending", "scheduled", "completed", "cancelled", "rescheduled"],
+      default: "pending",
+    },
+    consultationDuration: {
+      type: Number, // in minutes
+      default: 30,
+    },
+    consultationRequestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    consultationRequestedAt: {
+      type: Date,
+    },
     designReference: {
       type: [String], // Image URLs
       default: [],
@@ -178,7 +202,26 @@ const orderSchema = mongoose.Schema(
             ref: "User",
           },
           message: String,
-          attachments: [String],
+          attachments: {
+            type: [
+              {
+                type: {
+                  type: String,
+                  enum: ["image", "document", "video", "audio", "other"],
+                  default: "image",
+                },
+                url: String,
+                name: String,
+                size: Number, // in bytes
+              },
+            ],
+            default: [],
+          },
+          read: {
+            type: Boolean,
+            default: false,
+          },
+          readAt: Date,
           sentAt: {
             type: Date,
             default: Date.now,

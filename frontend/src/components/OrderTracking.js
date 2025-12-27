@@ -21,6 +21,18 @@ const OrderTracking = () => {
   // Messaging
   const [newMessage, setNewMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageAttachments, setMessageAttachments] = useState([]);
+  const [messageAttachmentFiles, setMessageAttachmentFiles] = useState([]);
+
+  // Consultation
+  const [showConsultationForm, setShowConsultationForm] = useState(false);
+  const [consultationData, setConsultationData] = useState({
+    consultationDate: "",
+    consultationType: "video",
+    consultationLink: "",
+    consultationDuration: 30,
+    notes: "",
+  });
 
   // Review
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -121,8 +133,8 @@ const OrderTracking = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) {
-      setError("Please enter a message");
+    if (!newMessage.trim() && messageAttachmentFiles.length === 0) {
+      setError("Please enter a message or attach a file");
       return;
     }
 
@@ -131,16 +143,104 @@ const OrderTracking = () => {
     setSuccess("");
 
     try {
+      let attachments = [];
+      if (messageAttachmentFiles.length > 0) {
+        const formData = new FormData();
+        messageAttachmentFiles.forEach((file) => {
+          formData.append("images", file);
+        });
+        const response = await api.post("/upload/images", formData);
+        attachments = response.data.data.map((url, idx) => ({
+          type: messageAttachmentFiles[idx].type.startsWith("image/") ? "image" : "document",
+          url: `http://localhost:5000${url}`,
+          name: messageAttachmentFiles[idx].name,
+          size: messageAttachmentFiles[idx].size,
+        }));
+      }
+
       await api.post(`/orders/${id}/messages`, {
         message: newMessage,
+        attachments: attachments,
       });
       setSuccess("Message sent successfully");
       setNewMessage("");
+      setMessageAttachmentFiles([]);
+      setMessageAttachments([]);
       fetchOrder();
     } catch (error) {
       setError(error.response?.data?.message || "Failed to send message");
     } finally {
       setSendingMessage(false);
+    }
+  };
+
+  const handleMessageAttachmentChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + messageAttachmentFiles.length > 5) {
+      alert("Maximum 5 files allowed");
+      return;
+    }
+    setMessageAttachmentFiles([...messageAttachmentFiles, ...files]);
+    setMessageAttachments([...messageAttachments, ...files.map(f => ({ name: f.name, size: f.size }))]);
+  };
+
+  const removeMessageAttachment = (index) => {
+    setMessageAttachmentFiles(messageAttachmentFiles.filter((_, i) => i !== index));
+    setMessageAttachments(messageAttachments.filter((_, i) => i !== index));
+  };
+
+  const handleScheduleConsultation = async (e) => {
+    e.preventDefault();
+    if (!consultationData.consultationDate) {
+      setError("Please select a consultation date and time");
+      return;
+    }
+
+    try {
+      await api.post(`/orders/${id}/consultation`, consultationData);
+      setSuccess("Consultation scheduled successfully");
+      setShowConsultationForm(false);
+      setConsultationData({
+        consultationDate: "",
+        consultationType: "video",
+        consultationLink: "",
+        consultationDuration: 30,
+        notes: "",
+      });
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to schedule consultation");
+    }
+  };
+
+  const handleUpdateConsultationStatus = async (status) => {
+    try {
+      await api.put(`/orders/${id}/consultation/status`, { status });
+      setSuccess(`Consultation marked as ${status}`);
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to update consultation status");
+    }
+  };
+
+  const handleRescheduleConsultation = async (e) => {
+    e.preventDefault();
+    if (!consultationData.consultationDate) {
+      setError("Please select a new consultation date and time");
+      return;
+    }
+
+    try {
+      await api.put(`/orders/${id}/consultation/reschedule`, {
+        consultationDate: consultationData.consultationDate,
+        consultationLink: consultationData.consultationLink,
+        notes: consultationData.notes,
+      });
+      setSuccess("Consultation rescheduled successfully");
+      setShowConsultationForm(false);
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to reschedule consultation");
     }
   };
 
@@ -758,6 +858,12 @@ const OrderTracking = () => {
           >
             Messages ({order.messages?.length || 0})
           </button>
+          <button
+            className={`tab-btn ${activeTab === "consultation" ? "active" : ""}`}
+            onClick={() => setActiveTab("consultation")}
+          >
+            Consultation
+          </button>
         </div>
 
         {activeTab === "details" && (
@@ -1079,13 +1185,264 @@ const OrderTracking = () => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Type your message..."
                     rows="3"
-                    required
                   />
+                </div>
+                <div className="form-group">
+                  <label>Attach Files (Optional, max 5)</label>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf,.doc,.docx"
+                    multiple
+                    onChange={handleMessageAttachmentChange}
+                    className="file-input"
+                  />
+                  {messageAttachments.length > 0 && (
+                    <div className="attachment-preview-list">
+                      {messageAttachments.map((att, idx) => (
+                        <div key={idx} className="attachment-preview-item">
+                          <span className="attachment-name">{att.name}</span>
+                          {att.size && (
+                            <span className="attachment-size">
+                              ({(att.size / 1024).toFixed(1)} KB)
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeMessageAttachment(idx)}
+                            className="remove-attachment-btn"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button type="submit" className="btn btn-primary" disabled={sendingMessage}>
                   {sendingMessage ? "Sending..." : "Send Message"}
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "consultation" && (
+          <div className="tab-content">
+            <div className="consultation-section">
+              <h3>Consultation Details</h3>
+              
+              {order.consultationDate ? (
+                <div className="consultation-info">
+                  <div className="consultation-details-card">
+                    <div className="detail-row">
+                      <span className="detail-label">Date & Time:</span>
+                      <span className="detail-value">
+                        {new Date(order.consultationDate).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Type:</span>
+                      <span className="detail-value">
+                        {order.consultationType?.replace(/_/g, " ").toUpperCase() || "In Person"}
+                      </span>
+                    </div>
+                    {order.consultationDuration && (
+                      <div className="detail-row">
+                        <span className="detail-label">Duration:</span>
+                        <span className="detail-value">{order.consultationDuration} minutes</span>
+                      </div>
+                    )}
+                    {order.consultationLink && (
+                      <div className="detail-row">
+                        <span className="detail-label">Video Link:</span>
+                        <a
+                          href={order.consultationLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="consultation-link"
+                        >
+                          Join Consultation
+                        </a>
+                      </div>
+                    )}
+                    <div className="detail-row">
+                      <span className="detail-label">Status:</span>
+                      <span className={`consultation-status ${order.consultationStatus}`}>
+                        {order.consultationStatus?.replace(/_/g, " ").toUpperCase() || "PENDING"}
+                      </span>
+                    </div>
+                    {order.consultationNotes && (
+                      <div className="consultation-notes">
+                        <strong>Notes:</strong>
+                        <p>{order.consultationNotes}</p>
+                      </div>
+                    )}
+
+                    <div className="consultation-actions">
+                      {order.consultationStatus === "scheduled" && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateConsultationStatus("completed")}
+                            className="btn btn-primary btn-sm"
+                          >
+                            Mark as Completed
+                          </button>
+                          <button
+                            onClick={() => {
+                              setConsultationData({
+                                consultationDate: new Date(order.consultationDate).toISOString().slice(0, 16),
+                                consultationType: order.consultationType || "video",
+                                consultationLink: order.consultationLink || "",
+                                consultationDuration: order.consultationDuration || 30,
+                                notes: order.consultationNotes || "",
+                              });
+                              setShowConsultationForm(true);
+                            }}
+                            className="btn btn-secondary btn-sm"
+                          >
+                            Reschedule
+                          </button>
+                          <button
+                            onClick={() => handleUpdateConsultationStatus("cancelled")}
+                            className="btn btn-danger btn-sm"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
+                      {order.consultationStatus === "rescheduled" && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateConsultationStatus("scheduled")}
+                            className="btn btn-primary btn-sm"
+                          >
+                            Confirm Reschedule
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="no-consultation">
+                  <p>No consultation scheduled yet.</p>
+                  <button
+                    onClick={() => setShowConsultationForm(true)}
+                    className="btn btn-primary"
+                  >
+                    Schedule Consultation
+                  </button>
+                </div>
+              )}
+
+              {showConsultationForm && (
+                <div className="consultation-form-section">
+                  <h4>{order.consultationDate ? "Reschedule Consultation" : "Schedule Consultation"}</h4>
+                  <form
+                    onSubmit={order.consultationDate ? handleRescheduleConsultation : handleScheduleConsultation}
+                    className="consultation-form"
+                  >
+                    <div className="form-group">
+                      <label>Date & Time *</label>
+                      <input
+                        type="datetime-local"
+                        value={consultationData.consultationDate}
+                        onChange={(e) =>
+                          setConsultationData({
+                            ...consultationData,
+                            consultationDate: e.target.value,
+                          })
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Consultation Type *</label>
+                      <select
+                        value={consultationData.consultationType}
+                        onChange={(e) =>
+                          setConsultationData({
+                            ...consultationData,
+                            consultationType: e.target.value,
+                          })
+                        }
+                        required
+                      >
+                        <option value="video">Video Call</option>
+                        <option value="in_person">In Person</option>
+                        <option value="phone">Phone Call</option>
+                      </select>
+                    </div>
+                    {consultationData.consultationType === "video" && (
+                      <div className="form-group">
+                        <label>Video Call Link (Zoom, Google Meet, etc.)</label>
+                        <input
+                          type="url"
+                          value={consultationData.consultationLink}
+                          onChange={(e) =>
+                            setConsultationData({
+                              ...consultationData,
+                              consultationLink: e.target.value,
+                            })
+                          }
+                          placeholder="https://zoom.us/j/..."
+                        />
+                      </div>
+                    )}
+                    <div className="form-group">
+                      <label>Duration (minutes)</label>
+                      <input
+                        type="number"
+                        value={consultationData.consultationDuration}
+                        onChange={(e) =>
+                          setConsultationData({
+                            ...consultationData,
+                            consultationDuration: Number(e.target.value),
+                          })
+                        }
+                        min="15"
+                        max="120"
+                        step="15"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Notes (Optional)</label>
+                      <textarea
+                        value={consultationData.notes}
+                        onChange={(e) =>
+                          setConsultationData({
+                            ...consultationData,
+                            notes: e.target.value,
+                          })
+                        }
+                        rows="3"
+                        placeholder="Any special requirements or notes..."
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="btn btn-primary">
+                        {order.consultationDate ? "Reschedule" : "Schedule"} Consultation
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowConsultationForm(false);
+                          setConsultationData({
+                            consultationDate: "",
+                            consultationType: "video",
+                            consultationLink: "",
+                            consultationDuration: 30,
+                            notes: "",
+                          });
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -9,6 +9,10 @@ const {
   addRevision,
   updateFabric,
   addMessage,
+  markMessageAsRead,
+  scheduleConsultation,
+  updateConsultationStatus,
+  rescheduleConsultation,
   approveRevision,
   rejectRevision,
   startRevision,
@@ -32,6 +36,10 @@ router.put("/:id/revisions/:revisionId/customer-approve", protect, customerAppro
 router.put("/:id/revisions/:revisionId/customer-reject", protect, customerRejectRevision);
 router.put("/:id/fabric", protect, updateFabric);
 router.post("/:id/messages", protect, addMessage);
+router.put("/:id/messages/:messageId/read", protect, markMessageAsRead);
+router.post("/:id/consultation", protect, scheduleConsultation);
+router.put("/:id/consultation/status", protect, updateConsultationStatus);
+router.put("/:id/consultation/reschedule", protect, rescheduleConsultation);
 
 module.exports = router;
 

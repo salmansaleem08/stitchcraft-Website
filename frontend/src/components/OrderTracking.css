@@ -701,13 +701,211 @@
   margin-top: 0.5rem;
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+
+.attachment-item {
+  display: flex;
+  flex-direction: column;
   gap: 0.25rem;
+}
+
+.attachment-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid #e8e0d6;
+  transition: border-color 0.3s ease;
+}
+
+.attachment-image:hover {
+  border-color: #8b4513;
 }
 
 .attachment-link {
   color: inherit;
   text-decoration: underline;
   font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.attachment-size {
+  font-size: 0.75rem;
+  color: #9a8a7a;
+}
+
+.message-unread-indicator {
+  display: inline-block;
+  background: #dc3545;
+  color: #fff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.attachment-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.attachment-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #f5f1eb;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.attachment-name {
+  flex: 1;
+  color: #2c1810;
+}
+
+.remove-attachment-btn {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-attachment-btn:hover {
+  background: #c82333;
+}
+
+.consultation-section {
+  padding: 1rem 0;
+}
+
+.consultation-info {
+  margin-bottom: 2rem;
+}
+
+.consultation-details-card {
+  background: #f5f1eb;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #8b4513;
+}
+
+.consultation-link {
+  color: #8b4513;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.consultation-link:hover {
+  color: #6b3410;
+  text-decoration: underline;
+}
+
+.consultation-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.consultation-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.consultation-status.scheduled {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.consultation-status.completed {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.consultation-status.cancelled {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.consultation-status.rescheduled {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.consultation-notes {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #ffffff;
+  border-radius: 4px;
+}
+
+.consultation-notes strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2c1810;
+}
+
+.consultation-notes p {
+  color: #5a4a3a;
+  margin: 0;
+}
+
+.consultation-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.no-consultation {
+  text-align: center;
+  padding: 2rem;
+  background: #f5f1eb;
+  border-radius: 8px;
+}
+
+.no-consultation p {
+  color: #5a4a3a;
+  margin-bottom: 1rem;
+}
+
+.consultation-form-section {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-top: 2rem;
+}
+
+.consultation-form-section h4 {
+  font-size: 1.3rem;
+  color: #2c1810;
+  margin-bottom: 1.5rem;
+}
+
+.consultation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .no-messages {
