@@ -132,6 +132,94 @@
   gap: 1rem;
 }
 
+.trust-indicators {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 2rem 0;
+}
+
+.trust-section h3 {
+  font-size: 1.3rem;
+  color: #2c1810;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #8b4513;
+}
+
+.trust-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.trust-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f5f1eb;
+  border-radius: 6px;
+  border-left: 4px solid #8b4513;
+}
+
+.trust-label {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.trust-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c1810;
+}
+
+.trust-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.trust-status.excellent {
+  background: #d4edda;
+  color: #155724;
+}
+
+.trust-status.good {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.trust-status.fair {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badges-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.trust-badge {
+  background: #8b4513;
+  color: #f5f1eb;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -247,27 +335,75 @@
   color: #5a4a3a;
 }
 
+.portfolio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e8e0d6;
+}
+
+.portfolio-header h3 {
+  font-size: 1.5rem;
+  color: #2c1810;
+  margin: 0;
+}
+
+.portfolio-count {
+  color: #5a4a3a;
+  font-size: 0.95rem;
+}
+
 .portfolio-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
 }
 
 .portfolio-item {
-  background: #f5f1eb;
+  background: #fff;
   border-radius: 8px;
   overflow: hidden;
-  transition: transform 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .portfolio-item:hover {
   transform: translateY(-5px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.portfolio-image-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
 }
 
 .portfolio-image {
   width: 100%;
-  height: 250px;
+  height: 280px;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.portfolio-item:hover .portfolio-image {
+  transform: scale(1.05);
+}
+
+.before-after-indicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(139, 69, 19, 0.9);
+  color: #fff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .portfolio-placeholder {
@@ -281,7 +417,69 @@
 }
 
 .portfolio-info {
-  padding: 1rem;
+  padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.portfolio-info h4 {
+  font-size: 1.1rem;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+}
+
+.portfolio-description {
+  color: #5a4a3a;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+  flex: 1;
+}
+
+.portfolio-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.portfolio-date {
+  font-size: 0.85rem;
+  color: #9a8a7a;
+}
+
+.before-after-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.comparison-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comparison-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8b4513;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.comparison-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 2px solid #e8e0d6;
 }
 
 .portfolio-info h4 {
@@ -372,17 +570,95 @@
   margin-bottom: 1rem;
 }
 
+.review-photos-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.review-photos-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #8b4513;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .review-photos {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.75rem;
+}
+
+.review-photo-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.review-photo-wrapper:hover {
+  transform: scale(1.05);
 }
 
 .review-photo {
-  width: 100px;
+  width: 100%;
   height: 100px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 6px;
+  border: 2px solid #e8e0d6;
+  transition: border-color 0.3s ease;
+}
+
+.review-photo-wrapper:hover .review-photo {
+  border-color: #8b4513;
+}
+
+.review-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  color: #5a4a3a;
+  font-weight: 500;
+}
+
+.detail-stars {
+  color: #d4a574;
+  font-size: 0.95rem;
+}
+
+.detail-value {
+  color: #2c1810;
+  font-weight: 600;
+}
+
+.verified-review-badge {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .no-data {

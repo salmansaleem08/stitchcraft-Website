@@ -124,6 +124,53 @@ const TailorProfile = () => {
           </div>
         </div>
 
+        <div className="trust-indicators">
+          <div className="trust-section">
+            <h3>Trust Indicators</h3>
+            <div className="trust-badges-grid">
+              {tailor.badges?.length > 0 && (
+                <div className="trust-item">
+                  <span className="trust-label">Verified Badges</span>
+                  <div className="badges-display">
+                    {tailor.badges.map((badge, idx) => (
+                      <span key={idx} className="trust-badge" title={typeof badge === 'object' ? badge.name : badge}>
+                        {typeof badge === 'object' ? badge.name || badge.type : badge}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {tailor.averageResponseTime > 0 && (
+                <div className="trust-item">
+                  <span className="trust-label">Response Time</span>
+                  <span className="trust-value">
+                    {tailor.averageResponseTime < 24
+                      ? `${tailor.averageResponseTime.toFixed(1)} hours`
+                      : `${(tailor.averageResponseTime / 24).toFixed(1)} days`}
+                  </span>
+                  <span className="trust-status good">Fast Responder</span>
+                </div>
+              )}
+              {tailor.completionRate > 0 && (
+                <div className="trust-item">
+                  <span className="trust-label">Completion Rate</span>
+                  <span className="trust-value">{tailor.completionRate.toFixed(0)}%</span>
+                  <span className={`trust-status ${tailor.completionRate >= 90 ? 'excellent' : tailor.completionRate >= 75 ? 'good' : 'fair'}`}>
+                    {tailor.completionRate >= 90 ? 'Excellent' : tailor.completionRate >= 75 ? 'Good' : 'Fair'}
+                  </span>
+                </div>
+              )}
+              {tailor.totalReviews >= 10 && tailor.rating >= 4.5 && (
+                <div className="trust-item">
+                  <span className="trust-label">Customer Favorite</span>
+                  <span className="trust-value">{tailor.rating.toFixed(1)}</span>
+                  <span className="trust-status excellent">Highly Rated</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="profile-stats">
           <div className="stat-card">
             <div className="stat-value">{tailor.experience || 0}</div>
@@ -145,6 +192,12 @@ const TailorProfile = () => {
             <div className="stat-card">
               <div className="stat-value">{tailor.averageResponseTime.toFixed(1)}h</div>
               <div className="stat-label">Avg Response Time</div>
+            </div>
+          )}
+          {tailor.portfolio?.length > 0 && (
+            <div className="stat-card">
+              <div className="stat-value">{tailor.portfolio.length}</div>
+              <div className="stat-label">Portfolio Items</div>
             </div>
           )}
         </div>
@@ -234,36 +287,64 @@ const TailorProfile = () => {
           {activeTab === "portfolio" && (
             <div className="tab-content">
               {tailor.portfolio?.length > 0 ? (
-                <div className="portfolio-grid">
-                  {tailor.portfolio.map((item, idx) => (
-                    <div key={idx} className="portfolio-item">
-                      {item.afterImage ? (
-                        <img
-                          src={item.afterImage}
-                          alt={item.title || "Portfolio item"}
-                          className="portfolio-image"
-                        />
-                      ) : item.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title || "Portfolio item"}
-                          className="portfolio-image"
-                        />
-                      ) : (
-                        <div className="portfolio-placeholder">No Image</div>
-                      )}
-                      {item.title && (
-                        <div className="portfolio-info">
-                          <h4>{item.title}</h4>
-                          {item.description && <p>{item.description}</p>}
-                          {item.category && (
-                            <span className="portfolio-category">{item.category}</span>
+                <>
+                  <div className="portfolio-header">
+                    <h3>Portfolio Gallery</h3>
+                    <p className="portfolio-count">{tailor.portfolio.length} items</p>
+                  </div>
+                  <div className="portfolio-grid">
+                    {tailor.portfolio.map((item, idx) => (
+                      <div key={idx} className="portfolio-item">
+                        <div className="portfolio-image-wrapper">
+                          {item.afterImage ? (
+                            <img
+                              src={item.afterImage}
+                              alt={item.title || "Portfolio item"}
+                              className="portfolio-image"
+                            />
+                          ) : item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.title || "Portfolio item"}
+                              className="portfolio-image"
+                            />
+                          ) : (
+                            <div className="portfolio-placeholder">No Image</div>
+                          )}
+                          {item.beforeImage && (
+                            <div className="before-after-indicator">Before/After Available</div>
                           )}
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        <div className="portfolio-info">
+                          {item.title && <h4>{item.title}</h4>}
+                          {item.description && <p className="portfolio-description">{item.description}</p>}
+                          <div className="portfolio-meta">
+                            {item.category && (
+                              <span className="portfolio-category">{item.category}</span>
+                            )}
+                            {item.createdAt && (
+                              <span className="portfolio-date">
+                                {new Date(item.createdAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          {item.beforeImage && (
+                            <div className="before-after-comparison">
+                              <div className="comparison-item">
+                                <span className="comparison-label">Before</span>
+                                <img src={item.beforeImage} alt="Before" className="comparison-image" />
+                              </div>
+                              <div className="comparison-item">
+                                <span className="comparison-label">After</span>
+                                <img src={item.afterImage || item.imageUrl} alt="After" className="comparison-image" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="no-data">
                   <p>No portfolio items yet</p>
@@ -311,16 +392,63 @@ const TailorProfile = () => {
                         <p className="review-comment">{review.comment}</p>
                       )}
                       {review.photos?.length > 0 && (
-                        <div className="review-photos">
-                          {review.photos.map((photo, idx) => (
-                            <img
-                              key={idx}
-                              src={photo}
-                              alt={`Review photo ${idx + 1}`}
-                              className="review-photo"
-                            />
-                          ))}
+                        <div className="review-photos-section">
+                          <span className="review-photos-label">Customer Photos ({review.photos.length})</span>
+                          <div className="review-photos">
+                            {review.photos.map((photo, idx) => (
+                              <div key={idx} className="review-photo-wrapper">
+                                <img
+                                  src={photo}
+                                  alt={`Review photo ${idx + 1}`}
+                                  className="review-photo"
+                                  onClick={() => window.open(photo, '_blank')}
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </div>
+                      )}
+                      {review.quality && (
+                        <div className="review-details">
+                          <div className="detail-item">
+                            <span className="detail-label">Quality:</span>
+                            <span className="detail-stars">
+                              {"★".repeat(review.quality)}
+                              {"☆".repeat(5 - review.quality)}
+                            </span>
+                          </div>
+                          {review.communication && (
+                            <div className="detail-item">
+                              <span className="detail-label">Communication:</span>
+                              <span className="detail-stars">
+                                {"★".repeat(review.communication)}
+                                {"☆".repeat(5 - review.communication)}
+                              </span>
+                            </div>
+                          )}
+                          {review.valueForMoney && (
+                            <div className="detail-item">
+                              <span className="detail-label">Value for Money:</span>
+                              <span className="detail-stars">
+                                {"★".repeat(review.valueForMoney)}
+                                {"☆".repeat(5 - review.valueForMoney)}
+                              </span>
+                            </div>
+                          )}
+                          {review.responseTime && (
+                            <div className="detail-item">
+                              <span className="detail-label">Response Time:</span>
+                              <span className="detail-value">
+                                {review.responseTime < 24
+                                  ? `${review.responseTime.toFixed(1)} hours`
+                                  : `${(review.responseTime / 24).toFixed(1)} days`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {review.isVerified && (
+                        <span className="verified-review-badge">Verified Purchase</span>
                       )}
                     </div>
                   ))}

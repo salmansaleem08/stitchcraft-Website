@@ -30,7 +30,9 @@ const OrderTracking = () => {
     quality: 5,
     communication: 5,
     valueForMoney: 5,
+    photos: [],
   });
+  const [reviewPhotoFiles, setReviewPhotoFiles] = useState([]);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [existingReview, setExistingReview] = useState(null);
 
