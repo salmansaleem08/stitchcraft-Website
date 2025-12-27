@@ -114,14 +114,30 @@ const orderSchema = mongoose.Schema(
           description: String,
           status: {
             type: String,
-            enum: ["pending", "in_progress", "completed", "rejected"],
+            enum: ["pending", "approved", "rejected", "in_progress", "completed", "customer_approved", "customer_rejected"],
             default: "pending",
           },
           requestedAt: {
             type: Date,
             default: Date.now,
           },
+          approvedAt: Date,
+          approvedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+          rejectedAt: Date,
+          rejectedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+          rejectionReason: String,
           completedAt: Date,
+          customerApprovedAt: Date,
+          customerRejectedAt: Date,
+          customerRejectionReason: String,
+          images: [String], // Before/after images
+          notes: String, // Tailor's notes during revision
         },
       ],
       default: [],

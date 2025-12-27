@@ -255,7 +255,7 @@ exports.updateOrderStatus = async (req, res) => {
 // @access  Private
 exports.addRevision = async (req, res) => {
   try {
-    const { description } = req.body;
+    const { description, images } = req.body;
 
     const order = await Order.findById(req.params.id);
 
@@ -275,6 +275,7 @@ exports.addRevision = async (req, res) => {
       requestedBy: "customer",
       description,
       status: "pending",
+      images: images || [],
     });
 
     order.currentRevision = revisionNumber;
@@ -285,6 +286,307 @@ exports.addRevision = async (req, res) => {
     res.json({
       success: true,
       data: updatedOrder,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Approve revision request
+// @route   PUT /api/orders/:id/revisions/:revisionId/approve
+// @access  Private (Tailor only)
+exports.approveRevision = async (req, res) => {
+  try {
+    const { notes } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can approve revisions
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can approve revisions" });
+    }
+
+    const revision = order.revisions.id(req.params.revisionId);
+
+    if (!revision) {
+      return res.status(404).json({ message: "Revision not found" });
+    }
+
+    if (revision.status !== "pending") {
+      return res.status(400).json({ message: "Revision is not pending" });
+    }
+
+    revision.status = "approved";
+    revision.approvedAt = new Date();
+    revision.approvedBy = req.user._id;
+    if (notes) revision.notes = notes;
+
+    order.status = "in_progress";
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reject revision request
+// @route   PUT /api/orders/:id/revisions/:revisionId/reject
+// @access  Private (Tailor only)
+exports.rejectRevision = async (req, res) => {
+  try {
+    const { rejectionReason } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can reject revisions
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can reject revisions" });
+    }
+
+    const revision = order.revisions.id(req.params.revisionId);
+
+    if (!revision) {
+      return res.status(404).json({ message: "Revision not found" });
+    }
+
+    if (revision.status !== "pending") {
+      return res.status(400).json({ message: "Revision is not pending" });
+    }
+
+    revision.status = "rejected";
+    revision.rejectedAt = new Date();
+    revision.rejectedBy = req.user._id;
+    if (rejectionReason) revision.rejectionReason = rejectionReason;
+
+    // If there are other pending revisions, keep status as revision_requested
+    const hasPendingRevisions = order.revisions.some(
+      (rev) => rev.status === "pending" && rev._id.toString() !== revision._id.toString()
+    );
+
+    if (!hasPendingRevisions) {
+      // Determine next status based on order state
+      if (order.status === "revision_requested") {
+        order.status = "in_progress";
+      }
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mark revision as in progress
+// @route   PUT /api/orders/:id/revisions/:revisionId/in-progress
+// @access  Private (Tailor only)
+exports.startRevision = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can start revisions
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can start revisions" });
+    }
+
+    const revision = order.revisions.id(req.params.revisionId);
+
+    if (!revision) {
+      return res.status(404).json({ message: "Revision not found" });
+    }
+
+    if (revision.status !== "approved") {
+      return res.status(400).json({ message: "Revision must be approved first" });
+    }
+
+    revision.status = "in_progress";
+    order.status = "in_progress";
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Complete revision
+// @route   PUT /api/orders/:id/revisions/:revisionId/complete
+// @access  Private (Tailor only)
+exports.completeRevision = async (req, res) => {
+  try {
+    const { images, notes } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only tailor can complete revisions
+    if (order.tailor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only tailor can complete revisions" });
+    }
+
+    const revision = order.revisions.id(req.params.revisionId);
+
+    if (!revision) {
+      return res.status(404).json({ message: "Revision not found" });
+    }
+
+    if (revision.status !== "in_progress") {
+      return res.status(400).json({ message: "Revision must be in progress" });
+    }
+
+    revision.status = "completed";
+    revision.completedAt = new Date();
+    if (images) revision.images = [...(revision.images || []), ...images];
+    if (notes) revision.notes = notes;
+
+    // Check if all revisions are completed
+    const allRevisionsCompleted = order.revisions.every(
+      (rev) => rev.status === "completed" || rev.status === "rejected"
+    );
+
+    if (allRevisionsCompleted) {
+      order.status = "quality_check";
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Customer approve completed revision
+// @route   PUT /api/orders/:id/revisions/:revisionId/customer-approve
+// @access  Private (Customer only)
+exports.customerApproveRevision = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can approve completed revisions
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can approve revisions" });
+    }
+
+    const revision = order.revisions.id(req.params.revisionId);
+
+    if (!revision) {
+      return res.status(404).json({ message: "Revision not found" });
+    }
+
+    if (revision.status !== "completed") {
+      return res.status(400).json({ message: "Revision must be completed first" });
+    }
+
+    revision.status = "customer_approved";
+    revision.customerApprovedAt = new Date();
+
+    // Check if all revisions are customer approved
+    const allRevisionsApproved = order.revisions.every(
+      (rev) =>
+        rev.status === "customer_approved" ||
+        rev.status === "rejected" ||
+        rev.status === "customer_rejected"
+    );
+
+    if (allRevisionsApproved && order.status === "quality_check") {
+      order.status = "completed";
+    }
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Customer reject completed revision
+// @route   PUT /api/orders/:id/revisions/:revisionId/customer-reject
+// @access  Private (Customer only)
+exports.customerRejectRevision = async (req, res) => {
+  try {
+    const { rejectionReason } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Only customer can reject completed revisions
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Only customer can reject revisions" });
+    }
+
+    const revision = order.revisions.id(req.params.revisionId);
+
+    if (!revision) {
+      return res.status(404).json({ message: "Revision not found" });
+    }
+
+    if (revision.status !== "completed") {
+      return res.status(400).json({ message: "Revision must be completed first" });
+    }
+
+    revision.status = "customer_rejected";
+    revision.customerRejectedAt = new Date();
+    if (rejectionReason) revision.customerRejectionReason = rejectionReason;
+
+    // Create a new revision request
+    const revisionNumber = order.currentRevision + 1;
+    order.revisions.push({
+      revisionNumber,
+      requestedBy: "customer",
+      description: rejectionReason || "Previous revision was not satisfactory",
+      status: "pending",
+    });
+    order.currentRevision = revisionNumber;
+    order.status = "revision_requested";
+
+    await order.save();
+
+    res.json({
+      success: true,
+      data: order,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

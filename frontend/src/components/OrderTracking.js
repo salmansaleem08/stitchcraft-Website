@@ -167,16 +167,130 @@ const OrderTracking = () => {
     }
   };
 
-  const handleRequestRevision = async () => {
-    const description = prompt("Please describe what needs to be revised:");
-    if (!description) return;
+  const [showRevisionForm, setShowRevisionForm] = useState(false);
+  const [revisionData, setRevisionData] = useState({
+    description: "",
+    images: [],
+  });
+  const [revisionImageFiles, setRevisionImageFiles] = useState([]);
+
+  const handleRequestRevision = async (e) => {
+    e?.preventDefault();
+    
+    if (!revisionData.description.trim()) {
+      setError("Please provide a description for the revision");
+      return;
+    }
 
     try {
-      await api.post(`/orders/${id}/revisions`, { description });
+      let imageUrls = [];
+      if (revisionImageFiles.length > 0) {
+        const formData = new FormData();
+        revisionImageFiles.forEach((file) => {
+          formData.append("images", file);
+        });
+        const response = await api.post("/upload/images", formData);
+        imageUrls = response.data.data.map((url) => `http://localhost:5000${url}`);
+      }
+
+      await api.post(`/orders/${id}/revisions`, {
+        description: revisionData.description,
+        images: imageUrls,
+      });
       setSuccess("Revision request submitted");
+      setShowRevisionForm(false);
+      setRevisionData({ description: "", images: [] });
+      setRevisionImageFiles([]);
       fetchOrder();
     } catch (error) {
       setError(error.response?.data?.message || "Failed to request revision");
+    }
+  };
+
+  const handleRevisionImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + revisionImageFiles.length > 5) {
+      alert("Maximum 5 images allowed");
+      return;
+    }
+    setRevisionImageFiles([...revisionImageFiles, ...files]);
+  };
+
+  const removeRevisionImage = (index) => {
+    setRevisionImageFiles(revisionImageFiles.filter((_, i) => i !== index));
+  };
+
+  const handleApproveRevision = async (revisionId) => {
+    try {
+      await api.put(`/orders/${id}/revisions/${revisionId}/approve`);
+      setSuccess("Revision approved");
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to approve revision");
+    }
+  };
+
+  const handleRejectRevision = async (revisionId) => {
+    const reason = prompt("Please provide a reason for rejection:");
+    if (!reason) return;
+
+    try {
+      await api.put(`/orders/${id}/revisions/${revisionId}/reject`, {
+        rejectionReason: reason,
+      });
+      setSuccess("Revision rejected");
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to reject revision");
+    }
+  };
+
+  const handleStartRevision = async (revisionId) => {
+    try {
+      await api.put(`/orders/${id}/revisions/${revisionId}/in-progress`);
+      setSuccess("Revision started");
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to start revision");
+    }
+  };
+
+  const handleCompleteRevision = async (revisionId) => {
+    const notes = prompt("Add any notes about the completed revision (optional):");
+    
+    try {
+      await api.put(`/orders/${id}/revisions/${revisionId}/complete`, {
+        notes: notes || "",
+      });
+      setSuccess("Revision marked as completed");
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to complete revision");
+    }
+  };
+
+  const handleCustomerApproveRevision = async (revisionId) => {
+    try {
+      await api.put(`/orders/${id}/revisions/${revisionId}/customer-approve`);
+      setSuccess("Revision approved");
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to approve revision");
+    }
+  };
+
+  const handleCustomerRejectRevision = async (revisionId) => {
+    const reason = prompt("Please provide a reason for rejection:");
+    if (!reason) return;
+
+    try {
+      await api.put(`/orders/${id}/revisions/${revisionId}/customer-reject`, {
+        rejectionReason: reason,
+      });
+      setSuccess("Revision rejected. New revision request created.");
+      fetchOrder();
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to reject revision");
     }
   };
 
@@ -426,9 +540,75 @@ const OrderTracking = () => {
           <div className="status-update-section">
             <h3>Request Revision</h3>
             <p>If you need changes to your order, you can request a revision</p>
-            <button onClick={handleRequestRevision} className="btn btn-secondary">
-              Request Revision
-            </button>
+            {!showRevisionForm ? (
+              <button
+                onClick={() => setShowRevisionForm(true)}
+                className="btn btn-secondary"
+              >
+                Request Revision
+              </button>
+            ) : (
+              <form onSubmit={handleRequestRevision} className="revision-form">
+                <div className="form-group">
+                  <label>Description *</label>
+                  <textarea
+                    value={revisionData.description}
+                    onChange={(e) =>
+                      setRevisionData({ ...revisionData, description: e.target.value })
+                    }
+                    rows="4"
+                    placeholder="Describe what needs to be revised..."
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Upload Images (Optional, max 5)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleRevisionImageChange}
+                    className="file-input"
+                  />
+                  {revisionImageFiles.length > 0 && (
+                    <div className="revision-images-preview">
+                      {revisionImageFiles.map((file, idx) => (
+                        <div key={idx} className="image-preview-item">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${idx + 1}`}
+                            className="preview-image"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeRevisionImage(idx)}
+                            className="remove-image-btn"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary">
+                    Submit Revision Request
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowRevisionForm(false);
+                      setRevisionData({ description: "", images: [] });
+                      setRevisionImageFiles([]);
+                    }}
+                    className="btn btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         )}
 
@@ -716,21 +896,131 @@ const OrderTracking = () => {
 
             {order.revisions && order.revisions.length > 0 && (
               <div className="order-section">
-                <h3>Revisions ({order.revisions.length})</h3>
-                {order.revisions.map((revision, idx) => (
-                  <div key={idx} className="revision-item">
-                    <div className="revision-header">
-                      <span>Revision #{revision.revisionNumber}</span>
-                      <span className={`revision-status ${revision.status}`}>
-                        {revision.status}
-                      </span>
+                <h3>Revision History ({order.revisions.length})</h3>
+                <div className="revisions-timeline">
+                  {order.revisions.map((revision, idx) => (
+                    <div key={idx} className="revision-item">
+                      <div className="revision-header">
+                        <div>
+                          <span className="revision-number">
+                            Revision #{revision.revisionNumber}
+                          </span>
+                          <span className={`revision-status ${revision.status}`}>
+                            {revision.status.replace(/_/g, " ").toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="revision-date">
+                          {new Date(revision.requestedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      {revision.description && (
+                        <div className="revision-description">
+                          <strong>Request:</strong> {revision.description}
+                        </div>
+                      )}
+
+                      {revision.images && revision.images.length > 0 && (
+                        <div className="revision-images">
+                          <strong>Images:</strong>
+                          <div className="images-grid">
+                            {revision.images.map((img, imgIdx) => (
+                              <img
+                                key={imgIdx}
+                                src={img}
+                                alt={`Revision ${revision.revisionNumber} image ${imgIdx + 1}`}
+                                className="revision-image"
+                                onClick={() => window.open(img, "_blank")}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {revision.notes && (
+                        <div className="revision-notes">
+                          <strong>Tailor Notes:</strong> {revision.notes}
+                        </div>
+                      )}
+
+                      {revision.rejectionReason && (
+                        <div className="rejection-reason">
+                          <strong>Rejection Reason:</strong> {revision.rejectionReason}
+                        </div>
+                      )}
+
+                      {revision.customerRejectionReason && (
+                        <div className="rejection-reason">
+                          <strong>Customer Feedback:</strong> {revision.customerRejectionReason}
+                        </div>
+                      )}
+
+                      {revision.completedAt && (
+                        <div className="revision-timeline">
+                          <span>Completed: {new Date(revision.completedAt).toLocaleDateString()}</span>
+                        </div>
+                      )}
+
+                      {/* Tailor Actions */}
+                      {isTailor && revision.status === "pending" && (
+                        <div className="revision-actions">
+                          <button
+                            onClick={() => handleApproveRevision(revision._id)}
+                            className="btn btn-primary btn-sm"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectRevision(revision._id)}
+                            className="btn btn-danger btn-sm"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+
+                      {isTailor && revision.status === "approved" && (
+                        <div className="revision-actions">
+                          <button
+                            onClick={() => handleStartRevision(revision._id)}
+                            className="btn btn-primary btn-sm"
+                          >
+                            Start Revision
+                          </button>
+                        </div>
+                      )}
+
+                      {isTailor && revision.status === "in_progress" && (
+                        <div className="revision-actions">
+                          <button
+                            onClick={() => handleCompleteRevision(revision._id)}
+                            className="btn btn-primary btn-sm"
+                          >
+                            Mark as Completed
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Customer Actions */}
+                      {isCustomer && revision.status === "completed" && (
+                        <div className="revision-actions">
+                          <button
+                            onClick={() => handleCustomerApproveRevision(revision._id)}
+                            className="btn btn-primary btn-sm"
+                          >
+                            Approve Revision
+                          </button>
+                          <button
+                            onClick={() => handleCustomerRejectRevision(revision._id)}
+                            className="btn btn-danger btn-sm"
+                          >
+                            Request Changes
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    {revision.description && <p>{revision.description}</p>}
-                    <p className="revision-date">
-                      Requested: {new Date(revision.requestedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
