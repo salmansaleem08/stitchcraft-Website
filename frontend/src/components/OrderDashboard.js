@@ -8,29 +8,48 @@ const OrderDashboard = () => {
   const { user } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
   const [supplyOrders, setSupplyOrders] = useState([]);
+  const [bulkOrders, setBulkOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [activeTab, setActiveTab] = useState("tailor");
+  const [activeTab, setActiveTab] = useState(user?.role === "supplier" ? "supply" : "tailor");
 
   useEffect(() => {
     if (user) {
       fetchOrders();
     }
-  }, [user, statusFilter]);
+  }, [user, statusFilter, activeTab]);
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const params = statusFilter ? `?status=${statusFilter}` : "";
       
-      const [tailorOrdersRes, supplyOrdersRes] = await Promise.all([
-        api.get(`/orders${params}`),
-        api.get(`/supply-orders${params}`),
-      ]);
-      
-      setOrders(tailorOrdersRes.data.data);
-      setSupplyOrders(supplyOrdersRes.data.data);
+      if (user?.role === "supplier") {
+        // Suppliers see their supply and bulk orders
+        if (activeTab === "supply") {
+          const response = await api.get(`/supply-orders${params}`);
+          setSupplyOrders(response.data.data);
+          setBulkOrders([]);
+          setOrders([]);
+        } else if (activeTab === "bulk") {
+          const response = await api.get(`/bulk-orders${params}`);
+          setBulkOrders(response.data.data);
+          setSupplyOrders([]);
+          setOrders([]);
+        }
+      } else {
+        // Customers see their tailor and supply orders
+        if (activeTab === "tailor") {
+          const response = await api.get(`/orders${params}`);
+          setOrders(response.data.data);
+          setSupplyOrders([]);
+        } else if (activeTab === "supply") {
+          const response = await api.get(`/supply-orders${params}`);
+          setSupplyOrders(response.data.data);
+          setOrders([]);
+        }
+      }
       setError("");
     } catch (error) {
       setError("Failed to load orders");
@@ -43,12 +62,19 @@ const OrderDashboard = () => {
   const getStatusBadgeClass = (status) => {
     const statusClasses = {
       pending: "status-pending",
+      confirmed: "status-confirmed",
+      approved: "status-confirmed",
+      booked: "status-booked",
       consultation_scheduled: "status-scheduled",
       consultation_completed: "status-scheduled",
       fabric_selected: "status-progress",
       in_progress: "status-progress",
+      processing: "status-processing",
       revision_requested: "status-revision",
       quality_check: "status-progress",
+      shipped: "status-shipped",
+      on_way: "status-on-way",
+      delivered: "status-delivered",
       completed: "status-completed",
       cancelled: "status-cancelled",
     };
@@ -95,20 +121,40 @@ const OrderDashboard = () => {
           </div>
         </div>
 
-        {user?.role === "customer" && (
+        {(user?.role === "customer" || user?.role === "supplier") && (
           <div className="order-tabs">
-            <button
-              className={`tab-btn ${activeTab === "tailor" ? "active" : ""}`}
-              onClick={() => setActiveTab("tailor")}
-            >
-              Tailor Orders ({orders.length})
-            </button>
-            <button
-              className={`tab-btn ${activeTab === "supply" ? "active" : ""}`}
-              onClick={() => setActiveTab("supply")}
-            >
-              Supply Orders ({supplyOrders.length})
-            </button>
+            {user?.role === "customer" && (
+              <>
+                <button
+                  className={`tab-btn ${activeTab === "tailor" ? "active" : ""}`}
+                  onClick={() => setActiveTab("tailor")}
+                >
+                  Tailor Orders ({orders.length})
+                </button>
+                <button
+                  className={`tab-btn ${activeTab === "supply" ? "active" : ""}`}
+                  onClick={() => setActiveTab("supply")}
+                >
+                  Supply Orders ({supplyOrders.length})
+                </button>
+              </>
+            )}
+            {user?.role === "supplier" && (
+              <>
+                <button
+                  className={`tab-btn ${activeTab === "supply" ? "active" : ""}`}
+                  onClick={() => setActiveTab("supply")}
+                >
+                  Supply Orders ({supplyOrders.length})
+                </button>
+                <button
+                  className={`tab-btn ${activeTab === "bulk" ? "active" : ""}`}
+                  onClick={() => setActiveTab("bulk")}
+                >
+                  Bulk Orders ({bulkOrders.length})
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -209,10 +255,13 @@ const OrderDashboard = () => {
                   <div key={order._id} className="order-card">
                     <div className="order-card-header">
                       <div>
-                        <h3>Supply Order #{order._id.slice(-8)}</h3>
+                        <h3>Supply Order #{order.orderNumber || order._id.slice(-8)}</h3>
                         <p className="order-date">
                           {new Date(order.createdAt).toLocaleDateString()}
                         </p>
+                        {user?.role === "supplier" && (
+                          <p className="customer-name">Customer: {order.customer?.name}</p>
+                        )}
                       </div>
                       <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
                         {formatStatus(order.status)}
@@ -223,11 +272,11 @@ const OrderDashboard = () => {
                       <div className="order-info">
                         <div className="info-item">
                           <span className="info-label">Items:</span>
-                          <span className="info-value">{order.items.length} item(s)</span>
+                          <span className="info-value">{order.items?.length || 0} item(s)</span>
                         </div>
                         <div className="info-item">
                           <span className="info-label">Total Price:</span>
-                          <span className="info-value">PKR {order.finalPrice?.toLocaleString()}</span>
+                          <span className="info-value">PKR {order.finalPrice?.toLocaleString() || 0}</span>
                         </div>
                         {user?.role === "customer" ? (
                           <div className="info-item">
@@ -236,12 +285,7 @@ const OrderDashboard = () => {
                               {order.supplier?.businessName || order.supplier?.name}
                             </span>
                           </div>
-                        ) : (
-                          <div className="info-item">
-                            <span className="info-label">Customer:</span>
-                            <span className="info-value">{order.customer?.name}</span>
-                          </div>
-                        )}
+                        ) : null}
                         {order.trackingNumber && (
                           <div className="info-item">
                             <span className="info-label">Tracking:</span>
@@ -253,25 +297,62 @@ const OrderDashboard = () => {
 
                     <div className="order-card-actions">
                       <Link to={`/supply-orders/${order._id}`} className="btn btn-primary">
-                        View Details
+                        {user?.role === "supplier" ? "View & Update Status" : "View Details"}
                       </Link>
-                      {user?.role === "supplier" && order.status === "pending" && (
-                        <button
-                          onClick={async () => {
-                            try {
-                              await api.put(`/supply-orders/${order._id}/status`, {
-                                status: "confirmed",
-                              });
-                              fetchOrders();
-                            } catch (error) {
-                              console.error("Error confirming order:", error);
-                            }
-                          }}
-                          className="btn btn-secondary"
-                        >
-                          Confirm
-                        </button>
-                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === "bulk" && (
+          <>
+            {bulkOrders.length === 0 ? (
+              <div className="no-orders">
+                <p>No bulk orders found</p>
+              </div>
+            ) : (
+              <div className="orders-list">
+                {bulkOrders.map((order) => (
+                  <div key={order._id} className="order-card">
+                    <div className="order-card-header">
+                      <div>
+                        <h3>Bulk Order #{order.orderNumber || order._id.slice(-8)}</h3>
+                        <p className="order-date">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </p>
+                        <p className="customer-name">Customer: {order.customer?.name}</p>
+                      </div>
+                      <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                        {formatStatus(order.status)}
+                      </span>
+                    </div>
+
+                    <div className="order-card-body">
+                      <div className="order-info">
+                        <div className="info-item">
+                          <span className="info-label">Items:</span>
+                          <span className="info-value">{order.items?.length || 0} fabric(s)</span>
+                        </div>
+                        <div className="info-item">
+                          <span className="info-label">Total Price:</span>
+                          <span className="info-value">PKR {order.totalPrice?.toLocaleString() || 0}</span>
+                        </div>
+                        {order.trackingNumber && (
+                          <div className="info-item">
+                            <span className="info-label">Tracking:</span>
+                            <span className="info-value">{order.trackingNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="order-card-actions">
+                      <Link to={`/bulk-orders/${order._id}`} className="btn btn-primary">
+                        View & Update Status
+                      </Link>
                     </div>
                   </div>
                 ))}

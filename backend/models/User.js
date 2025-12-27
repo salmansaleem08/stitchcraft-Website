@@ -224,7 +224,17 @@ const userSchema = mongoose.Schema(
         {
           documentType: {
             type: String,
-            enum: ["business_license", "tax_certificate", "cnic", "other"],
+            enum: [
+              "Business Registration",
+              "Tax Certificate",
+              "CNIC",
+              "Trade License",
+              "Other",
+              "business_license",
+              "tax_certificate",
+              "cnic",
+              "other",
+            ],
           },
           documentUrl: String,
           uploadedAt: { type: Date, default: Date.now },

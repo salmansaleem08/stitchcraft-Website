@@ -222,9 +222,11 @@ exports.updateSupplyOrderStatus = async (req, res) => {
     // Status transition validation
     const validTransitions = {
       pending: ["confirmed", "cancelled"],
-      confirmed: ["processing", "cancelled"],
+      confirmed: ["booked", "cancelled"],
+      booked: ["processing", "cancelled"],
       processing: ["shipped", "cancelled"],
-      shipped: ["delivered"],
+      shipped: ["on_way", "cancelled"],
+      on_way: ["delivered", "cancelled"],
       delivered: [],
       cancelled: [],
     };

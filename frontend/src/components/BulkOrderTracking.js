@@ -2,9 +2,9 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
-import "./SupplyOrderTracking.css";
+import "./BulkOrderTracking.css";
 
-const SupplyOrderTracking = () => {
+const BulkOrderTracking = () => {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const SupplyOrderTracking = () => {
   const fetchOrder = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/supply-orders/${id}`);
+      const response = await api.get(`/bulk-orders/${id}`);
       setOrder(response.data.data);
       setError("");
     } catch (error) {
@@ -41,7 +41,7 @@ const SupplyOrderTracking = () => {
     setUpdating(true);
 
     try {
-      await api.put(`/supply-orders/${id}/status`, statusUpdate);
+      await api.put(`/bulk-orders/${id}/status`, statusUpdate);
       await fetchOrder();
       setStatusUpdate({ status: "", trackingNumber: "", note: "" });
     } catch (error) {
@@ -57,7 +57,7 @@ const SupplyOrderTracking = () => {
     }
 
     try {
-      await api.post(`/supply-orders/${id}/cancel`);
+      await api.post(`/bulk-orders/${id}/cancel`);
       await fetchOrder();
     } catch (error) {
       setError(error.response?.data?.message || "Failed to cancel order");
@@ -67,11 +67,9 @@ const SupplyOrderTracking = () => {
   const getStatusBadgeClass = (status) => {
     const statusClasses = {
       pending: "status-pending",
-      confirmed: "status-confirmed",
-      booked: "status-confirmed",
+      approved: "status-confirmed",
       processing: "status-processing",
       shipped: "status-shipped",
-      on_way: "status-shipped",
       delivered: "status-delivered",
       cancelled: "status-cancelled",
     };
@@ -84,7 +82,7 @@ const SupplyOrderTracking = () => {
 
   if (loading) {
     return (
-      <div className="supply-order-tracking-container">
+      <div className="bulk-order-tracking-container">
         <div className="loading-container">
           <div className="loading-spinner"></div>
           <p>Loading order details...</p>
@@ -95,7 +93,7 @@ const SupplyOrderTracking = () => {
 
   if (error && !order) {
     return (
-      <div className="supply-order-tracking-container">
+      <div className="bulk-order-tracking-container">
         <div className="error-message">{error}</div>
         <Link to="/orders" className="btn btn-primary">
           Back to Orders
@@ -106,7 +104,7 @@ const SupplyOrderTracking = () => {
 
   if (!order) {
     return (
-      <div className="supply-order-tracking-container">
+      <div className="bulk-order-tracking-container">
         <div className="error-message">Order not found</div>
         <Link to="/orders" className="btn btn-primary">
           Back to Orders
@@ -119,7 +117,7 @@ const SupplyOrderTracking = () => {
   const isSupplier = user?.role === "supplier" && user?._id === order.supplier._id;
 
   return (
-    <div className="supply-order-tracking-container">
+    <div className="bulk-order-tracking-container">
       <div className="container">
         <Link to="/orders" className="back-link">
           ← Back to Orders
@@ -127,7 +125,7 @@ const SupplyOrderTracking = () => {
 
         <div className="order-header">
           <div>
-            <h1>Supply Order #{order._id.slice(-8)}</h1>
+            <h1>Bulk Order #{order._id.slice(-8)}</h1>
             <p className="order-date">
               Placed on {new Date(order.createdAt).toLocaleDateString()}
             </p>
@@ -144,25 +142,25 @@ const SupplyOrderTracking = () => {
             <div className="order-section">
               <h2>Order Items</h2>
               <div className="items-list">
-                {order.items.map((item, idx) => (
+                {order.items?.map((item, idx) => (
                   <div key={idx} className="order-item">
                     <div className="item-image">
-                      {item.supply?.images && item.supply.images.length > 0 ? (
-                        <img src={item.supply.images[0]} alt={item.supply.name} />
+                      {item.fabric?.images && item.fabric.images.length > 0 ? (
+                        <img src={item.fabric.images[0]} alt={item.fabric.name} />
                       ) : (
                         <div className="item-placeholder">
-                          {item.supply?.name?.charAt(0).toUpperCase() || "S"}
+                          {item.fabric?.name?.charAt(0).toUpperCase() || "F"}
                         </div>
                       )}
                     </div>
                     <div className="item-details">
-                      <h3>{item.supply?.name || "Supply"}</h3>
-                      <p className="item-category">{item.supply?.category}</p>
+                      <h3>{item.fabric?.name || "Fabric"}</h3>
+                      <p className="item-type">{item.fabric?.fabricType}</p>
                       <div className="item-quantity-price">
-                        <span>Quantity: {item.quantity} {item.unit}</span>
-                        <span>Price: PKR {item.price?.toLocaleString()}/{item.unit}</span>
+                        <span>Quantity: {item.quantity} meters</span>
+                        <span>Price: PKR {item.price?.toLocaleString()}/meter</span>
                         <span className="item-subtotal">
-                          Subtotal: PKR {item.subtotal?.toLocaleString()}
+                          Subtotal: PKR {(item.price * item.quantity).toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -174,13 +172,12 @@ const SupplyOrderTracking = () => {
             <div className="order-section">
               <h2>Shipping Address</h2>
               <div className="shipping-address">
-                <p>{order.shippingAddress.street}</p>
+                <p>{order.shippingAddress?.street}</p>
                 <p>
-                  {order.shippingAddress.city}, {order.shippingAddress.province}{" "}
-                  {order.shippingAddress.postalCode}
+                  {order.shippingAddress?.city}, {order.shippingAddress?.province}{" "}
+                  {order.shippingAddress?.postalCode}
                 </p>
-                <p>{order.shippingAddress.country}</p>
-                <p>Phone: {order.shippingAddress.phone}</p>
+                {order.shippingAddress?.phone && <p>Phone: {order.shippingAddress.phone}</p>}
               </div>
             </div>
 
@@ -191,25 +188,27 @@ const SupplyOrderTracking = () => {
               </div>
             )}
 
-            <div className="order-section">
-              <h2>Order Timeline</h2>
-              <div className="timeline">
-                {order.timeline.map((event, idx) => (
-                  <div key={idx} className="timeline-item">
-                    <div className="timeline-marker"></div>
-                    <div className="timeline-content">
-                      <div className="timeline-header">
-                        <span className="timeline-status">{formatStatus(event.status)}</span>
-                        <span className="timeline-date">
-                          {new Date(event.timestamp).toLocaleString()}
-                        </span>
+            {order.timeline && order.timeline.length > 0 && (
+              <div className="order-section">
+                <h2>Order Timeline</h2>
+                <div className="timeline">
+                  {order.timeline.map((event, idx) => (
+                    <div key={idx} className="timeline-item">
+                      <div className="timeline-marker"></div>
+                      <div className="timeline-content">
+                        <div className="timeline-header">
+                          <span className="timeline-status">{formatStatus(event.status)}</span>
+                          <span className="timeline-date">
+                            {new Date(event.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        {event.note && <p className="timeline-note">{event.note}</p>}
                       </div>
-                      {event.note && <p className="timeline-note">{event.note}</p>}
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="order-sidebar">
@@ -217,17 +216,17 @@ const SupplyOrderTracking = () => {
               <h2>Order Summary</h2>
               <div className="summary-row">
                 <span>Subtotal:</span>
-                <span>PKR {order.totalPrice?.toLocaleString()}</span>
+                <span>PKR {order.subtotal?.toLocaleString()}</span>
               </div>
-              {order.discount > 0 && (
+              {order.bulkDiscount > 0 && (
                 <div className="summary-row">
                   <span>Discount:</span>
-                  <span>- PKR {order.discount?.toLocaleString()}</span>
+                  <span>- PKR {order.bulkDiscount?.toLocaleString()}</span>
                 </div>
               )}
               <div className="summary-row total">
                 <span>Total:</span>
-                <span>PKR {order.finalPrice?.toLocaleString()}</span>
+                <span>PKR {order.totalPrice?.toLocaleString()}</span>
               </div>
             </div>
 
@@ -254,21 +253,15 @@ const SupplyOrderTracking = () => {
                     >
                       <option value="">Select status</option>
                       {order.status === "pending" && (
-                        <option value="confirmed">Confirmed</option>
+                        <option value="approved">Approved</option>
                       )}
-                      {order.status === "confirmed" && (
-                        <option value="booked">Booked</option>
-                      )}
-                      {order.status === "booked" && (
+                      {order.status === "approved" && (
                         <option value="processing">Processing</option>
                       )}
                       {order.status === "processing" && (
                         <option value="shipped">Shipped</option>
                       )}
                       {order.status === "shipped" && (
-                        <option value="on_way">On Way</option>
-                      )}
-                      {order.status === "on_way" && (
                         <option value="delivered">Delivered</option>
                       )}
                     </select>
@@ -309,11 +302,24 @@ const SupplyOrderTracking = () => {
               </div>
             )}
 
-            {isCustomer && ["pending", "confirmed"].includes(order.status) && (
+            {isCustomer && ["pending", "approved"].includes(order.status) && (
               <div className="cancel-order">
                 <button onClick={handleCancel} className="btn btn-danger btn-block">
                   Cancel Order
                 </button>
+              </div>
+            )}
+
+            {isCustomer && order.status === "delivered" && (
+              <div className="review-prompt">
+                <h3>Order Delivered!</h3>
+                <p>How was your experience? Please leave a review.</p>
+                <Link
+                  to={`/suppliers/${order.supplier._id}`}
+                  className="btn btn-primary btn-block"
+                >
+                  Review Supplier
+                </Link>
               </div>
             )}
           </div>
@@ -323,5 +329,5 @@ const SupplyOrderTracking = () => {
   );
 };
 
-export default SupplyOrderTracking;
+export default BulkOrderTracking;
 

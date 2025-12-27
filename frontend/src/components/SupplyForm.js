@@ -59,7 +59,8 @@ const SupplyForm = () => {
       const response = await api.get(`/supplies/${id}`);
       const supply = response.data.data;
 
-      if (supply.supplier._id.toString() !== user._id.toString()) {
+      const supplierId = supply.supplier?._id || supply.supplier;
+      if (supplierId && supplierId.toString() !== user._id.toString()) {
         navigate("/");
         return;
       }
@@ -67,9 +68,13 @@ const SupplyForm = () => {
       // Convert Map to object for form handling
       const specsObj = {};
       if (supply.specifications) {
-        supply.specifications.forEach((value, key) => {
-          specsObj[key] = value;
-        });
+        if (supply.specifications instanceof Map) {
+          supply.specifications.forEach((value, key) => {
+            specsObj[key] = value;
+          });
+        } else if (typeof supply.specifications === 'object') {
+          Object.assign(specsObj, supply.specifications);
+        }
       }
 
       setFormData({
@@ -81,17 +86,17 @@ const SupplyForm = () => {
         color: supply.color || "",
         size: supply.size || "",
         material: supply.material || "",
-        price: supply.price || "",
+        price: supply.price || 0,
         unit: supply.unit || "piece",
         minimumOrderQuantity: supply.minimumOrderQuantity || 1,
         stockQuantity: supply.stockQuantity || 0,
-        images: supply.images || [],
+        images: Array.isArray(supply.images) ? supply.images : [],
         specifications: specsObj,
-        tags: supply.tags || [],
+        tags: Array.isArray(supply.tags) ? supply.tags : [],
         isActive: supply.isActive !== undefined ? supply.isActive : true,
         isFeatured: supply.isFeatured || false,
         bulkDiscountEnabled: supply.bulkDiscountEnabled || false,
-        bulkDiscountTiers: supply.bulkDiscountTiers || [],
+        bulkDiscountTiers: Array.isArray(supply.bulkDiscountTiers) ? supply.bulkDiscountTiers : [],
       });
       setError("");
     } catch (error) {

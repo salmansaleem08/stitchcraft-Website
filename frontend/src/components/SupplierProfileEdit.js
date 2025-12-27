@@ -45,6 +45,12 @@ const SupplierProfileEdit = () => {
     discountPercentage: "",
   });
 
+  const [verificationDocuments, setVerificationDocuments] = useState([]);
+  const [newDocument, setNewDocument] = useState({
+    documentType: "",
+    documentUrl: "",
+  });
+
   useEffect(() => {
     if (!user || user.role !== "supplier" || user._id !== id) {
       navigate("/");
@@ -79,6 +85,7 @@ const SupplierProfileEdit = () => {
         bulkDiscountTiers: supplier.bulkDiscountTiers || [],
         distributionCenters: supplier.distributionCenters || [],
       });
+      setVerificationDocuments(supplier.verificationDocuments || []);
       setError("");
     } catch (error) {
       setError("Failed to load supplier profile");
@@ -182,6 +189,22 @@ const SupplierProfileEdit = () => {
   const removeDiscountTier = (index) => {
     const updated = formData.bulkDiscountTiers.filter((_, i) => i !== index);
     setFormData({ ...formData, bulkDiscountTiers: updated });
+  };
+
+  const handleAddVerificationDocument = async () => {
+    if (!newDocument.documentType || !newDocument.documentUrl) {
+      setError("Please provide document type and URL");
+      return;
+    }
+
+    try {
+      const response = await api.post("/suppliers/verification-documents", newDocument);
+      setVerificationDocuments(response.data.data.verificationDocuments || []);
+      setNewDocument({ documentType: "", documentUrl: "" });
+      setSuccess("Verification document uploaded successfully");
+    } catch (error) {
+      setError(error.response?.data?.message || "Failed to upload document");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -495,6 +518,82 @@ const SupplierProfileEdit = () => {
                 className="btn btn-secondary"
               >
                 Add Center
+              </button>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h2>Verification Documents</h2>
+            <p className="section-description">
+              Upload verification documents to get your supplier account verified. This helps build trust with customers.
+            </p>
+
+            {verificationDocuments.length > 0 && (
+              <div className="documents-list">
+                <h3>Uploaded Documents</h3>
+                {verificationDocuments.map((doc, idx) => (
+                  <div key={idx} className="document-item">
+                    <div className="document-info">
+                      <strong>{doc.documentType}</strong>
+                      <span className={`doc-status ${doc.verified ? "verified" : "pending"}`}>
+                        {doc.verified ? "Verified" : "Pending Review"}
+                      </span>
+                    </div>
+                    {doc.documentUrl && (
+                      <a
+                        href={doc.documentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="doc-link"
+                      >
+                        View Document
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="add-document-form">
+              <h3>Add Verification Document</h3>
+              <div className="form-group">
+                <label htmlFor="documentType">Document Type *</label>
+                <select
+                  id="documentType"
+                  value={newDocument.documentType}
+                  onChange={(e) =>
+                    setNewDocument({ ...newDocument, documentType: e.target.value })
+                  }
+                >
+                  <option value="">Select document type</option>
+                  <option value="Business Registration">Business Registration</option>
+                  <option value="Tax Certificate">Tax Certificate</option>
+                  <option value="CNIC">CNIC</option>
+                  <option value="Trade License">Trade License</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="documentUrl">Document URL *</label>
+                <input
+                  type="url"
+                  id="documentUrl"
+                  value={newDocument.documentUrl}
+                  onChange={(e) =>
+                    setNewDocument({ ...newDocument, documentUrl: e.target.value })
+                  }
+                  placeholder="https://example.com/document.pdf"
+                />
+                <small>Upload your document to a file hosting service and paste the URL here</small>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddVerificationDocument}
+                className="btn btn-secondary"
+              >
+                Upload Document
               </button>
             </div>
           </div>

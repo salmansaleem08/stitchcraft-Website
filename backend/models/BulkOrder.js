@@ -68,7 +68,7 @@ const bulkOrderSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "approved", "processing", "shipped", "delivered", "cancelled"],
+      enum: ["pending", "approved", "processing", "shipped", "on_way", "delivered", "cancelled"],
       default: "pending",
     },
     subtotal: {
@@ -150,8 +150,8 @@ bulkOrderSchema.pre("save", function (next) {
   if (this.isModified("status") && !this.isNew) {
     this.timeline.push({
       status: this.status,
-      description: `Bulk order status changed to ${this.status}`,
-      updatedBy: this.supplier,
+      timestamp: new Date(),
+      note: `Bulk order status changed to ${this.status}`,
     });
   }
   next();

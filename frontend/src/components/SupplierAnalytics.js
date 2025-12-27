@@ -124,6 +124,24 @@ const SupplierAnalytics = () => {
                 <div className="stat-label">Average Rating</div>
                 <div className="stat-total">{overview.reviews.total} reviews</div>
               </div>
+
+              {overview.estimatedProfit !== undefined && (
+                <div className="stat-card profit">
+                  <div className="stat-icon">Profit</div>
+                  <div className="stat-value">{formatCurrency(overview.estimatedProfit)}</div>
+                  <div className="stat-label">Estimated Profit</div>
+                  <div className="stat-total">From {formatCurrency(overview.totalRevenue)} revenue</div>
+                </div>
+              )}
+
+              {overview.totalInventoryValue !== undefined && (
+                <div className="stat-card inventory">
+                  <div className="stat-icon">Inventory</div>
+                  <div className="stat-value">{formatCurrency(overview.totalInventoryValue)}</div>
+                  <div className="stat-label">Inventory Value</div>
+                  <div className="stat-total">{overview.totalItemsLeft || 0} items left</div>
+                </div>
+              )}
             </div>
 
             <div className="analytics-grid">

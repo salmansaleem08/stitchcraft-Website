@@ -123,12 +123,24 @@
   color: #856404;
 }
 
+.status-confirmed,
+.status-approved {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-booked {
+  background: #d4edda;
+  color: #155724;
+}
+
 .status-scheduled {
   background: #cfe2ff;
   color: #084298;
 }
 
-.status-progress {
+.status-progress,
+.status-processing {
   background: #d1e7dd;
   color: #0f5132;
 }
@@ -138,6 +150,17 @@
   color: #856404;
 }
 
+.status-shipped {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.status-on-way {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-delivered,
 .status-completed {
   background: #d1e7dd;
   color: #0f5132;
@@ -146,6 +169,13 @@
 .status-cancelled {
   background: #f8d7da;
   color: #842029;
+}
+
+.customer-name {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+  margin: 0.25rem 0;
+  font-weight: 500;
 }
 
 .order-card-body {

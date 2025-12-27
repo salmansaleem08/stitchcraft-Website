@@ -81,26 +81,34 @@ const Navigation = () => {
               </Link>
             </>
           )}
-          {user && user.role === "supplier" && (
+                  {user && user.role === "supplier" && (
+                    <>
+                      <Link to="/dashboard" className="nav-link">
+                        Dashboard
+                      </Link>
+                      <Link to={`/suppliers/${user._id}/edit`} className="nav-link">
+                        My Profile
+                      </Link>
+                      <Link to="/supplier-orders" className="nav-link">
+                        My Orders
+                      </Link>
+                      <Link to="/fabrics/me/list" className="nav-link">
+                        My Fabrics
+                      </Link>
+                      <Link to="/supplies/me/list" className="nav-link">
+                        My Supplies
+                      </Link>
+                    </>
+                  )}
+          {user && user.role === "customer" && (
             <>
-              <Link to="/dashboard" className="nav-link">
-                Dashboard
+              <Link to="/cart" className="nav-link">
+                Cart
               </Link>
-              <Link to={`/suppliers/${user._id}/edit`} className="nav-link">
-                My Profile
-              </Link>
-              <Link to="/fabrics/me/list" className="nav-link">
-                My Fabrics
-              </Link>
-              <Link to="/supplies/me/list" className="nav-link">
-                My Supplies
+              <Link to="/orders" className="nav-link">
+                My Orders
               </Link>
             </>
-          )}
-          {user && user.role === "customer" && (
-            <Link to="/orders" className="nav-link">
-              My Orders
-            </Link>
           )}
         </nav>
       </div>

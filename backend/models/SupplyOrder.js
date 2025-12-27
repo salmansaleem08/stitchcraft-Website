@@ -65,7 +65,7 @@ const supplyOrderSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"],
+      enum: ["pending", "confirmed", "booked", "processing", "shipped", "on_way", "delivered", "cancelled"],
       default: "pending",
     },
     trackingNumber: {

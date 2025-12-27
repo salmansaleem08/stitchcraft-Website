@@ -142,8 +142,8 @@ const SupplierDashboard = () => {
           <div className="action-card">
             <h3>Orders</h3>
             <p>View and manage customer orders</p>
-            <Link to="/orders" className="btn btn-primary">
-              View Orders
+            <Link to="/supplier-orders" className="btn btn-primary">
+              Manage Orders
             </Link>
           </div>
         </div>

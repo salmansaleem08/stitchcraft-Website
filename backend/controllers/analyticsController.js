@@ -88,6 +88,19 @@ exports.getAnalyticsOverview = async (req, res) => {
     const activeProducts =
       fabrics.filter((f) => f.isActive).length + supplies.filter((s) => s.isActive).length;
 
+    // Calculate inventory value and left items
+    const totalInventoryValue =
+      fabrics.reduce((sum, f) => sum + (f.stockQuantity || 0) * (f.pricePerMeter || 0), 0) +
+      supplies.reduce((sum, s) => sum + (s.stockQuantity || 0) * (s.price || 0), 0);
+
+    const totalItemsLeft =
+      fabrics.reduce((sum, f) => sum + (f.stockQuantity || 0), 0) +
+      supplies.reduce((sum, s) => sum + (s.stockQuantity || 0), 0);
+
+    // Calculate profit (revenue - cost, assuming 30% margin for now)
+    const estimatedCost = totalRevenue * 0.7;
+    const estimatedProfit = totalRevenue - estimatedCost;
+
     // Get reviews
     const reviews = await SupplyReview.find({ supplier: req.user._id });
     const averageRating =
@@ -124,6 +137,11 @@ exports.getAnalyticsOverview = async (req, res) => {
           total: reviews.length,
           averageRating: Math.round(averageRating * 10) / 10,
         },
+        totalInventoryValue,
+        totalItemsLeft,
+        estimatedProfit: Math.round(estimatedProfit * 10) / 10,
+        estimatedCost: Math.round(estimatedCost * 10) / 10,
+        totalRevenue,
       },
     });
   } catch (error) {

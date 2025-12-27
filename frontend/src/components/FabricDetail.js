@@ -285,9 +285,28 @@ const FabricDetail = () => {
 
             {user && user.role === "customer" && (
               <div className="customer-actions">
+                {fabric.stockQuantity > 0 && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await api.post("/cart/items", {
+                          productType: "fabric",
+                          productId: fabric._id,
+                          quantity: 1,
+                        });
+                        alert("Item added to cart!");
+                      } catch (error) {
+                        alert(error.response?.data?.message || "Failed to add to cart");
+                      }
+                    }}
+                    className="btn btn-primary"
+                  >
+                    Add to Cart
+                  </button>
+                )}
                 <Link
                   to={`/fabrics/${fabric._id}/sample-order`}
-                  className="btn btn-primary"
+                  className="btn btn-secondary"
                 >
                   Order Sample
                 </Link>

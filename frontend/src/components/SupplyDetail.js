@@ -249,12 +249,23 @@ const SupplyDetail = () => {
                   Edit Supply
                 </Link>
               ) : user?.role === "customer" && supply.stockQuantity > 0 ? (
-                <Link
-                  to={`/supply-order/${supply.supplier._id}`}
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.post("/cart/items", {
+                        productType: "supply",
+                        productId: supply._id,
+                        quantity: 1,
+                      });
+                      alert("Item added to cart!");
+                    } catch (error) {
+                      alert(error.response?.data?.message || "Failed to add to cart");
+                    }
+                  }}
                   className="btn btn-primary"
                 >
-                  Order from Supplier
-                </Link>
+                  Add to Cart
+                </button>
               ) : null}
             </div>
           </div>

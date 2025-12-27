@@ -22,6 +22,8 @@ app.use("/api/supply-orders", require("./routes/supplyOrderRoutes"));
 app.use("/api/supply-reviews", require("./routes/supplyReviewRoutes"));
 app.use("/api/analytics", require("./routes/analyticsRoutes"));
 app.use("/api/search", require("./routes/searchRoutes"));
+app.use("/api/cart", require("./routes/cartRoutes"));
+app.use("/api/checkout", require("./routes/checkoutRoutes"));
 app.use("/api/sample-orders", require("./routes/sampleOrderRoutes"));
 app.use("/api/bulk-orders", require("./routes/bulkOrderRoutes"));
 app.use("/api/inventory", require("./routes/inventoryRoutes"));

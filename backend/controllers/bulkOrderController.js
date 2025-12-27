@@ -232,18 +232,19 @@ exports.updateBulkOrderStatus = async (req, res) => {
         if (trackingNumber) {
           bulkOrder.trackingNumber = trackingNumber;
         }
+      } else if (status === "on_way") {
+        // On way status
       } else if (status === "delivered") {
         bulkOrder.deliveredAt = new Date();
       }
     }
 
-    if (notes) {
-      bulkOrder.timeline.push({
-        status: bulkOrder.status,
-        description: notes,
-        updatedBy: req.user._id,
-      });
-    }
+    // Add timeline entry
+    bulkOrder.timeline.push({
+      status: bulkOrder.status,
+      timestamp: new Date(),
+      note: notes || `Status updated to ${status}`,
+    });
 
     const updatedOrder = await bulkOrder.save();
 
@@ -291,8 +292,8 @@ exports.cancelBulkOrder = async (req, res) => {
     bulkOrder.status = "cancelled";
     bulkOrder.timeline.push({
       status: "cancelled",
-      description: "Order cancelled by customer",
-      updatedBy: req.user._id,
+      timestamp: new Date(),
+      note: "Order cancelled by customer",
     });
 
     const updatedOrder = await bulkOrder.save();

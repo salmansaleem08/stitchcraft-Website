@@ -30,7 +30,10 @@ import MySupplies from "./components/MySupplies";
 import SupplyOrderForm from "./components/SupplyOrderForm";
 import SupplyOrderTracking from "./components/SupplyOrderTracking";
 import SupplierAnalytics from "./components/SupplierAnalytics";
+import SupplierOrders from "./components/SupplierOrders";
 import SearchPage from "./components/SearchPage";
+import Cart from "./components/Cart";
+import Checkout from "./components/Checkout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -44,6 +47,22 @@ function App() {
             <Routes>
                       <Route path="/" element={<Home />} />
                       <Route path="/search" element={<SearchPage />} />
+                      <Route
+                        path="/cart"
+                        element={
+                          <ProtectedRoute requiredRole="customer">
+                            <Cart />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/checkout"
+                        element={
+                          <ProtectedRoute requiredRole="customer">
+                            <Checkout />
+                          </ProtectedRoute>
+                        }
+                      />
                       <Route path="/login" element={<Login />} />
                       <Route path="/signup" element={<Signup />} />
               <Route path="/tailors" element={<TailorListing />} />
