@@ -28,7 +28,7 @@ const userSchema = mongoose.Schema(
     role: {
       type: String,
       required: [true, "Please select a role"],
-      enum: ["tailor", "customer", "supplier"],
+      enum: ["tailor", "customer", "supplier", "admin"],
     },
     phone: {
       type: String,
@@ -239,6 +239,8 @@ const userSchema = mongoose.Schema(
           documentUrl: String,
           uploadedAt: { type: Date, default: Date.now },
           verified: { type: Boolean, default: false },
+          verifiedAt: Date,
+          verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         },
       ],
       default: [],
@@ -248,10 +250,18 @@ const userSchema = mongoose.Schema(
       enum: ["pending", "under_review", "verified", "rejected"],
       default: "pending",
     },
+    verificationRemarks: {
+      type: String,
+      maxlength: 1000,
+    },
     verificationNotes: {
       type: String,
       maxlength: 1000,
     },
+    verifiedAt: Date,
+    verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    rejectedAt: Date,
+    rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     minimumOrderQuantity: {
       type: Number,
       default: 1,

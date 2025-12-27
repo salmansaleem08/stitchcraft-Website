@@ -26,6 +26,14 @@ const SupplierDashboard = () => {
     } catch (error) {
       setError("Failed to load dashboard statistics");
       console.error("Error fetching stats:", error);
+      // Set default values on error
+      setStats({
+        totalProducts: 0,
+        totalOrders: 0,
+        totalRevenue: 0,
+        averageRating: 0,
+        verificationStatus: user?.verificationStatus || "pending",
+      });
     } finally {
       setLoading(false);
     }
@@ -126,7 +134,7 @@ const SupplierDashboard = () => {
           <div className="action-card">
             <h3>Inventory</h3>
             <p>View inventory summary and low stock alerts</p>
-            <Link to="/inventory/manage" className="btn btn-primary">
+            <Link to="/inventory" className="btn btn-primary">
               View Inventory
             </Link>
           </div>

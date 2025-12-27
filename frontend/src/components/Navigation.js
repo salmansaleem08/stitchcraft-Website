@@ -100,16 +100,26 @@ const Navigation = () => {
                       </Link>
                     </>
                   )}
-          {user && user.role === "customer" && (
-            <>
-              <Link to="/cart" className="nav-link">
-                Cart
-              </Link>
-              <Link to="/orders" className="nav-link">
-                My Orders
-              </Link>
-            </>
-          )}
+                  {user && user.role === "customer" && (
+                    <>
+                      <Link to="/cart" className="nav-link">
+                        Cart
+                      </Link>
+                      <Link to="/orders" className="nav-link">
+                        My Orders
+                      </Link>
+                    </>
+                  )}
+                  {user && user.role === "admin" && (
+                    <>
+                      <Link to="/admin/dashboard" className="nav-link">
+                        Dashboard
+                      </Link>
+                      <Link to="/admin/verifications" className="nav-link">
+                        Verifications
+                      </Link>
+                    </>
+                  )}
         </nav>
       </div>
     </header>

@@ -33,15 +33,22 @@ const Login = () => {
       return;
     }
 
-    const result = await login(formData.email, formData.password);
+    try {
+      const result = await login(formData.email, formData.password);
 
-    if (result.success) {
-      navigate("/");
-    } else {
-      setError(result.message);
+      if (result.success) {
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          navigate("/");
+        }, 100);
+      } else {
+        setError(result.message);
+        setLoading(false);
+      }
+    } catch (error) {
+      setError("An unexpected error occurred. Please try again.");
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

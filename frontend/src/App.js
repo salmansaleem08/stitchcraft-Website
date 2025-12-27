@@ -31,6 +31,8 @@ import SupplyOrderForm from "./components/SupplyOrderForm";
 import SupplyOrderTracking from "./components/SupplyOrderTracking";
 import SupplierAnalytics from "./components/SupplierAnalytics";
 import SupplierOrders from "./components/SupplierOrders";
+import AdminDashboard from "./components/AdminDashboard";
+import AdminVerifications from "./components/AdminVerifications";
 import SearchPage from "./components/SearchPage";
 import Cart from "./components/Cart";
 import Checkout from "./components/Checkout";
@@ -180,6 +182,22 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="customer">
                     <BulkOrderForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/verifications"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminVerifications />
                   </ProtectedRoute>
                 }
               />
