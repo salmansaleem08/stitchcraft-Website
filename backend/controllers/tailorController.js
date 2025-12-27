@@ -1,6 +1,21 @@
 const User = require("../models/User");
 const Review = require("../models/Review");
 
+// Helper function to calculate distance between two coordinates (Haversine formula)
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Radius of the Earth in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in km
+};
+
 // @desc    Get all tailors with filters
 // @route   GET /api/tailors
 // @access  Public
@@ -17,6 +32,13 @@ exports.getTailors = async (req, res) => {
       sortBy,
       page = 1,
       limit = 12,
+      minBudget,
+      maxBudget,
+      language,
+      urgency,
+      latitude,
+      longitude,
+      maxDistance, // in km
     } = req.query;
 
     // Build filter object
@@ -46,12 +68,33 @@ exports.getTailors = async (req, res) => {
       filter.experience = { $gte: parseInt(minExperience) };
     }
 
+    if (language) {
+      filter.languages = { $in: language.split(",") };
+    }
+
+    if (urgency === "true" || urgency === true) {
+      filter["urgencyHandling.rushOrders"] = true;
+    }
+
     if (search) {
       filter.$or = [
         { name: new RegExp(search, "i") },
         { shopName: new RegExp(search, "i") },
         { bio: new RegExp(search, "i") },
       ];
+    }
+
+    // Budget filtering - need to check pricing tiers
+    // This will be handled after fetching tailors since pricing is in a separate model
+
+    // Location-based filtering
+    let locationFilter = null;
+    if (latitude && longitude && maxDistance) {
+      locationFilter = {
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        maxDistance: parseFloat(maxDistance),
+      };
     }
 
     // Build sort object
@@ -69,17 +112,70 @@ exports.getTailors = async (req, res) => {
       case "response":
         sort = { averageResponseTime: 1 };
         break;
+      case "urgency":
+        // Sort by minimum days (lower = faster)
+        sort = { "urgencyHandling.minimumDays": 1, averageResponseTime: 1 };
+        break;
+      case "distance":
+        // Will be sorted after distance calculation
+        sort = { createdAt: -1 };
+        break;
       default:
         sort = { createdAt: -1 };
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const tailors = await User.find(filter)
+    let tailors = await User.find(filter)
       .select("-password")
       .sort(sort)
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit) * 2); // Fetch more to filter by budget/distance
+
+    // Apply location-based filtering if needed
+    if (locationFilter) {
+      tailors = tailors
+        .map((tailor) => {
+          if (tailor.location?.coordinates?.latitude && tailor.location?.coordinates?.longitude) {
+            const distance = calculateDistance(
+              locationFilter.latitude,
+              locationFilter.longitude,
+              tailor.location.coordinates.latitude,
+              tailor.location.coordinates.longitude
+            );
+            tailor._doc.distance = distance;
+            return tailor;
+          }
+          return null;
+        })
+        .filter((tailor) => tailor && tailor._doc.distance <= locationFilter.maxDistance)
+        .sort((a, b) => a._doc.distance - b._doc.distance);
+    }
+
+    // Apply budget filtering if needed
+    if (minBudget || maxBudget) {
+      const PricingTier = require("../models/PricingTier");
+      const filteredTailors = [];
+
+      for (const tailor of tailors) {
+        const pricingTiers = await PricingTier.find({ tailor: tailor._id });
+        if (pricingTiers.length > 0) {
+          const minPrice = Math.min(...pricingTiers.map((tier) => tier.basePrice));
+          const maxPrice = Math.max(...pricingTiers.map((tier) => tier.basePrice));
+
+          if (minBudget && maxPrice < parseFloat(minBudget)) continue;
+          if (maxBudget && minPrice > parseFloat(maxBudget)) continue;
+
+          tailor._doc.priceRange = { min: minPrice, max: maxPrice };
+        }
+        filteredTailors.push(tailor);
+      }
+
+      tailors = filteredTailors;
+    }
+
+    // Limit to requested page size
+    tailors = tailors.slice(0, parseInt(limit));
 
     const total = await User.countDocuments(filter);
 

@@ -146,6 +146,28 @@ const userSchema = mongoose.Schema(
         sunday: { open: String, close: String, isOpen: Boolean },
       },
     },
+    languages: {
+      type: [String],
+      default: ["Urdu", "English"],
+      enum: ["Urdu", "English", "Punjabi", "Sindhi", "Pashto", "Balochi", "Hindko", "Other"],
+    },
+    location: {
+      coordinates: {
+        latitude: { type: Number },
+        longitude: { type: Number },
+      },
+      address: {
+        street: String,
+        city: String,
+        province: String,
+        postalCode: String,
+      },
+    },
+    urgencyHandling: {
+      rushOrders: { type: Boolean, default: false },
+      rushOrderFee: { type: Number, default: 0 },
+      minimumDays: { type: Number, default: 7 }, // Minimum days for standard orders
+    },
     // Supplier-specific fields
     businessName: {
       type: String,

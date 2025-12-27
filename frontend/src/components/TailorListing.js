@@ -16,6 +16,16 @@ const TailorListing = () => {
     minExperience: "",
     search: "",
     sortBy: "rating",
+    minBudget: "",
+    maxBudget: "",
+    language: "",
+    urgency: false,
+    useLocation: false,
+    maxDistance: "50",
+  });
+  const [userLocation, setUserLocation] = useState({
+    latitude: null,
+    longitude: null,
   });
   const [pagination, setPagination] = useState({
     page: 1,
@@ -27,16 +37,50 @@ const TailorListing = () => {
     fetchTailors();
   }, [filters, pagination.page]);
 
+  useEffect(() => {
+    // Request user location if location-based search is enabled
+    if (filters.useLocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setUserLocation({ latitude: null, longitude: null });
+        }
+      );
+    }
+  }, [filters.useLocation]);
+
   const fetchTailors = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         page: pagination.page,
         limit: 12,
-        ...Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== "")
-        ),
       });
+
+      // Add filters (excluding boolean and location-specific)
+      Object.entries(filters).forEach(([key, value]) => {
+        if (key === "urgency" && value) {
+          params.append(key, "true");
+        } else if (key === "useLocation" || key === "maxDistance") {
+          // Handle separately
+        } else if (value !== "" && value !== false) {
+          params.append(key, value);
+        }
+      });
+
+      // Add location parameters if enabled
+      if (filters.useLocation && userLocation.latitude && userLocation.longitude) {
+        params.append("latitude", userLocation.latitude);
+        params.append("longitude", userLocation.longitude);
+        params.append("maxDistance", filters.maxDistance || "50");
+        params.append("sortBy", filters.sortBy === "distance" ? "distance" : filters.sortBy);
+      }
 
       const response = await api.get(`/tailors?${params}`);
       setTailors(response.data.data);
@@ -73,7 +117,14 @@ const TailorListing = () => {
       minExperience: "",
       search: "",
       sortBy: "rating",
+      minBudget: "",
+      maxBudget: "",
+      language: "",
+      urgency: false,
+      useLocation: false,
+      maxDistance: "50",
     });
+    setUserLocation({ latitude: null, longitude: null });
     setPagination({ ...pagination, page: 1 });
   };
 
@@ -212,6 +263,88 @@ const TailorListing = () => {
             </div>
 
             <div className="filter-group">
+              <label>Budget Range (PKR)</label>
+              <div className="budget-range">
+                <input
+                  type="number"
+                  name="minBudget"
+                  value={filters.minBudget}
+                  onChange={handleFilterChange}
+                  placeholder="Min"
+                  min="0"
+                />
+                <span className="range-separator">-</span>
+                <input
+                  type="number"
+                  name="maxBudget"
+                  value={filters.maxBudget}
+                  onChange={handleFilterChange}
+                  placeholder="Max"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            <div className="filter-group">
+              <label>Language</label>
+              <select
+                name="language"
+                value={filters.language}
+                onChange={handleFilterChange}
+              >
+                <option value="">All Languages</option>
+                <option value="Urdu">Urdu</option>
+                <option value="English">English</option>
+                <option value="Punjabi">Punjabi</option>
+                <option value="Sindhi">Sindhi</option>
+                <option value="Pashto">Pashto</option>
+                <option value="Balochi">Balochi</option>
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  name="urgency"
+                  checked={filters.urgency}
+                  onChange={(e) =>
+                    setFilters({ ...filters, urgency: e.target.checked })
+                  }
+                />
+                Accepts Rush Orders
+              </label>
+            </div>
+
+            <div className="filter-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  name="useLocation"
+                  checked={filters.useLocation}
+                  onChange={(e) =>
+                    setFilters({ ...filters, useLocation: e.target.checked })
+                  }
+                />
+                Use My Location
+              </label>
+              {filters.useLocation && (
+                <div className="location-options">
+                  <label>Max Distance (km)</label>
+                  <input
+                    type="number"
+                    name="maxDistance"
+                    value={filters.maxDistance}
+                    onChange={handleFilterChange}
+                    min="1"
+                    max="500"
+                    placeholder="50"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="filter-group">
               <label>Sort By</label>
               <select
                 name="sortBy"
@@ -222,6 +355,10 @@ const TailorListing = () => {
                 <option value="experience">Most Experienced</option>
                 <option value="orders">Most Orders</option>
                 <option value="response">Fastest Response</option>
+                <option value="urgency">Fastest Delivery</option>
+                {filters.useLocation && (
+                  <option value="distance">Nearest First</option>
+                )}
               </select>
             </div>
           </aside>
@@ -330,6 +467,31 @@ const TailorListing = () => {
                               {badge.type}
                             </span>
                           ))}
+                        </div>
+                      )}
+
+                      {tailor.distance && (
+                        <div className="tailor-distance">
+                          <span className="distance-label">Distance:</span>
+                          <span className="distance-value">
+                            {tailor.distance.toFixed(1)} km
+                          </span>
+                        </div>
+                      )}
+
+                      {tailor.urgencyHandling?.rushOrders && (
+                        <div className="rush-order-badge">
+                          Rush Orders Available
+                        </div>
+                      )}
+
+                      {tailor.languages && tailor.languages.length > 0 && (
+                        <div className="tailor-languages">
+                          <span className="languages-label">Languages:</span>
+                          <span className="languages-value">
+                            {tailor.languages.slice(0, 2).join(", ")}
+                            {tailor.languages.length > 2 && ` +${tailor.languages.length - 2}`}
+                          </span>
                         </div>
                       )}
                     </Link>
