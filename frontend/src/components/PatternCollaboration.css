@@ -1,0 +1,176 @@
+.pattern-collaboration {
+  padding: 2rem 0;
+  min-height: calc(100vh - 80px);
+}
+
+.collaboration-header {
+  margin-bottom: 2rem;
+}
+
+.collaboration-header h1 {
+  font-size: 2rem;
+  color: #2c1810;
+  margin: 1rem 0 0.5rem;
+}
+
+.collaboration-header h2 {
+  font-size: 1.3rem;
+  color: #5a4a3a;
+  font-weight: normal;
+}
+
+.collaboration-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.collaboration-section {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.collaboration-section h3 {
+  font-size: 1.3rem;
+  color: #2c1810;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e8e0d6;
+}
+
+.no-requests,
+.no-collaborators {
+  color: #5a4a3a;
+  text-align: center;
+  padding: 2rem;
+}
+
+.requests-list,
+.collaborators-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.request-card,
+.collaborator-card {
+  padding: 1.5rem;
+  background: #f5f1eb;
+  border-radius: 8px;
+  border: 1px solid #e8e0d6;
+}
+
+.request-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.request-info {
+  flex: 1;
+}
+
+.requester-details,
+.collaborator-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.requester-details strong,
+.collaborator-info strong {
+  font-size: 1.1rem;
+  color: #2c1810;
+}
+
+.requester-email,
+.collaborator-email {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+}
+
+.collaborator-role {
+  font-size: 0.85rem;
+  color: #8b4513;
+  font-weight: 500;
+}
+
+.request-message {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: #fff;
+  border-radius: 4px;
+  border-left: 3px solid #8b4513;
+}
+
+.request-message strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2c1810;
+}
+
+.request-message p {
+  color: #5a4a3a;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.request-date,
+.collaborator-date {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+  margin-top: 0.5rem;
+}
+
+.request-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.role-select {
+  padding: 0.5rem;
+  border: 1px solid #d4a574;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #2c1810;
+  background: #fff;
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.collaborator-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .request-card {
+    flex-direction: column;
+  }
+
+  .request-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .request-actions .btn-small {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .collaborator-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+

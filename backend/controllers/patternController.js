@@ -154,10 +154,50 @@ exports.getPattern = async (req, res) => {
 // @access  Private (Designer/Tailor)
 exports.createPattern = async (req, res) => {
   try {
+    // Handle file URLs from uploads
     const patternData = {
       ...req.body,
       designer: req.user._id,
     };
+
+    // Parse JSON fields if they're strings
+    if (typeof patternData.measurements === "string") {
+      patternData.measurements = JSON.parse(patternData.measurements);
+    }
+    if (typeof patternData.fabricRequirements === "string") {
+      patternData.fabricRequirements = JSON.parse(patternData.fabricRequirements);
+    }
+    if (typeof patternData.careInstructions === "string") {
+      patternData.careInstructions = JSON.parse(patternData.careInstructions);
+    }
+    if (typeof patternData.copyright === "string") {
+      patternData.copyright = JSON.parse(patternData.copyright);
+    }
+    if (typeof patternData.collaboration === "string") {
+      patternData.collaboration = JSON.parse(patternData.collaboration);
+    }
+    if (typeof patternData.images === "string") {
+      patternData.images = JSON.parse(patternData.images);
+    }
+    if (typeof patternData.tags === "string") {
+      patternData.tags = JSON.parse(patternData.tags);
+    }
+
+    // Convert price to number
+    if (patternData.price) {
+      patternData.price = Number(patternData.price);
+    }
+
+    // Convert boolean strings
+    if (typeof patternData.isFree === "string") {
+      patternData.isFree = patternData.isFree === "true";
+    }
+    if (typeof patternData.isPublished === "string") {
+      patternData.isPublished = patternData.isPublished === "true";
+    }
+    if (typeof patternData.featured === "string") {
+      patternData.featured = patternData.featured === "true";
+    }
 
     const pattern = await Pattern.create(patternData);
 

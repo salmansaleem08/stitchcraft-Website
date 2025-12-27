@@ -180,6 +180,18 @@
 .pattern-actions .btn {
   flex: 1;
   min-width: 150px;
+  max-width: 100%;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  padding: 0.9rem 1.2rem;
+  font-size: 0.9rem;
+  text-align: center;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
 }
 
 .pattern-description,

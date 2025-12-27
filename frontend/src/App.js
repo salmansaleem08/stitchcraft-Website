@@ -39,6 +39,9 @@ import Checkout from "./components/Checkout";
 import PatternLibrary from "./components/PatternLibrary";
 import PatternDetail from "./components/PatternDetail";
 import PatternTools from "./components/PatternTools";
+import PatternForm from "./components/PatternForm";
+import PatternCollaboration from "./components/PatternCollaboration";
+import PatternDesigner from "./components/PatternDesigner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -248,7 +251,39 @@ function App() {
               />
               <Route path="/patterns" element={<PatternLibrary />} />
               <Route path="/patterns/:id" element={<PatternDetail />} />
+              <Route
+                path="/patterns/:id/collaboration"
+                element={
+                  <ProtectedRoute>
+                    <PatternCollaboration />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patterns/new"
+                element={
+                  <ProtectedRoute>
+                    <PatternForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patterns/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <PatternForm />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/pattern-tools" element={<PatternTools />} />
+              <Route
+                path="/pattern-designer"
+                element={
+                  <ProtectedRoute>
+                    <PatternDesigner />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/materials"
                 element={

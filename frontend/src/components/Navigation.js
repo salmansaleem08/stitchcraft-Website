@@ -74,6 +74,16 @@ const Navigation = () => {
           <Link to="/pattern-tools" className="nav-link">
             Pattern Tools
           </Link>
+          {user && (user.role === "tailor" || user.role === "supplier") && (
+            <>
+              <Link to="/patterns/new" className="nav-link">
+                Create Pattern
+              </Link>
+              <Link to="/pattern-designer" className="nav-link">
+                Pattern Designer
+              </Link>
+            </>
+          )}
           {user && user.role === "tailor" && (
             <>
               <Link to="/dashboard" className="nav-link">

@@ -207,6 +207,14 @@ const PatternDetail = () => {
                   Request Collaboration
                 </button>
               )}
+              {user && pattern.designer?._id === user._id && (
+                <Link
+                  to={`/patterns/${id}/collaboration`}
+                  className="btn btn-secondary"
+                >
+                  Manage Collaboration Requests
+                </Link>
+              )}
             </div>
 
             <div className="pattern-description">
