@@ -52,6 +52,7 @@ app.use("/api/videos", require("./routes/videoRoutes"));
 app.use("/api/price-comparison", require("./routes/priceComparisonRoutes"));
 app.use("/api/equipment", require("./routes/equipmentRoutes"));
 app.use("/api/maintenance", require("./routes/maintenanceRoutes"));
+app.use("/api/ai-design-assistant", require("./routes/aiDesignAssistantRoutes"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

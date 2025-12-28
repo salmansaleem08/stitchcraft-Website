@@ -63,6 +63,7 @@ import EquipmentMarketplace from "./components/EquipmentMarketplace";
 import EquipmentDetail from "./components/EquipmentDetail";
 import EquipmentForm from "./components/EquipmentForm";
 import MaintenanceBooking from "./components/MaintenanceBooking";
+import VirtualStylist from "./components/VirtualStylist";
 import "./App.css";
 
 function App() {
@@ -408,6 +409,7 @@ function App() {
               <Route path="/equipment/:id" element={<EquipmentDetail />} />
               <Route path="/equipment/:id/edit" element={<ProtectedRoute><EquipmentForm /></ProtectedRoute>} />
               <Route path="/maintenance" element={<ProtectedRoute><MaintenanceBooking /></ProtectedRoute>} />
+              <Route path="/virtual-stylist" element={<VirtualStylist />} />
             </Routes>
           </main>
         </div>
