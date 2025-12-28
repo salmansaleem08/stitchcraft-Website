@@ -74,6 +74,9 @@ const Navigation = () => {
           <Link to="/pattern-tools" className="nav-link">
             Pattern Tools
           </Link>
+          <Link to="/learning" className="nav-link">
+            Learning Portal
+          </Link>
           {user && (user.role === "tailor" || user.role === "supplier") && (
             <>
               <Link to="/patterns/new" className="nav-link">

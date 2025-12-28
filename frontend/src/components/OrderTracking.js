@@ -1154,6 +1154,42 @@ const OrderTracking = () => {
           >
             Consultation
           </button>
+          <button
+            className={`tab-btn ${activeTab === "payments" ? "active" : ""}`}
+            onClick={() => setActiveTab("payments")}
+          >
+            Payments ({order.paymentSchedule?.length || 0})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "delivery" ? "active" : ""}`}
+            onClick={() => setActiveTab("delivery")}
+          >
+            Delivery
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "disputes" ? "active" : ""}`}
+            onClick={() => setActiveTab("disputes")}
+          >
+            Disputes {order.disputes && order.disputes.length > 0 && `(${order.disputes.length})`}
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "alterations" ? "active" : ""}`}
+            onClick={() => setActiveTab("alterations")}
+          >
+            Alterations {order.alterationRequests && order.alterationRequests.length > 0 && `(${order.alterationRequests.length})`}
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "refunds" ? "active" : ""}`}
+            onClick={() => setActiveTab("refunds")}
+          >
+            Refunds {order.refundRequests && order.refundRequests.length > 0 && `(${order.refundRequests.length})`}
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "emergency" ? "active" : ""}`}
+            onClick={() => setActiveTab("emergency")}
+          >
+            Emergency Contact
+          </button>
         </div>
 
         {activeTab === "details" && (

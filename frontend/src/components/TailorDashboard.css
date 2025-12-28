@@ -346,6 +346,618 @@
   font-size: 0.9rem;
 }
 
+.dashboard-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding: 0 1.5rem;
+  overflow-x: auto;
+  border-bottom: 2px solid #e8e0d6;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  border-bottom: 3px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #5a4a3a;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: #2c1810;
+  background: #f9f7f4;
+}
+
+.tab-btn.active {
+  color: #8b4513;
+  border-bottom-color: #8b4513;
+  background: #ffffff;
+}
+
+.timeline-view {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 2rem;
+  padding-left: 2rem;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -1.5rem;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  background: #8b4513;
+  border-radius: 50%;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 2px #8b4513;
+}
+
+.timeline-content {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.timeline-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0;
+}
+
+.timeline-details p {
+  margin-bottom: 0.5rem;
+  color: #5a4a3a;
+}
+
+.timeline-milestones {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.milestone {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.milestone-date {
+  font-weight: 600;
+  color: #2c1810;
+  min-width: 100px;
+}
+
+.milestone-status {
+  color: #5a4a3a;
+}
+
+.milestone-notes {
+  color: #5a4a3a;
+  font-style: italic;
+}
+
+.communication-center {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.message-item {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-left: 4px solid #8b4513;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.message-order {
+  font-weight: 600;
+  color: #2c1810;
+}
+
+.message-date {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+}
+
+.message-sender {
+  margin-bottom: 0.5rem;
+  color: #8b4513;
+}
+
+.message-content {
+  color: #5a4a3a;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.message-attachments {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.message-attachments a {
+  padding: 0.25rem 0.75rem;
+  background: #ffffff;
+  border: 1px solid #e8e0d6;
+  border-radius: 4px;
+  color: #8b4513;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.payment-tracking {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.payment-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.payment-stat {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-left: 4px solid #8b4513;
+}
+
+.payment-label {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.payment-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2c1810;
+}
+
+.payment-value.paid {
+  color: #0f5132;
+}
+
+.payment-value.pending {
+  color: #856404;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.payments-table th {
+  background: #f9f7f4;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #2c1810;
+  border-bottom: 2px solid #e8e0d6;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.payments-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e8e0d6;
+  color: #5a4a3a;
+}
+
+.payments-table tr:hover {
+  background: #f9f7f4;
+}
+
+.delivery-scheduling {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.delivery-item {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-left: 4px solid #8b4513;
+}
+
+.delivery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.delivery-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0;
+}
+
+.delivery-details p {
+  margin-bottom: 0.5rem;
+  color: #5a4a3a;
+}
+
+.delivery-address {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.analytics-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.analytics-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.analytics-stat-card {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-left: 4px solid #8b4513;
+}
+
+.analytics-stat-label {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.analytics-stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2c1810;
+  margin-bottom: 0.25rem;
+}
+
+.analytics-stat-change {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+}
+
+.analytics-section {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.analytics-section h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 1.5rem;
+}
+
+.analytics-section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 1rem;
+}
+
+.earnings-chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.earnings-projection {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-left: 4px solid #8b4513;
+}
+
+.earnings-projection p {
+  margin-bottom: 0.5rem;
+  color: #5a4a3a;
+}
+
+.earnings-history {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.earnings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.earnings-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f9f7f4;
+  border-radius: 4px;
+}
+
+.earnings-period {
+  font-weight: 600;
+  color: #2c1810;
+}
+
+.earnings-amount {
+  font-weight: 700;
+  color: #8b4513;
+}
+
+.earnings-orders {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+}
+
+.retention-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.retention-stat {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  border: 2px solid #e8e0d6;
+}
+
+.retention-label {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.retention-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c1810;
+}
+
+.top-customers {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.customers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.customer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f9f7f4;
+  border-radius: 4px;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #2c1810;
+}
+
+.customer-orders {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+}
+
+.customer-revenue {
+  font-weight: 700;
+  color: #8b4513;
+}
+
+.services-analysis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.services-list,
+.garments-list {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.service-item,
+.garment-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #f9f7f4;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+.service-name,
+.garment-name {
+  font-weight: 600;
+  color: #2c1810;
+}
+
+.service-count,
+.garment-count {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+}
+
+.service-revenue,
+.garment-revenue {
+  font-weight: 700;
+  color: #8b4513;
+}
+
+.service-avg,
+.garment-avg {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+}
+
+.seasonal-analysis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.seasonal-forecast {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-left: 4px solid #8b4513;
+}
+
+.seasonal-forecast p {
+  margin-bottom: 0.5rem;
+  color: #5a4a3a;
+}
+
+.seasonal-stats {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.season-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f9f7f4;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+}
+
+.season-name {
+  font-weight: 600;
+  color: #2c1810;
+}
+
+.season-orders {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+}
+
+.season-revenue {
+  font-weight: 700;
+  color: #8b4513;
+}
+
+.benchmarking-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.benchmark-item {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border-left: 4px solid #8b4513;
+}
+
+.benchmark-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 0.75rem;
+  text-transform: capitalize;
+}
+
+.benchmark-comparison {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.benchmark-value,
+.benchmark-benchmark {
+  font-size: 0.95rem;
+  color: #5a4a3a;
+}
+
+.benchmark-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.benchmark-status.above {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.benchmark-status.below {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.benchmark-diff {
+  font-weight: 700;
+  color: #8b4513;
+}
+
 @media (max-width: 768px) {
   .dashboard-header {
     flex-direction: column;
@@ -376,6 +988,45 @@
   .orders-table th,
   .orders-table td {
     padding: 0.75rem 0.5rem;
+  }
+
+  .dashboard-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .timeline-view {
+    padding-left: 1rem;
+  }
+
+  .timeline-item {
+    padding-left: 1.5rem;
+  }
+
+  .timeline-marker {
+    left: -1rem;
+  }
+
+  .earnings-chart,
+  .services-analysis,
+  .seasonal-analysis {
+    grid-template-columns: 1fr;
+  }
+
+  .service-item,
+  .garment-item {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .benchmark-comparison {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

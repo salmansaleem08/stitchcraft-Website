@@ -29,6 +29,7 @@ app.use("/api/supplies", require("./routes/supplyRoutes"));
 app.use("/api/supply-orders", require("./routes/supplyOrderRoutes"));
 app.use("/api/supply-reviews", require("./routes/supplyReviewRoutes"));
 app.use("/api/analytics", require("./routes/analyticsRoutes"));
+app.use("/api/analytics/tailor", require("./routes/tailorAnalyticsRoutes"));
 app.use("/api/search", require("./routes/searchRoutes"));
 app.use("/api/cart", require("./routes/cartRoutes"));
 app.use("/api/checkout", require("./routes/checkoutRoutes"));
@@ -41,6 +42,12 @@ app.use("/api/pricing", require("./routes/pricingRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
 app.use("/api/mood-boards", require("./routes/moodBoardRoutes"));
 app.use("/api/design-annotations", require("./routes/designAnnotationRoutes"));
+app.use("/api/courses", require("./routes/courseRoutes"));
+app.use("/api/forums", require("./routes/forumRoutes"));
+app.use("/api/workshops", require("./routes/workshopRoutes"));
+app.use("/api/news", require("./routes/newsRoutes"));
+app.use("/api/mentorships", require("./routes/mentorshipRoutes"));
+app.use("/api/videos", require("./routes/videoRoutes"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

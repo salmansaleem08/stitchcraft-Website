@@ -93,6 +93,10 @@ const AdminDashboard = () => {
             <p>Review and approve supplier verification documents</p>
             <div className="action-badge">{stats?.pendingVerifications || 0} pending</div>
           </Link>
+          <Link to="/admin/videos" className="action-card">
+            <h3>Video Management</h3>
+            <p>Manage YouTube videos for Learning Portal</p>
+          </Link>
         </div>
       </div>
     </div>

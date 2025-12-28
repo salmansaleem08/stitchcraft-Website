@@ -18,6 +18,7 @@ const TailorOrders = () => {
   const [statusNotes, setStatusNotes] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [success, setSuccess] = useState("");
+  const [viewMode, setViewMode] = useState("grid"); // "grid" or "kanban"
 
   useEffect(() => {
     if (user && user.role === "tailor") {
@@ -140,8 +141,24 @@ const TailorOrders = () => {
     <div className="tailor-orders-container">
       <div className="container">
         <div className="page-header">
-          <h1>Order Management</h1>
-          <p>Manage and track all your orders</p>
+          <div>
+            <h1>Order Management</h1>
+            <p>Manage and track all your orders</p>
+          </div>
+          <div className="view-toggle">
+            <button
+              className={`view-btn ${viewMode === "grid" ? "active" : ""}`}
+              onClick={() => setViewMode("grid")}
+            >
+              Grid View
+            </button>
+            <button
+              className={`view-btn ${viewMode === "kanban" ? "active" : ""}`}
+              onClick={() => setViewMode("kanban")}
+            >
+              Queue View
+            </button>
+          </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
@@ -191,7 +208,178 @@ const TailorOrders = () => {
           </div>
         </div>
 
-        <div className="orders-grid">
+        {viewMode === "kanban" ? (
+          <div className="kanban-board">
+            <div className="kanban-column">
+              <div className="kanban-column-header">
+                <h3>Pending ({orders.filter((o) => o.status === "pending" || o.status === "consultation_scheduled").length})</h3>
+              </div>
+              <div className="kanban-column-content">
+                {filteredOrders
+                  .filter((o) => o.status === "pending" || o.status === "consultation_scheduled")
+                  .map((order) => (
+                    <div key={order._id} className="kanban-card">
+                      <div className="kanban-card-header">
+                        <span className="kanban-order-number">#{order.orderNumber || order._id.toString().slice(-6)}</span>
+                        <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                          {formatStatus(order.status)}
+                        </span>
+                      </div>
+                      <div className="kanban-card-body">
+                        <p className="kanban-customer">{order.customer?.name || "N/A"}</p>
+                        <p className="kanban-garment">{order.garmentType}</p>
+                        <p className="kanban-price">PKR {order.totalPrice?.toLocaleString() || 0}</p>
+                        {order.estimatedCompletionDate && (
+                          <p className="kanban-date">
+                            Due: {new Date(order.estimatedCompletionDate).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      <div className="kanban-card-actions">
+                        <Link to={`/orders/${order._id}`} className="btn btn-primary btn-sm">
+                          View
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setNewStatus(order.status);
+                            setShowStatusUpdate(true);
+                          }}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          Update
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            <div className="kanban-column">
+              <div className="kanban-column-header">
+                <h3>In Progress ({orders.filter((o) => o.status === "in_progress" || o.status === "fabric_selected" || o.status === "consultation_completed").length})</h3>
+              </div>
+              <div className="kanban-column-content">
+                {filteredOrders
+                  .filter((o) => o.status === "in_progress" || o.status === "fabric_selected" || o.status === "consultation_completed")
+                  .map((order) => (
+                    <div key={order._id} className="kanban-card">
+                      <div className="kanban-card-header">
+                        <span className="kanban-order-number">#{order.orderNumber || order._id.toString().slice(-6)}</span>
+                        <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                          {formatStatus(order.status)}
+                        </span>
+                      </div>
+                      <div className="kanban-card-body">
+                        <p className="kanban-customer">{order.customer?.name || "N/A"}</p>
+                        <p className="kanban-garment">{order.garmentType}</p>
+                        <p className="kanban-price">PKR {order.totalPrice?.toLocaleString() || 0}</p>
+                        {order.estimatedCompletionDate && (
+                          <p className="kanban-date">
+                            Due: {new Date(order.estimatedCompletionDate).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      <div className="kanban-card-actions">
+                        <Link to={`/orders/${order._id}`} className="btn btn-primary btn-sm">
+                          View
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setNewStatus(order.status);
+                            setShowStatusUpdate(true);
+                          }}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          Update
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            <div className="kanban-column">
+              <div className="kanban-column-header">
+                <h3>Review ({orders.filter((o) => o.status === "revision_requested" || o.status === "quality_check").length})</h3>
+              </div>
+              <div className="kanban-column-content">
+                {filteredOrders
+                  .filter((o) => o.status === "revision_requested" || o.status === "quality_check")
+                  .map((order) => (
+                    <div key={order._id} className="kanban-card">
+                      <div className="kanban-card-header">
+                        <span className="kanban-order-number">#{order.orderNumber || order._id.toString().slice(-6)}</span>
+                        <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                          {formatStatus(order.status)}
+                        </span>
+                      </div>
+                      <div className="kanban-card-body">
+                        <p className="kanban-customer">{order.customer?.name || "N/A"}</p>
+                        <p className="kanban-garment">{order.garmentType}</p>
+                        <p className="kanban-price">PKR {order.totalPrice?.toLocaleString() || 0}</p>
+                        {order.estimatedCompletionDate && (
+                          <p className="kanban-date">
+                            Due: {new Date(order.estimatedCompletionDate).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      <div className="kanban-card-actions">
+                        <Link to={`/orders/${order._id}`} className="btn btn-primary btn-sm">
+                          View
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setNewStatus(order.status);
+                            setShowStatusUpdate(true);
+                          }}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          Update
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            <div className="kanban-column">
+              <div className="kanban-column-header">
+                <h3>Completed ({orders.filter((o) => o.status === "completed").length})</h3>
+              </div>
+              <div className="kanban-column-content">
+                {filteredOrders
+                  .filter((o) => o.status === "completed")
+                  .map((order) => (
+                    <div key={order._id} className="kanban-card">
+                      <div className="kanban-card-header">
+                        <span className="kanban-order-number">#{order.orderNumber || order._id.toString().slice(-6)}</span>
+                        <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                          {formatStatus(order.status)}
+                        </span>
+                      </div>
+                      <div className="kanban-card-body">
+                        <p className="kanban-customer">{order.customer?.name || "N/A"}</p>
+                        <p className="kanban-garment">{order.garmentType}</p>
+                        <p className="kanban-price">PKR {order.totalPrice?.toLocaleString() || 0}</p>
+                        <p className="kanban-date">
+                          {new Date(order.updatedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="kanban-card-actions">
+                        <Link to={`/orders/${order._id}`} className="btn btn-primary btn-sm">
+                          View
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="orders-grid">
           {filteredOrders.length > 0 ? (
             filteredOrders.map((order) => (
               <div key={order._id} className="order-card">
@@ -272,6 +460,7 @@ const TailorOrders = () => {
             </div>
           )}
         </div>
+        )}
 
         {showStatusUpdate && selectedOrder && (
           <div className="modal-overlay" onClick={() => setShowStatusUpdate(false)}>

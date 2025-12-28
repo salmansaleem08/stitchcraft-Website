@@ -1,0 +1,181 @@
+const Video = require("../models/Video");
+
+// @desc    Get all videos by category
+// @route   GET /api/videos
+// @access  Public
+exports.getVideos = async (req, res) => {
+  try {
+    const { category, limit = 10 } = req.query;
+
+    const filter = { isActive: true };
+
+    if (category) {
+      filter.category = category;
+    }
+
+    const videos = await Video.find(filter)
+      .populate("addedBy", "name")
+      .sort({ order: 1, createdAt: -1 })
+      .limit(parseInt(limit));
+
+    res.json({
+      success: true,
+      count: videos.length,
+      data: videos,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get single video
+// @route   GET /api/videos/:id
+// @access  Public
+exports.getVideo = async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id).populate("addedBy", "name");
+
+    if (!video) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    // Increment views
+    video.views += 1;
+    await video.save();
+
+    res.json({
+      success: true,
+      data: video,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Create video (Admin only)
+// @route   POST /api/videos
+// @access  Private (Admin only)
+exports.createVideo = async (req, res) => {
+  try {
+    const { title, description, youtubeUrl, category, order } = req.body;
+
+    // Extract YouTube ID
+    const youtubeIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = youtubeUrl.match(youtubeIdRegex);
+
+    if (!match || !match[1]) {
+      return res.status(400).json({ message: "Invalid YouTube URL" });
+    }
+
+    const youtubeId = match[1];
+    const thumbnail = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
+
+    const video = new Video({
+      title,
+      description,
+      youtubeUrl,
+      youtubeId,
+      category,
+      thumbnail,
+      order: order || 0,
+      addedBy: req.user._id,
+    });
+
+    await video.save();
+    await video.populate("addedBy", "name");
+
+    res.status(201).json({
+      success: true,
+      data: video,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Update video (Admin only)
+// @route   PUT /api/videos/:id
+// @access  Private (Admin only)
+exports.updateVideo = async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id);
+
+    if (!video) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    // If YouTube URL is being updated, extract new ID
+    if (req.body.youtubeUrl && req.body.youtubeUrl !== video.youtubeUrl) {
+      const youtubeIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      const match = req.body.youtubeUrl.match(youtubeIdRegex);
+
+      if (!match || !match[1]) {
+        return res.status(400).json({ message: "Invalid YouTube URL" });
+      }
+
+      req.body.youtubeId = match[1];
+      req.body.thumbnail = `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg`;
+    }
+
+    Object.assign(video, req.body);
+    await video.save();
+    await video.populate("addedBy", "name");
+
+    res.json({
+      success: true,
+      data: video,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Delete video (Admin only)
+// @route   DELETE /api/videos/:id
+// @access  Private (Admin only)
+exports.deleteVideo = async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id);
+
+    if (!video) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    await video.deleteOne();
+
+    res.json({
+      success: true,
+      message: "Video deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all videos for admin (including inactive)
+// @route   GET /api/videos/admin/all
+// @access  Private (Admin only)
+exports.getAllVideosAdmin = async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    const filter = {};
+
+    if (category) {
+      filter.category = category;
+    }
+
+    const videos = await Video.find(filter)
+      .populate("addedBy", "name")
+      .sort({ category: 1, order: 1, createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: videos.length,
+      data: videos,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

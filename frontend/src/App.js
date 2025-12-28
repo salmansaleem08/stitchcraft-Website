@@ -46,6 +46,15 @@ import PatternDesigner from "./components/PatternDesigner";
 import MoodBoard from "./components/MoodBoard";
 import DesignAnnotationTool from "./components/DesignAnnotationTool";
 import ProtectedRoute from "./components/ProtectedRoute";
+import LearningPortal from "./components/LearningPortal";
+import CourseList from "./components/CourseList";
+import CourseDetail from "./components/CourseDetail";
+import ForumList from "./components/ForumList";
+import ForumDetail from "./components/ForumDetail";
+import WorkshopList from "./components/WorkshopList";
+import NewsList from "./components/NewsList";
+import MentorshipProgram from "./components/MentorshipProgram";
+import AdminVideoManagement from "./components/AdminVideoManagement";
 import "./App.css";
 
 function App() {
@@ -250,6 +259,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/videos"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminVideoManagement />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/supplies" element={<SupplyListing />} />
               <Route path="/supplies/:id" element={<SupplyDetail />} />
               <Route
@@ -336,6 +353,15 @@ function App() {
                   </div>
                 }
               />
+              <Route path="/learning" element={<LearningPortal />} />
+              <Route path="/courses" element={<CourseList />} />
+              <Route path="/courses/:id" element={<CourseDetail />} />
+              <Route path="/forums" element={<ForumList />} />
+              <Route path="/forums/:id" element={<ForumDetail />} />
+              <Route path="/workshops" element={<WorkshopList />} />
+              <Route path="/news" element={<NewsList />} />
+              <Route path="/news/:id" element={<NewsList />} />
+              <Route path="/mentorships" element={<MentorshipProgram />} />
             </Routes>
           </main>
         </div>
