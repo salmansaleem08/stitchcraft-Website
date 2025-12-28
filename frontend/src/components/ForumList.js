@@ -11,6 +11,14 @@ const ForumList = () => {
   const [filters, setFilters] = useState({ category: "", search: "", sortBy: "createdAt" });
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const category = params.get("category");
+    if (category) {
+      setFilters((prev) => ({ ...prev, category }));
+    }
+  }, []);
+
+  useEffect(() => {
     fetchForums();
     fetchVideos();
   }, [filters]);
@@ -53,16 +61,38 @@ const ForumList = () => {
           <Link to="/forums/new" className="btn btn-primary">New Post</Link>
         </div>
 
+        <div className="forum-categories-section">
+          <h2>Browse by Category</h2>
+          <div className="categories-grid">
+            <Link to="/forums?category=general" className="category-card">
+              <h3>General Discussions</h3>
+              <p>Connect with fellow tailors and share experiences</p>
+            </Link>
+            <Link to="/forums?category=techniques" className="category-card">
+              <h3>Technique Sharing</h3>
+              <p>Learn and share advanced tailoring techniques</p>
+            </Link>
+            <Link to="/forums?category=business" className="category-card">
+              <h3>Business Advice</h3>
+              <p>Get advice on running and growing your tailoring business</p>
+            </Link>
+            <Link to="/forums?category=troubleshooting" className="category-card">
+              <h3>Troubleshooting</h3>
+              <p>Get help with technical issues and challenges</p>
+            </Link>
+          </div>
+        </div>
+
         <div className="filters-section">
           <select value={filters.category} onChange={(e) => setFilters({...filters, category: e.target.value})}>
             <option value="">All Categories</option>
-            <option value="general">General</option>
-            <option value="techniques">Techniques</option>
-            <option value="business">Business</option>
-            <option value="tools">Tools</option>
-            <option value="fabric">Fabric</option>
-            <option value="design">Design</option>
+            <option value="general">General Discussions</option>
+            <option value="techniques">Technique Sharing</option>
+            <option value="business">Business Advice</option>
             <option value="troubleshooting">Troubleshooting</option>
+            <option value="tools">Tools & Equipment</option>
+            <option value="fabric">Fabric & Materials</option>
+            <option value="design">Design & Patterns</option>
           </select>
           <input
             type="text"
@@ -97,7 +127,15 @@ const ForumList = () => {
               {forum.isPinned && <span className="pinned-badge">Pinned</span>}
               <div className="forum-header">
                 <Link to={`/forums/${forum._id}`} className="forum-title">{forum.title}</Link>
-                <span className="forum-category">{forum.category}</span>
+                <span className="forum-category">
+                  {forum.category === "general" && "General Discussions"}
+                  {forum.category === "techniques" && "Technique Sharing"}
+                  {forum.category === "business" && "Business Advice"}
+                  {forum.category === "troubleshooting" && "Troubleshooting"}
+                  {forum.category === "tools" && "Tools & Equipment"}
+                  {forum.category === "fabric" && "Fabric & Materials"}
+                  {forum.category === "design" && "Design & Patterns"}
+                </span>
               </div>
               <p className="forum-content">{forum.content.substring(0, 200)}...</p>
               <div className="forum-footer">

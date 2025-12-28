@@ -15,8 +15,21 @@
 .post-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.post-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.post-actions-header {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .post-header h1 {
@@ -38,12 +51,41 @@
 .post-author {
   color: #5a4a3a;
   margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.resolved-badge {
+  padding: 0.25rem 0.75rem;
+  background: #28a745;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .post-content {
   color: #2c1810;
   line-height: 1.8;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tag {
+  padding: 0.25rem 0.75rem;
+  background: #e8e0d6;
+  color: #5a4a3a;
+  border-radius: 4px;
+  font-size: 0.85rem;
 }
 
 .replies-section {
@@ -59,28 +101,77 @@
   background: #f9f7f4;
   border-radius: 8px;
   border-left: 4px solid transparent;
+  position: relative;
 }
 
 .reply-item.solution {
-  border-left-color: #8b4513;
-  background: #ffffff;
+  border-left-color: #28a745;
+  background: #f0f9f4;
+}
+
+.solution-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.25rem 0.75rem;
+  background: #28a745;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.reply-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
 }
 
 .reply-author {
   font-weight: 600;
   color: #2c1810;
-  margin-bottom: 0.5rem;
 }
 
 .reply-content {
   color: #5a4a3a;
   line-height: 1.6;
   margin-bottom: 0.5rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .reply-date {
   font-size: 0.85rem;
   color: #5a4a3a;
+}
+
+.reply-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.reply-likes {
+  color: #5a4a3a;
+  font-size: 0.9rem;
+}
+
+.btn-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background: #c82333;
 }
 
 .reply-form {

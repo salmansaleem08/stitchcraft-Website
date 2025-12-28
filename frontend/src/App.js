@@ -51,6 +51,7 @@ import CourseList from "./components/CourseList";
 import CourseDetail from "./components/CourseDetail";
 import ForumList from "./components/ForumList";
 import ForumDetail from "./components/ForumDetail";
+import ForumForm from "./components/ForumForm";
 import WorkshopList from "./components/WorkshopList";
 import NewsList from "./components/NewsList";
 import MentorshipProgram from "./components/MentorshipProgram";
@@ -357,6 +358,22 @@ function App() {
               <Route path="/courses" element={<CourseList />} />
               <Route path="/courses/:id" element={<CourseDetail />} />
               <Route path="/forums" element={<ForumList />} />
+              <Route
+                path="/forums/new"
+                element={
+                  <ProtectedRoute>
+                    <ForumForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/forums/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <ForumForm />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/forums/:id" element={<ForumDetail />} />
               <Route path="/workshops" element={<WorkshopList />} />
               <Route path="/news" element={<NewsList />} />
