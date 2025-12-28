@@ -1,40 +1,47 @@
 .auth-container {
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh - 70px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
-  background: linear-gradient(135deg, #f5f1eb 0%, #e8e0d6 100%);
+  padding: 3rem 1.5rem;
+  background: #f5f1eb;
 }
 
-.auth-card {
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 2.5rem;
+.auth-wrapper {
   width: 100%;
-  max-width: 500px;
-}
-
-.signup-card {
-  max-width: 700px;
+  max-width: 420px;
+  background: #ffffff;
+  padding: 3rem 2.5rem;
+  border: 1px solid #e8e0d6;
 }
 
 .auth-header {
+  margin-bottom: 2.5rem;
   text-align: center;
-  margin-bottom: 2rem;
 }
 
-.auth-header h2 {
-  color: #2c1810;
-  font-size: 2rem;
+.auth-header h1 {
+  font-size: 1.875rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  color: #2c1810;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
 }
 
 .auth-header p {
+  font-size: 0.9375rem;
   color: #5a4a3a;
-  font-size: 1rem;
+  margin: 0;
+}
+
+.auth-error {
+  background: #fff5f5;
+  color: #c53030;
+  padding: 0.875rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  border: 1px solid #fed7d7;
 }
 
 .auth-form {
@@ -43,38 +50,48 @@
   gap: 1.5rem;
 }
 
-.form-group {
+.form-field {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.form-group label {
-  color: #2c1810;
+.form-field label {
+  font-size: 0.875rem;
   font-weight: 500;
-  font-size: 0.95rem;
-}
-
-.form-group input,
-.form-group select {
-  padding: 0.75rem;
-  border: 1px solid #d4a574;
-  border-radius: 4px;
-  font-size: 1rem;
   color: #2c1810;
-  background-color: #ffffff;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  letter-spacing: 0.01em;
 }
 
-.form-group input:focus,
-.form-group select:focus {
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e8e0d6;
+  border-radius: 4px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: #2c1810;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
   outline: none;
   border-color: #8b4513;
-  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.08);
 }
 
-.form-group input::placeholder {
-  color: #9a8a7a;
+.form-field input::placeholder {
+  color: #9ca3af;
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 100px;
 }
 
 .form-row {
@@ -84,8 +101,8 @@
 }
 
 .checkbox-group {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
   margin-top: 0.5rem;
 }
@@ -93,17 +110,20 @@
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   cursor: pointer;
-  font-weight: 400;
-  color: #2c1810;
+  font-size: 0.9375rem;
+  color: #5a4a3a;
 }
 
 .checkbox-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  width: auto;
+  margin: 0;
   cursor: pointer;
-  accent-color: #8b4513;
+}
+
+.checkbox-label span {
+  flex: 1;
 }
 
 .btn-block {
@@ -111,59 +131,61 @@
   margin-top: 0.5rem;
 }
 
-.error-message {
-  background-color: #fee;
-  color: #c33;
-  padding: 0.75rem 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-  border-left: 4px solid #c33;
-  font-size: 0.9rem;
-}
-
 .auth-footer {
+  margin-top: 2rem;
   text-align: center;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  padding-top: 2rem;
   border-top: 1px solid #e8e0d6;
 }
 
 .auth-footer p {
+  font-size: 0.875rem;
   color: #5a4a3a;
-  font-size: 0.95rem;
+  margin: 0;
 }
 
 .auth-footer a {
   color: #8b4513;
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.3s ease;
+  transition: color 0.2s ease;
 }
 
 .auth-footer a:hover {
   color: #6b3410;
-  text-decoration: underline;
+}
+
+.signup-card {
+  max-width: 680px;
+  padding: 3.5rem 3rem;
+}
+
+.signup-card .auth-form {
+  gap: 1.75rem;
+}
+
+.signup-card .form-field {
+  gap: 0.625rem;
 }
 
 @media (max-width: 768px) {
-  .auth-card {
-    padding: 2rem 1.5rem;
+  .auth-container {
+    padding: 2rem 1rem;
+  }
+
+  .auth-wrapper {
+    padding: 2.5rem 2rem;
   }
 
   .signup-card {
-    max-width: 100%;
+    padding: 2.5rem 2rem;
   }
 
   .form-row {
     grid-template-columns: 1fr;
   }
 
-  .checkbox-group {
-    grid-template-columns: 1fr;
-  }
-
-  .auth-header h2 {
-    font-size: 1.75rem;
+  .auth-header h1 {
+    font-size: 1.625rem;
   }
 }
-

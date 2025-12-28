@@ -76,7 +76,6 @@ const Cart = () => {
     }
   };
 
-  // Group items by supplier
   const itemsBySupplier = {};
   if (cart && cart.items) {
     cart.items.forEach((item) => {
@@ -104,7 +103,6 @@ const Cart = () => {
       <div className="cart-container">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Loading cart...</p>
         </div>
       </div>
     );
@@ -114,10 +112,10 @@ const Cart = () => {
     <div className="cart-container">
       <div className="container">
         <div className="cart-header">
-          <h1>Shopping Cart</h1>
+          <h1>Cart</h1>
           {cart && cart.items.length > 0 && (
-            <button onClick={clearCart} className="btn btn-secondary">
-              Clear Cart
+            <button onClick={clearCart} className="btn btn-text">
+              Clear cart
             </button>
           )}
         </div>
@@ -127,27 +125,24 @@ const Cart = () => {
         {!cart || cart.items.length === 0 ? (
           <div className="empty-cart">
             <p>Your cart is empty</p>
-            <Link to="/supplies" className="btn btn-primary">
-              Browse Supplies
-            </Link>
-            <Link to="/fabrics" className="btn btn-primary">
-              Browse Fabrics
-            </Link>
+            <div className="empty-cart-actions">
+              <Link to="/supplies" className="btn btn-primary">
+                Browse supplies
+              </Link>
+              <Link to="/fabrics" className="btn btn-secondary">
+                Browse fabrics
+              </Link>
+            </div>
           </div>
         ) : (
-          <div className="cart-content">
+          <div className="cart-layout">
             <div className="cart-items-section">
               {Object.entries(itemsBySupplier).map(([supplierId, group]) => (
                 <div key={supplierId} className="supplier-group">
                   <div className="supplier-header">
-                    <h2>
-                      {group.supplier?.businessName || group.supplier?.name || "Supplier"}
-                    </h2>
-                    <Link
-                      to={`/suppliers/${supplierId}`}
-                      className="supplier-link"
-                    >
-                      View Supplier
+                    <h2>{group.supplier?.businessName || group.supplier?.name || "Supplier"}</h2>
+                    <Link to={`/suppliers/${supplierId}`} className="supplier-link">
+                      View supplier
                     </Link>
                   </div>
 
@@ -156,10 +151,7 @@ const Cart = () => {
                       <div key={item._id} className="cart-item">
                         <div className="item-image">
                           {item.product?.images && item.product.images.length > 0 ? (
-                            <img
-                              src={item.product.images[0]}
-                              alt={item.product.name}
-                            />
+                            <img src={item.product.images[0]} alt={item.product.name} />
                           ) : (
                             <div className="item-placeholder">
                               {item.product?.name?.charAt(0).toUpperCase() || "P"}
@@ -167,101 +159,107 @@ const Cart = () => {
                           )}
                         </div>
 
-                        <div className="item-details">
-                          <h3>
-                            <Link
-                              to={
-                                item.productType === "fabric"
-                                  ? `/fabrics/${item.product._id}`
-                                  : `/supplies/${item.product._id}`
-                              }
-                            >
-                              {item.product?.name || "Product"}
-                            </Link>
-                          </h3>
-                          <p className="item-type">
-                            {item.productType === "fabric" ? "Fabric" : "Supply"}
-                            {item.product?.fabricType && ` - ${item.product.fabricType}`}
-                            {item.product?.category && ` - ${item.product.category}`}
-                          </p>
-                          <p className="item-price">
-                            PKR {item.price?.toLocaleString()}/{item.unit}
-                          </p>
-                        </div>
+                        <div className="item-main">
+                          <div className="item-info">
+                            <h3>
+                              <Link
+                                to={
+                                  item.productType === "fabric"
+                                    ? `/fabrics/${item.product._id}`
+                                    : `/supplies/${item.product._id}`
+                                }
+                              >
+                                {item.product?.name || "Product"}
+                              </Link>
+                            </h3>
+                            <p className="item-meta">
+                              {item.productType === "fabric" ? "Fabric" : "Supply"}
+                              {item.product?.fabricType && ` - ${item.product.fabricType}`}
+                              {item.product?.category && ` - ${item.product.category}`}
+                            </p>
+                            <p className="item-price">
+                              PKR {item.price?.toLocaleString()}/{item.unit}
+                            </p>
+                          </div>
 
-                        <div className="item-quantity">
-                          <label>Quantity:</label>
-                          <div className="quantity-controls">
+                          <div className="item-controls">
+                            <div className="quantity-control">
+                              <label>Quantity</label>
+                              <div className="quantity-buttons">
+                                <button
+                                  onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                                  className="quantity-btn"
+                                  disabled={updating}
+                                >
+                                  −
+                                </button>
+                                <span className="quantity-value">{item.quantity}</span>
+                                <button
+                                  onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                                  className="quantity-btn"
+                                  disabled={updating}
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="item-subtotal">
+                              <span className="subtotal-label">Subtotal</span>
+                              <span className="subtotal-value">
+                                PKR {(item.price * item.quantity).toLocaleString()}
+                              </span>
+                            </div>
+
                             <button
-                              onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                              className="btn-quantity"
+                              onClick={() => removeItem(item._id)}
+                              className="btn-remove"
                               disabled={updating}
                             >
-                              -
-                            </button>
-                            <span className="quantity-value">{item.quantity}</span>
-                            <button
-                              onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                              className="btn-quantity"
-                              disabled={updating}
-                            >
-                              +
+                              Remove
                             </button>
                           </div>
                         </div>
-
-                        <div className="item-subtotal">
-                          <span className="subtotal-label">Subtotal:</span>
-                          <span className="subtotal-value">
-                            PKR {(item.price * item.quantity).toLocaleString()}
-                          </span>
-                        </div>
-
-                        <button
-                          onClick={() => removeItem(item._id)}
-                          className="btn-remove"
-                          disabled={updating}
-                        >
-                          Remove
-                        </button>
                       </div>
                     ))}
                   </div>
 
-                  <div className="supplier-total">
-                    <span>Subtotal for this supplier:</span>
-                    <span className="total-amount">PKR {group.total.toLocaleString()}</span>
+                  <div className="supplier-footer">
+                    <div className="supplier-total">
+                      <span>Subtotal</span>
+                      <span className="total-amount">PKR {group.total.toLocaleString()}</span>
+                    </div>
+                    <Link
+                      to={`/checkout?supplier=${supplierId}`}
+                      className="btn btn-primary"
+                    >
+                      Checkout from {group.supplier?.businessName || group.supplier?.name}
+                    </Link>
                   </div>
-
-                  <Link
-                    to={`/checkout?supplier=${supplierId}`}
-                    className="btn btn-primary btn-checkout"
-                  >
-                    Checkout from {group.supplier?.businessName || group.supplier?.name}
-                  </Link>
                 </div>
               ))}
             </div>
 
             <div className="cart-summary">
-              <h2>Order Summary</h2>
+              <h2>Summary</h2>
               <div className="summary-row">
-                <span>Total Items:</span>
+                <span>Items</span>
                 <span>{cart.items.length}</span>
               </div>
               <div className="summary-row">
-                <span>Suppliers:</span>
+                <span>Suppliers</span>
                 <span>{Object.keys(itemsBySupplier).length}</span>
               </div>
-              <div className="summary-row total">
-                <span>Grand Total:</span>
+              <div className="summary-divider"></div>
+              <div className="summary-row summary-total">
+                <span>Total</span>
                 <span>PKR {grandTotal.toLocaleString()}</span>
               </div>
               <Link to="/checkout" className="btn btn-primary btn-block">
-                Checkout All
+                Checkout all
               </Link>
-              <Link to="/supplies" className="btn btn-secondary btn-block">
-                Continue Shopping
+              <Link to="/supplies" className="btn btn-text btn-block">
+                Continue shopping
               </Link>
             </div>
           </div>
@@ -272,4 +270,3 @@ const Cart = () => {
 };
 
 export default Cart;
-

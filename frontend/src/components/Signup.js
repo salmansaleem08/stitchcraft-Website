@@ -1,7 +1,6 @@
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import "../App.css";
 import "./Auth.css";
 
 const Signup = () => {
@@ -16,10 +15,8 @@ const Signup = () => {
     city: "",
     province: "",
     postalCode: "",
-    // Tailor fields
     specialization: [],
     experience: "",
-    // Supplier fields
     businessName: "",
     businessType: "",
     businessDescription: "",
@@ -68,7 +65,6 @@ const Signup = () => {
     setError("");
     setLoading(true);
 
-    // Validation
     if (!formData.name || !formData.email || !formData.password || !formData.role) {
       setError("Please fill in all required fields");
       setLoading(false);
@@ -87,7 +83,6 @@ const Signup = () => {
       return;
     }
 
-    // Prepare user data
     const userData = {
       name: formData.name,
       email: formData.email,
@@ -102,7 +97,6 @@ const Signup = () => {
       },
     };
 
-    // Add role-specific fields
     if (formData.role === "tailor") {
       userData.specialization = formData.specialization;
       userData.experience = formData.experience ? parseInt(formData.experience) : 0;
@@ -141,54 +135,58 @@ const Signup = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-card signup-card">
+      <div className="auth-wrapper signup-card">
         <div className="auth-header">
-          <h2>Create Account</h2>
-          <p>Join StitchCraft and start your journey</p>
+          <h1>Create account</h1>
+          <p>Join StitchCraft to get started</p>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className="auth-error">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="name">Full Name *</label>
+          <div className="form-field">
+            <label htmlFor="name">Full name *</label>
             <input
               type="text"
               id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="Enter your full name"
+              placeholder="Your full name"
               required
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email Address *</label>
+          <div className="form-field">
+            <label htmlFor="email">Email *</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Enter your email"
+              placeholder="your@email.com"
               required
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="phone">Phone Number</label>
+          <div className="form-field">
+            <label htmlFor="phone">Phone number</label>
             <input
               type="tel"
               id="phone"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="Enter your phone number"
+              placeholder="Optional"
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-field">
             <label htmlFor="role">I am a *</label>
             <select
               id="role"
@@ -198,16 +196,16 @@ const Signup = () => {
               required
             >
               <option value="">Select your role</option>
-              <option value="customer">Customer (Service Seeker)</option>
-              <option value="tailor">Tailor (Service Provider)</option>
-              <option value="supplier">Supplier (Raw Material Seller)</option>
+              <option value="customer">Customer</option>
+              <option value="tailor">Tailor</option>
+              <option value="supplier">Supplier</option>
             </select>
           </div>
 
           {formData.role === "tailor" && (
             <>
-              <div className="form-group">
-                <label>Specialization (Select all that apply)</label>
+              <div className="form-field">
+                <label>Specialization</label>
                 <div className="checkbox-group">
                   {specializations.map((spec) => (
                     <label key={spec} className="checkbox-label">
@@ -224,15 +222,15 @@ const Signup = () => {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="experience">Years of Experience</label>
+              <div className="form-field">
+                <label htmlFor="experience">Years of experience</label>
                 <input
                   type="number"
                   id="experience"
                   name="experience"
                   value={formData.experience}
                   onChange={handleChange}
-                  placeholder="Enter years of experience"
+                  placeholder="0"
                   min="0"
                 />
               </div>
@@ -241,21 +239,21 @@ const Signup = () => {
 
           {formData.role === "supplier" && (
             <>
-              <div className="form-group">
-                <label htmlFor="businessName">Business Name *</label>
+              <div className="form-field">
+                <label htmlFor="businessName">Business name *</label>
                 <input
                   type="text"
                   id="businessName"
                   name="businessName"
                   value={formData.businessName}
                   onChange={handleChange}
-                  placeholder="Enter your business name"
+                  placeholder="Your business name"
                   required
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="businessType">Business Type *</label>
+              <div className="form-field">
+                <label htmlFor="businessType">Business type *</label>
                 <select
                   id="businessType"
                   name="businessType"
@@ -263,7 +261,7 @@ const Signup = () => {
                   onChange={handleChange}
                   required
                 >
-                  <option value="">Select business type</option>
+                  <option value="">Select type</option>
                   <option value="fabric">Fabric</option>
                   <option value="supplies">Supplies</option>
                   <option value="equipment">Equipment</option>
@@ -271,32 +269,32 @@ const Signup = () => {
                 </select>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="businessDescription">Business Description</label>
+              <div className="form-field">
+                <label htmlFor="businessDescription">Business description</label>
                 <textarea
                   id="businessDescription"
                   name="businessDescription"
                   value={formData.businessDescription}
                   onChange={handleChange}
-                  placeholder="Describe your business and products..."
+                  placeholder="Describe your business..."
                   rows="3"
                 />
               </div>
 
               <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="businessRegistrationNumber">Business Registration Number</label>
+                <div className="form-field">
+                  <label htmlFor="businessRegistrationNumber">Registration number</label>
                   <input
                     type="text"
                     id="businessRegistrationNumber"
                     name="businessRegistrationNumber"
                     value={formData.businessRegistrationNumber}
                     onChange={handleChange}
-                    placeholder="Registration number"
+                    placeholder="Optional"
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="form-field">
                   <label htmlFor="taxId">Tax ID</label>
                   <input
                     type="text"
@@ -304,13 +302,13 @@ const Signup = () => {
                     name="taxId"
                     value={formData.taxId}
                     onChange={handleChange}
-                    placeholder="Tax identification number"
+                    placeholder="Optional"
                   />
                 </div>
               </div>
 
               <div className="form-row">
-                <div className="form-group">
+                <div className="form-field">
                   <label htmlFor="cnic">CNIC</label>
                   <input
                     type="text"
@@ -318,26 +316,26 @@ const Signup = () => {
                     name="cnic"
                     value={formData.cnic}
                     onChange={handleChange}
-                    placeholder="CNIC number"
+                    placeholder="Optional"
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="yearsInBusiness">Years in Business</label>
+                <div className="form-field">
+                  <label htmlFor="yearsInBusiness">Years in business</label>
                   <input
                     type="number"
                     id="yearsInBusiness"
                     name="yearsInBusiness"
                     value={formData.yearsInBusiness}
                     onChange={handleChange}
-                    placeholder="Years"
+                    placeholder="0"
                     min="0"
                   />
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Product Categories (Select all that apply)</label>
+              <div className="form-field">
+                <label>Product categories</label>
                 <div className="checkbox-group">
                   {[
                     "Fabric",
@@ -369,20 +367,20 @@ const Signup = () => {
             </>
           )}
 
-          <div className="form-group">
-            <label htmlFor="street">Street Address</label>
+          <div className="form-field">
+            <label htmlFor="street">Street address</label>
             <input
               type="text"
               id="street"
               name="street"
               value={formData.street}
               onChange={handleChange}
-              placeholder="Enter street address"
+              placeholder="Optional"
             />
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-field">
               <label htmlFor="city">City</label>
               <input
                 type="text"
@@ -390,11 +388,11 @@ const Signup = () => {
                 name="city"
                 value={formData.city}
                 onChange={handleChange}
-                placeholder="City"
+                placeholder="Optional"
               />
             </div>
 
-            <div className="form-group">
+            <div className="form-field">
               <label htmlFor="province">Province</label>
               <input
                 type="text"
@@ -402,24 +400,24 @@ const Signup = () => {
                 name="province"
                 value={formData.province}
                 onChange={handleChange}
-                placeholder="Province"
+                placeholder="Optional"
               />
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="postalCode">Postal Code</label>
+          <div className="form-field">
+            <label htmlFor="postalCode">Postal code</label>
             <input
               type="text"
               id="postalCode"
               name="postalCode"
               value={formData.postalCode}
               onChange={handleChange}
-              placeholder="Postal code"
+              placeholder="Optional"
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-field">
             <label htmlFor="password">Password *</label>
             <input
               type="password"
@@ -427,32 +425,32 @@ const Signup = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Enter password (min. 6 characters)"
+              placeholder="At least 6 characters"
               required
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password *</label>
+          <div className="form-field">
+            <label htmlFor="confirmPassword">Confirm password *</label>
             <input
               type="password"
               id="confirmPassword"
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              placeholder="Confirm your password"
+              placeholder="Re-enter your password"
               required
             />
           </div>
 
           <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-            {loading ? "Creating Account..." : "Create Account"}
+            {loading ? "Creating account..." : "Create account"}
           </button>
         </form>
 
         <div className="auth-footer">
           <p>
-            Already have an account? <Link to="/login">Login here</Link>
+            Already have an account? <Link to="/login">Sign in</Link>
           </p>
         </div>
       </div>
@@ -461,4 +459,3 @@ const Signup = () => {
 };
 
 export default Signup;
-
