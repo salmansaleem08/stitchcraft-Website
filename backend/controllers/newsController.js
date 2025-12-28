@@ -171,3 +171,25 @@ exports.toggleLike = async (req, res) => {
   }
 };
 
+// @desc    Delete news article
+// @route   DELETE /api/news/:id
+// @access  Private (Admin only)
+exports.deleteNews = async (req, res) => {
+  try {
+    const news = await IndustryNews.findById(req.params.id);
+
+    if (!news) {
+      return res.status(404).json({ message: "News article not found" });
+    }
+
+    await news.deleteOne();
+
+    res.json({
+      success: true,
+      message: "News article deleted",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

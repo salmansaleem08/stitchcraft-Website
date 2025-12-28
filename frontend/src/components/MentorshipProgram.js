@@ -11,13 +11,20 @@ const MentorshipProgram = () => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMentor, setSelectedMentor] = useState(null);
+  const [selectedMentorship, setSelectedMentorship] = useState(null);
   const [showRequestForm, setShowRequestForm] = useState(false);
+  const [showMentorshipDetail, setShowMentorshipDetail] = useState(false);
   const [requestData, setRequestData] = useState({ programType: "one_on_one", goals: [] });
+  const [newMessage, setNewMessage] = useState("");
+  const [isRegisteredAsMentor, setIsRegisteredAsMentor] = useState(false);
 
   useEffect(() => {
     fetchMentors();
     fetchVideos();
-    if (user) fetchMentorships();
+    if (user) {
+      fetchMentorships();
+      checkMentorRegistration();
+    }
   }, [user]);
 
   const fetchMentors = async () => {
@@ -49,6 +56,29 @@ const MentorshipProgram = () => {
     }
   };
 
+  const checkMentorRegistration = async () => {
+    if (user?.role === "tailor") {
+      try {
+        const response = await api.get("/mentorships/mentors");
+        const mentors = response.data.data || [];
+        const isMentor = mentors.some(m => m._id === user._id);
+        setIsRegisteredAsMentor(isMentor);
+      } catch (error) {
+        console.error("Error checking mentor registration:", error);
+      }
+    }
+  };
+
+  const handleRegisterAsMentor = async () => {
+    try {
+      await api.post("/mentorships/register-mentor");
+      setIsRegisteredAsMentor(true);
+      fetchMentors();
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to register as mentor");
+    }
+  };
+
   const handleRequestMentorship = async (e) => {
     e.preventDefault();
     try {
@@ -64,6 +94,31 @@ const MentorshipProgram = () => {
     }
   };
 
+  const handleViewMentorship = async (mentorshipId) => {
+    try {
+      const response = await api.get(`/mentorships/${mentorshipId}`);
+      setSelectedMentorship(response.data.data);
+      setShowMentorshipDetail(true);
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to load mentorship details");
+    }
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    try {
+      await api.post(`/mentorships/${selectedMentorship._id}/messages`, {
+        message: newMessage,
+      });
+      setNewMessage("");
+      handleViewMentorship(selectedMentorship._id);
+    } catch (error) {
+      alert(error.response?.data?.message || "Failed to send message");
+    }
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -72,6 +127,11 @@ const MentorshipProgram = () => {
         <div className="page-header">
           <h1>Master Tailor Mentorship Programs</h1>
           <p>Get personalized guidance from experienced master tailors</p>
+          {user && user.role === "tailor" && !isRegisteredAsMentor && (
+            <button onClick={handleRegisterAsMentor} className="btn btn-primary">
+              Register as Mentor
+            </button>
+          )}
         </div>
 
         {videos.length > 0 && (
@@ -108,6 +168,20 @@ const MentorshipProgram = () => {
                     <span>Experience: {mentor.experience} years</span>
                     <span>Rating: {mentor.rating?.toFixed(1) || "N/A"}</span>
                   </div>
+                  {user && user.role === "tailor" && user._id === mentor._id && (
+                    <span className="mentor-badge">You are a mentor</span>
+                  )}
+                  {user && user.role === "tailor" && user._id !== mentor._id && (
+                    <button
+                      onClick={() => {
+                        setSelectedMentor(mentor);
+                        setShowRequestForm(true);
+                      }}
+                      className="btn btn-primary"
+                    >
+                      Request Mentorship
+                    </button>
+                  )}
                   {user && user.role !== "tailor" && (
                     <button
                       onClick={() => {
@@ -147,6 +221,12 @@ const MentorshipProgram = () => {
                         </ul>
                       </div>
                     )}
+                    <button
+                      onClick={() => handleViewMentorship(mentorship._id)}
+                      className="btn btn-secondary"
+                    >
+                      View Details & Messages
+                    </button>
                   </div>
                 ))}
               </div>
@@ -186,6 +266,66 @@ const MentorshipProgram = () => {
                   <button type="submit" className="btn btn-primary">Send Request</button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {showMentorshipDetail && selectedMentorship && (
+          <div className="modal-overlay" onClick={() => { setShowMentorshipDetail(false); setSelectedMentorship(null); }}>
+            <div className="modal-content mentorship-detail-modal" onClick={(e) => e.stopPropagation()}>
+              <h2>Mentorship Details</h2>
+              <div className="mentorship-detail-info">
+                <p><strong>Mentor:</strong> {selectedMentorship.mentor?.name || "Unknown"}</p>
+                <p><strong>Mentee:</strong> {selectedMentorship.mentee?.name || "Unknown"}</p>
+                <p><strong>Status:</strong> <span className={`status-badge status-${selectedMentorship.status}`}>{selectedMentorship.status}</span></p>
+                <p><strong>Program Type:</strong> {selectedMentorship.programType}</p>
+                {selectedMentorship.goals && selectedMentorship.goals.length > 0 && (
+                  <div>
+                    <strong>Goals:</strong>
+                    <ul>
+                      {selectedMentorship.goals.map((goal, idx) => (
+                        <li key={idx}>{goal}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="mentorship-messages">
+                <h3>Messages</h3>
+                <div className="messages-list">
+                  {selectedMentorship.messages && selectedMentorship.messages.length > 0 ? (
+                    selectedMentorship.messages.map((msg, idx) => (
+                      <div key={idx} className={`message-item ${msg.sender?._id === user?._id ? "sent" : "received"}`}>
+                        <div className="message-sender">{msg.sender?.name || "Unknown"}</div>
+                        <div className="message-content">{msg.message}</div>
+                        <div className="message-date">{new Date(msg.createdAt).toLocaleString()}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No messages yet</p>
+                  )}
+                </div>
+                <form onSubmit={handleSendMessage} className="message-form">
+                  <textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type your message..."
+                    rows="3"
+                    required
+                  ></textarea>
+                  <button type="submit" className="btn btn-primary">Send Message</button>
+                </form>
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  onClick={() => { setShowMentorshipDetail(false); setSelectedMentorship(null); }}
+                  className="btn btn-secondary"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

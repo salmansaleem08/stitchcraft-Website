@@ -97,6 +97,14 @@ const AdminDashboard = () => {
             <h3>Video Management</h3>
             <p>Manage YouTube videos for Learning Portal</p>
           </Link>
+          <Link to="/admin/workshops" className="action-card">
+            <h3>Workshop Management</h3>
+            <p>Create and manage skill sharing workshops</p>
+          </Link>
+          <Link to="/admin/news" className="action-card">
+            <h3>News Management</h3>
+            <p>Share industry news and updates</p>
+          </Link>
         </div>
       </div>
     </div>

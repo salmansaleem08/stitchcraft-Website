@@ -42,7 +42,8 @@ exports.getMentorship = async (req, res) => {
   try {
     const mentorship = await Mentorship.findById(req.params.id)
       .populate("mentor", "name email avatar bio specialization portfolio")
-      .populate("mentee", "name email avatar");
+      .populate("mentee", "name email avatar")
+      .populate("messages.sender", "name avatar");
 
     if (!mentorship) {
       return res.status(404).json({ message: "Mentorship not found" });
@@ -193,7 +194,8 @@ exports.getMentors = async (req, res) => {
       role: "tailor",
       isActive: true,
       $or: [
-        { badges: { $in: ["Master Tailor"] } },
+        { "badges.type": "Mentor" },
+        { "badges.type": "Master Tailor" },
         { experience: { $gte: 10 } },
         { rating: { $gte: 4.5 } },
       ],
@@ -208,6 +210,83 @@ exports.getMentors = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add message to mentorship
+// @route   POST /api/mentorships/:id/messages
+// @access  Private
+exports.addMessage = async (req, res) => {
+  try {
+    const { message, attachments } = req.body;
+    const mentorship = await Mentorship.findById(req.params.id);
+
+    if (!mentorship) {
+      return res.status(404).json({ message: "Mentorship not found" });
+    }
+
+    // Check authorization
+    if (
+      mentorship.mentor.toString() !== req.user._id.toString() &&
+      mentorship.mentee.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    mentorship.messages.push({
+      sender: req.user._id,
+      message: message || "",
+      attachments: attachments || [],
+      read: false,
+    });
+
+    await mentorship.save();
+    await mentorship.populate("messages.sender", "name avatar");
+
+    res.json({
+      success: true,
+      data: mentorship.messages[mentorship.messages.length - 1],
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Register as mentor (for tailors)
+// @route   POST /api/mentorships/register-mentor
+// @access  Private (Tailor only)
+exports.registerAsMentor = async (req, res) => {
+  try {
+    if (req.user.role !== "tailor") {
+      return res.status(403).json({ message: "Only tailors can register as mentors" });
+    }
+
+    // Update user to indicate they're available as mentor
+    const user = await User.findById(req.user._id);
+    if (!user.badges) {
+      user.badges = [];
+    }
+    
+    // Check if user already has Mentor badge
+    const hasMentorBadge = user.badges.some(badge => badge.type === "Mentor");
+    
+    if (!hasMentorBadge) {
+      user.badges.push({
+        name: "Mentor",
+        type: "Mentor",
+        earnedAt: new Date(),
+      });
+    }
+    
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Registered as mentor successfully",
+      data: user,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
 

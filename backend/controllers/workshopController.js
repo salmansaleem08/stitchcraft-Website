@@ -210,3 +210,25 @@ exports.cancelRegistration = async (req, res) => {
   }
 };
 
+// @desc    Delete workshop
+// @route   DELETE /api/workshops/:id
+// @access  Private (Admin only)
+exports.deleteWorkshop = async (req, res) => {
+  try {
+    const workshop = await Workshop.findById(req.params.id);
+
+    if (!workshop) {
+      return res.status(404).json({ message: "Workshop not found" });
+    }
+
+    await workshop.deleteOne();
+
+    res.json({
+      success: true,
+      message: "Workshop deleted",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

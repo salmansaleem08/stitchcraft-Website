@@ -117,7 +117,7 @@ const userSchema = mongoose.Schema(
           name: String,
           type: {
             type: String,
-            enum: ["Master Tailor", "Speed Stitching", "Quality Expert", "Customer Favorite"],
+            enum: ["Master Tailor", "Speed Stitching", "Quality Expert", "Customer Favorite", "Mentor"],
           },
           earnedAt: {
             type: Date,

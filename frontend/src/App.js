@@ -56,6 +56,8 @@ import WorkshopList from "./components/WorkshopList";
 import NewsList from "./components/NewsList";
 import MentorshipProgram from "./components/MentorshipProgram";
 import AdminVideoManagement from "./components/AdminVideoManagement";
+import AdminWorkshopManagement from "./components/AdminWorkshopManagement";
+import AdminNewsManagement from "./components/AdminNewsManagement";
 import "./App.css";
 
 function App() {
@@ -265,6 +267,22 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <AdminVideoManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/workshops"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminWorkshopManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/news"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminNewsManagement />
                   </ProtectedRoute>
                 }
               />

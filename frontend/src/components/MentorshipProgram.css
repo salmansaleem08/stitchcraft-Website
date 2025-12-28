@@ -287,6 +287,136 @@
   line-height: 1.5;
 }
 
+.mentor-badge {
+  padding: 0.5rem 1rem;
+  background: #8b4513;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-block;
+  margin-top: 0.5rem;
+}
+
+.mentorship-detail-modal {
+  max-width: 700px;
+  width: 90%;
+}
+
+.mentorship-detail-info {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #e8e0d6;
+}
+
+.mentorship-detail-info p {
+  margin-bottom: 0.5rem;
+  color: #5a4a3a;
+}
+
+.mentorship-detail-info strong {
+  color: #2c1810;
+}
+
+.mentorship-messages {
+  margin-bottom: 2rem;
+}
+
+.mentorship-messages h3 {
+  font-size: 1.2rem;
+  color: #2c1810;
+  margin-bottom: 1rem;
+}
+
+.messages-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f9f7f4;
+  border-radius: 4px;
+}
+
+.message-item {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #ffffff;
+  border-radius: 4px;
+  border-left: 4px solid #e8e0d6;
+}
+
+.message-item.sent {
+  border-left-color: #8b4513;
+  background: #f5f1eb;
+}
+
+.message-sender {
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.message-content {
+  color: #5a4a3a;
+  margin-bottom: 0.5rem;
+  white-space: pre-wrap;
+}
+
+.message-date {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+}
+
+.message-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.message-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e8e0d6;
+  border-radius: 4px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: #8b4513;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #2c1810;
+}
+
+.btn-secondary {
+  background: #e8e0d6;
+  color: #2c1810;
+}
+
+.btn-secondary:hover {
+  background: #d4c4b0;
+}
+
 @media (max-width: 768px) {
   .mentorship-sections {
     grid-template-columns: 1fr;
@@ -298,6 +428,10 @@
 
   .videos-grid {
     grid-template-columns: 1fr;
+  }
+
+  .mentorship-detail-modal {
+    max-width: 95%;
   }
 }
 

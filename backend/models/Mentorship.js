@@ -59,6 +59,34 @@ const mentorshipSchema = new mongoose.Schema(
         createdAt: Date,
       },
     },
+    messages: [
+      {
+        sender: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        message: {
+          type: String,
+          required: true,
+        },
+        attachments: [
+          {
+            url: String,
+            filename: String,
+            fileType: String,
+          },
+        ],
+        read: {
+          type: Boolean,
+          default: false,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
