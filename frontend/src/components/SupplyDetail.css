@@ -125,6 +125,36 @@
   white-space: nowrap;
 }
 
+.sustainability-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: #4caf50;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.sustainability-info {
+  padding: 1.5rem;
+  background: #e8f5e9;
+  border-radius: 8px;
+  border-left: 4px solid #4caf50;
+  margin: 1.5rem 0;
+}
+
+.sustainability-info h3 {
+  font-size: 1.2rem;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+}
+
+.sustainability-info p {
+  color: #5a4a3a;
+  line-height: 1.6;
+}
+
 .supplier-info {
   display: flex;
   flex-direction: column;

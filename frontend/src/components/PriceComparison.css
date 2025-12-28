@@ -1,0 +1,257 @@
+.price-comparison-container {
+  min-height: calc(100vh - 80px);
+  padding: 2rem 0;
+  background: linear-gradient(135deg, #f5f1eb 0%, #e8e0d6 100%);
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+}
+
+.page-header p {
+  color: #5a4a3a;
+  font-size: 1.1rem;
+}
+
+.comparison-filters {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #e8e0d6;
+  background: #ffffff;
+  color: #5a4a3a;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+  background: #8b4513;
+  color: #ffffff;
+  border-color: #8b4513;
+}
+
+.filter-form {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.filter-form select,
+.filter-form input {
+  padding: 0.75rem;
+  border: 2px solid #e8e0d6;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.filter-form input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.comparisons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.comparison-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.comparison-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e8e0d6;
+}
+
+.comparison-header h3 {
+  font-size: 1.5rem;
+  color: #2c1810;
+  margin: 0;
+}
+
+.comparison-stats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.stat-item {
+  padding: 0.5rem 1rem;
+  background: #f9f7f4;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #5a4a3a;
+}
+
+.stat-item.savings {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.suppliers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.supplier-card {
+  background: #f9f7f4;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 2px solid #e8e0d6;
+  transition: all 0.3s ease;
+}
+
+.supplier-card:hover {
+  border-color: #8b4513;
+  box-shadow: 0 4px 15px rgba(139, 69, 19, 0.1);
+}
+
+.supplier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.product-link {
+  text-decoration: none;
+  color: #2c1810;
+}
+
+.product-link h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.product-link:hover {
+  color: #8b4513;
+}
+
+.verified-badge {
+  padding: 0.25rem 0.75rem;
+  background: #8b4513;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.supplier-info {
+  margin-bottom: 1rem;
+}
+
+.supplier-name {
+  display: block;
+  color: #5a4a3a;
+  text-decoration: none;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.supplier-name:hover {
+  color: #8b4513;
+}
+
+.quality-rating {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+}
+
+.price-section {
+  margin-bottom: 1rem;
+}
+
+.price-main {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c1810;
+  margin-bottom: 0.25rem;
+}
+
+.price-unit {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+}
+
+.stock-info {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+  margin-top: 0.5rem;
+}
+
+.product-rating {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+  margin-bottom: 0.5rem;
+}
+
+.location {
+  font-size: 0.85rem;
+  color: #5a4a3a;
+}
+
+.no-comparisons {
+  text-align: center;
+  padding: 3rem;
+  background: #ffffff;
+  border-radius: 8px;
+  color: #5a4a3a;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: #8b4513;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #2c1810;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 3rem;
+  color: #5a4a3a;
+}
+

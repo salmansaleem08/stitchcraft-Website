@@ -58,6 +58,11 @@ import MentorshipProgram from "./components/MentorshipProgram";
 import AdminVideoManagement from "./components/AdminVideoManagement";
 import AdminWorkshopManagement from "./components/AdminWorkshopManagement";
 import AdminNewsManagement from "./components/AdminNewsManagement";
+import PriceComparison from "./components/PriceComparison";
+import EquipmentMarketplace from "./components/EquipmentMarketplace";
+import EquipmentDetail from "./components/EquipmentDetail";
+import EquipmentForm from "./components/EquipmentForm";
+import MaintenanceBooking from "./components/MaintenanceBooking";
 import "./App.css";
 
 function App() {
@@ -397,6 +402,12 @@ function App() {
               <Route path="/news" element={<NewsList />} />
               <Route path="/news/:id" element={<NewsList />} />
               <Route path="/mentorships" element={<MentorshipProgram />} />
+              <Route path="/price-comparison" element={<PriceComparison />} />
+              <Route path="/equipment" element={<EquipmentMarketplace />} />
+              <Route path="/equipment/new" element={<ProtectedRoute><EquipmentForm /></ProtectedRoute>} />
+              <Route path="/equipment/:id" element={<EquipmentDetail />} />
+              <Route path="/equipment/:id/edit" element={<ProtectedRoute><EquipmentForm /></ProtectedRoute>} />
+              <Route path="/maintenance" element={<ProtectedRoute><MaintenanceBooking /></ProtectedRoute>} />
             </Routes>
           </main>
         </div>

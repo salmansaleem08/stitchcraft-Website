@@ -9,6 +9,7 @@ const InventoryManagement = () => {
   const [summary, setSummary] = useState(null);
   const [lowStockFabrics, setLowStockFabrics] = useState([]);
   const [lowStockSupplies, setLowStockSupplies] = useState([]);
+  const [wasteAnalytics, setWasteAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("summary");
@@ -23,9 +24,10 @@ const InventoryManagement = () => {
   const fetchInventoryData = async () => {
     try {
       setLoading(true);
-      const [summaryRes, lowStockRes] = await Promise.all([
+      const [summaryRes, lowStockRes, wasteRes] = await Promise.all([
         api.get("/inventory/summary"),
         api.get("/inventory/low-stock?threshold=10"),
+        api.get("/inventory/waste-analytics").catch(() => ({ data: { data: null } })),
       ]);
       setSummary(summaryRes.data.data);
       if (lowStockRes.data.fabrics && lowStockRes.data.supplies) {
@@ -35,6 +37,7 @@ const InventoryManagement = () => {
         setLowStockFabrics(lowStockRes.data.data || []);
         setLowStockSupplies([]);
       }
+      setWasteAnalytics(wasteRes.data.data);
       setError("");
     } catch (error) {
       setError("Failed to load inventory data");
@@ -83,7 +86,13 @@ const InventoryManagement = () => {
             className={`tab-btn ${activeTab === "low-stock" ? "active" : ""}`}
             onClick={() => setActiveTab("low-stock")}
           >
-            Low Stock ({lowStockFabrics.length})
+            Low Stock ({lowStockFabrics.length + lowStockSupplies.length})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "waste" ? "active" : ""}`}
+            onClick={() => setActiveTab("waste")}
+          >
+            Waste Analytics
           </button>
         </div>
 
@@ -208,6 +217,99 @@ const InventoryManagement = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "waste" && wasteAnalytics && (
+          <div className="waste-analytics-section">
+            <div className="waste-summary">
+              <h2>Waste Summary</h2>
+              <div className="waste-cards">
+                <div className="waste-card">
+                  <div className="waste-value">{wasteAnalytics.summary.totalFabricWaste.toFixed(2)}</div>
+                  <div className="waste-label">Fabric Waste (meters)</div>
+                  <div className="waste-percentage">{wasteAnalytics.summary.fabricWastePercentage}%</div>
+                </div>
+                <div className="waste-card">
+                  <div className="waste-value">{wasteAnalytics.summary.totalSupplyWaste.toFixed(2)}</div>
+                  <div className="waste-label">Supply Waste (units)</div>
+                  <div className="waste-percentage">{wasteAnalytics.summary.supplyWastePercentage}%</div>
+                </div>
+                <div className="waste-card">
+                  <div className="waste-value">
+                    PKR {wasteAnalytics.summary.estimatedWasteCost.toLocaleString()}
+                  </div>
+                  <div className="waste-label">Estimated Waste Cost</div>
+                </div>
+              </div>
+            </div>
+
+            {wasteAnalytics.topWastefulItems.fabrics.length > 0 && (
+              <div className="wasteful-items">
+                <h3>Top Wasteful Fabrics</h3>
+                <div className="wasteful-list">
+                  {wasteAnalytics.topWastefulItems.fabrics.map((item) => (
+                    <div key={item.id} className="wasteful-item">
+                      <div className="item-details">
+                        <h4>{item.name}</h4>
+                        <p>{item.fabricType}</p>
+                        <div className="waste-stats">
+                          <span>Waste: {item.waste} meters ({item.wastePercentage.toFixed(2)}%)</span>
+                          <span>Stock: {item.stockQuantity} meters</span>
+                        </div>
+                      </div>
+                      <Link to={`/fabrics/${item.id}/edit`} className="btn btn-secondary btn-small">
+                        Review
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {wasteAnalytics.topWastefulItems.supplies.length > 0 && (
+              <div className="wasteful-items">
+                <h3>Top Wasteful Supplies</h3>
+                <div className="wasteful-list">
+                  {wasteAnalytics.topWastefulItems.supplies.map((item) => (
+                    <div key={item.id} className="wasteful-item">
+                      <div className="item-details">
+                        <h4>{item.name}</h4>
+                        <p>{item.category}</p>
+                        <div className="waste-stats">
+                          <span>Waste: {item.waste} units ({item.wastePercentage.toFixed(2)}%)</span>
+                          <span>Stock: {item.stockQuantity} units</span>
+                        </div>
+                      </div>
+                      <Link to={`/supplies/${item.id}/edit`} className="btn btn-secondary btn-small">
+                        Review
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {wasteAnalytics.recommendations && wasteAnalytics.recommendations.length > 0 && (
+              <div className="waste-recommendations">
+                <h3>Waste Reduction Recommendations</h3>
+                <div className="recommendations-list">
+                  {wasteAnalytics.recommendations.map((rec, idx) => (
+                    <div key={idx} className={`recommendation-card priority-${rec.priority.toLowerCase()}`}>
+                      <div className="recommendation-header">
+                        <span className={`priority-badge priority-${rec.priority.toLowerCase()}`}>
+                          {rec.priority}
+                        </span>
+                        <span className="recommendation-category">{rec.category}</span>
+                      </div>
+                      <h4>{rec.issue}</h4>
+                      <p className="recommendation-text">{rec.recommendation}</p>
+                      <p className="recommendation-action">{rec.action}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

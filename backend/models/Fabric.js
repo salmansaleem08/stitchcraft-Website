@@ -166,6 +166,18 @@ const fabricSchema = mongoose.Schema(
       ],
       default: [],
     },
+    sustainability: {
+      isSustainable: { type: Boolean, default: false },
+      certification: { type: String, enum: ["Organic", "Fair Trade", "Recycled", "Eco-Friendly", "Other"], default: null },
+      carbonFootprint: { type: Number, default: null }, // kg CO2 per meter
+      waterUsage: { type: Number, default: null }, // liters per meter
+      sustainableDescription: { type: String, maxlength: 500 },
+    },
+    wasteTracking: {
+      totalWaste: { type: Number, default: 0 }, // in meters
+      wastePercentage: { type: Number, default: 0, min: 0, max: 100 }, // percentage of total stock
+      lastWasteUpdate: { type: Date },
+    },
   },
   {
     timestamps: true,

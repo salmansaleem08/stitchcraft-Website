@@ -68,6 +68,12 @@ const Navigation = () => {
           <Link to="/supplies" className="nav-link">
             Supplies
           </Link>
+          <Link to="/price-comparison" className="nav-link">
+            Price Comparison
+          </Link>
+          <Link to="/equipment" className="nav-link">
+            Equipment
+          </Link>
           <Link to="/patterns" className="nav-link">
             Patterns
           </Link>

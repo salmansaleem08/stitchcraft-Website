@@ -174,7 +174,32 @@ const FabricDetail = () => {
                   <span className="spec-value">{fabric.origin}</span>
                 </div>
               )}
+              {fabric.sustainability?.isSustainable && (
+                <div className="spec-item sustainable">
+                  <span className="spec-label">Sustainability:</span>
+                  <span className="spec-value">
+                    {fabric.sustainability.certification || "Eco-Friendly"}
+                    {fabric.sustainability.carbonFootprint && (
+                      <span className="sustainability-detail">
+                        {" "}• Carbon: {fabric.sustainability.carbonFootprint} kg CO2/m
+                      </span>
+                    )}
+                    {fabric.sustainability.waterUsage && (
+                      <span className="sustainability-detail">
+                        {" "}• Water: {fabric.sustainability.waterUsage} L/m
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {fabric.sustainability?.isSustainable && fabric.sustainability.sustainableDescription && (
+              <div className="sustainability-info">
+                <h3>Sustainable Sourcing</h3>
+                <p>{fabric.sustainability.sustainableDescription}</p>
+              </div>
+            )}
 
             {fabric.season && fabric.season.length > 0 && (
               <div className="fabric-tags">

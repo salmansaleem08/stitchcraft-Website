@@ -126,6 +126,11 @@ const SupplyDetail = () => {
               <p className="price-unit">Per {supply.unit || "piece"}</p>
             </div>
 
+            {supply.sustainability?.isSustainable && (
+              <div className="sustainability-badge">
+                Sustainable: {supply.sustainability.certification || "Eco-Friendly"}
+              </div>
+            )}
             <div className="supply-specs">
               <div className="spec-item">
                 <span className="spec-label">Category:</span>

@@ -119,6 +119,16 @@ const supplySchema = mongoose.Schema(
       ],
       default: [],
     },
+    sustainability: {
+      isSustainable: { type: Boolean, default: false },
+      certification: { type: String, enum: ["Organic", "Fair Trade", "Recycled", "Eco-Friendly", "Other"], default: null },
+      sustainableDescription: { type: String, maxlength: 500 },
+    },
+    wasteTracking: {
+      totalWaste: { type: Number, default: 0 }, // in units
+      wastePercentage: { type: Number, default: 0, min: 0, max: 100 },
+      lastWasteUpdate: { type: Date },
+    },
   },
   {
     timestamps: true,
