@@ -64,6 +64,7 @@ import EquipmentDetail from "./components/EquipmentDetail";
 import EquipmentForm from "./components/EquipmentForm";
 import MaintenanceBooking from "./components/MaintenanceBooking";
 import VirtualStylist from "./components/VirtualStylist";
+import VirtualTryOn from "./components/VirtualTryOn";
 import "./App.css";
 
 function App() {
@@ -410,6 +411,7 @@ function App() {
               <Route path="/equipment/:id/edit" element={<ProtectedRoute><EquipmentForm /></ProtectedRoute>} />
               <Route path="/maintenance" element={<ProtectedRoute><MaintenanceBooking /></ProtectedRoute>} />
               <Route path="/virtual-stylist" element={<VirtualStylist />} />
+              <Route path="/virtual-tryon" element={<ProtectedRoute><VirtualTryOn /></ProtectedRoute>} />
             </Routes>
           </main>
         </div>

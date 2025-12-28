@@ -86,6 +86,9 @@ const Navigation = () => {
           <Link to="/virtual-stylist" className="nav-link">
             Virtual Stylist
           </Link>
+          <Link to="/virtual-tryon" className="nav-link">
+            Virtual Try-On
+          </Link>
           {user && (user.role === "tailor" || user.role === "supplier") && (
             <>
               <Link to="/patterns/new" className="nav-link">
