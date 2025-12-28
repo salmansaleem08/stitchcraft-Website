@@ -1,4 +1,5 @@
 const upload = require("../utils/upload");
+const { videoUpload } = require("../utils/upload");
 const path = require("path");
 
 // Upload multiple images
@@ -50,6 +51,36 @@ exports.uploadPatternFile = async (req, res) => {
           fileName: req.file.originalname,
           fileSize: req.file.size,
           fileType: req.file.mimetype,
+        },
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Upload video file
+exports.uploadVideo = async (req, res) => {
+  try {
+    const uploadSingle = videoUpload.single("video");
+
+    uploadSingle(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ message: err.message });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No video file uploaded" });
+      }
+
+      res.json({
+        success: true,
+        data: {
+          url: `/uploads/videos/${req.file.filename}`,
+          fileName: req.file.originalname,
+          fileSize: req.file.size,
+          fileType: req.file.mimetype,
+          filename: req.file.filename,
         },
       });
     });

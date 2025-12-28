@@ -10,14 +10,27 @@ const videoSchema = new mongoose.Schema(
     description: {
       type: String,
     },
+    videoType: {
+      type: String,
+      enum: ["youtube", "local"],
+      default: "youtube",
+    },
     youtubeUrl: {
       type: String,
-      required: true,
       trim: true,
     },
     youtubeId: {
       type: String,
-      required: true,
+    },
+    localVideoUrl: {
+      type: String,
+      trim: true,
+    },
+    localVideoFilename: {
+      type: String,
+    },
+    fileSize: {
+      type: Number, // in bytes
     },
     category: {
       type: String,
@@ -63,9 +76,9 @@ const videoSchema = new mongoose.Schema(
   }
 );
 
-// Extract YouTube ID from URL before saving
+// Extract YouTube ID from URL before saving (only for YouTube videos)
 videoSchema.pre("save", function (next) {
-  if (this.youtubeUrl && !this.youtubeId) {
+  if (this.videoType === "youtube" && this.youtubeUrl && !this.youtubeId) {
     const youtubeIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = this.youtubeUrl.match(youtubeIdRegex);
     if (match && match[1]) {
@@ -74,6 +87,11 @@ videoSchema.pre("save", function (next) {
         this.thumbnail = `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg`;
       }
     }
+  }
+  // For local videos, generate thumbnail if not provided
+  if (this.videoType === "local" && this.localVideoUrl && !this.thumbnail) {
+    // Use a default video thumbnail or generate one
+    this.thumbnail = "/uploads/videos/default-thumbnail.jpg";
   }
   next();
 });

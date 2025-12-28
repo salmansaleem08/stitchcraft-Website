@@ -13,10 +13,15 @@ const AdminVideoManagement = () => {
     title: "",
     description: "",
     youtubeUrl: "",
+    videoType: "youtube",
     category: "video_tutorial",
     order: 0,
+    thumbnail: "",
   });
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videoFile, setVideoFile] = useState(null);
+  const [uploadedVideoData, setUploadedVideoData] = useState(null);
 
   useEffect(() => {
     fetchVideos();
@@ -37,28 +42,67 @@ const AdminVideoManagement = () => {
     }
   };
 
+  const handleVideoUpload = async (file) => {
+    try {
+      setUploadingVideo(true);
+      setError("");
+      const formData = new FormData();
+      formData.append("video", file);
+
+      const response = await api.post("/upload/video", formData);
+
+      setUploadedVideoData(response.data.data);
+      setUploadingVideo(false);
+      return response.data.data;
+    } catch (error) {
+      setUploadingVideo(false);
+      setError(error.response?.data?.message || "Failed to upload video");
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setError("");
       setSuccess("");
 
+      let submitData = { ...formData };
+
+      // If local video, upload file first
+      if (formData.videoType === "local") {
+        if (videoFile && !uploadedVideoData) {
+          const uploadResult = await handleVideoUpload(videoFile);
+          submitData.localVideoUrl = uploadResult.url;
+          submitData.localVideoFilename = uploadResult.filename;
+          submitData.fileSize = uploadResult.fileSize;
+        } else if (uploadedVideoData) {
+          submitData.localVideoUrl = uploadedVideoData.url;
+          submitData.localVideoFilename = uploadedVideoData.filename;
+          submitData.fileSize = uploadedVideoData.fileSize;
+        }
+      }
+
       if (editingVideo) {
-        await api.put(`/videos/${editingVideo._id}`, formData);
+        await api.put(`/videos/${editingVideo._id}`, submitData);
         setSuccess("Video updated successfully");
       } else {
-        await api.post("/videos", formData);
+        await api.post("/videos", submitData);
         setSuccess("Video added successfully");
       }
 
       setShowForm(false);
       setEditingVideo(null);
+      setVideoFile(null);
+      setUploadedVideoData(null);
       setFormData({
         title: "",
         description: "",
         youtubeUrl: "",
+        videoType: "youtube",
         category: "video_tutorial",
         order: 0,
+        thumbnail: "",
       });
       fetchVideos();
       setTimeout(() => setSuccess(""), 3000);
@@ -72,10 +116,14 @@ const AdminVideoManagement = () => {
     setFormData({
       title: video.title,
       description: video.description || "",
-      youtubeUrl: video.youtubeUrl,
+      youtubeUrl: video.youtubeUrl || "",
+      videoType: video.videoType || "youtube",
       category: video.category,
       order: video.order || 0,
+      thumbnail: video.thumbnail || "",
     });
+    setVideoFile(null);
+    setUploadedVideoData(null);
     setShowForm(true);
   };
 
@@ -165,9 +213,13 @@ const AdminVideoManagement = () => {
               title: "",
               description: "",
               youtubeUrl: "",
+              videoType: "youtube",
               category: "video_tutorial",
               order: 0,
+              thumbnail: "",
             });
+            setVideoFile(null);
+            setUploadedVideoData(null);
           }}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
@@ -181,15 +233,34 @@ const AdminVideoManagement = () => {
                       title: "",
                       description: "",
                       youtubeUrl: "",
+                      videoType: "youtube",
                       category: "video_tutorial",
                       order: 0,
+                      thumbnail: "",
                     });
+                    setVideoFile(null);
+                    setUploadedVideoData(null);
                   }}
                 >
                   ×
                 </button>
               </div>
               <form onSubmit={handleSubmit} className="video-form">
+                <div className="form-group">
+                  <label>Video Type *</label>
+                  <select
+                    value={formData.videoType}
+                    onChange={(e) => {
+                      setFormData({ ...formData, videoType: e.target.value });
+                      setVideoFile(null);
+                      setUploadedVideoData(null);
+                    }}
+                    required
+                  >
+                    <option value="youtube">YouTube Video</option>
+                    <option value="local">Upload Local Video</option>
+                  </select>
+                </div>
                 <div className="form-group">
                   <label>Title *</label>
                   <input
@@ -209,17 +280,59 @@ const AdminVideoManagement = () => {
                     placeholder="Video description"
                   ></textarea>
                 </div>
-                <div className="form-group">
-                  <label>YouTube URL *</label>
-                  <input
-                    type="url"
-                    value={formData.youtubeUrl}
-                    onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
-                    required
-                    placeholder="https://www.youtube.com/watch?v=..."
-                  />
-                  <small>Paste the full YouTube URL here</small>
-                </div>
+                {formData.videoType === "youtube" ? (
+                  <div className="form-group">
+                    <label>YouTube URL *</label>
+                    <input
+                      type="url"
+                      value={formData.youtubeUrl}
+                      onChange={(e) => setFormData({ ...formData, youtubeUrl: e.target.value })}
+                      required={formData.videoType === "youtube"}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                    />
+                    <small>Paste the full YouTube URL here</small>
+                  </div>
+                ) : (
+                  <>
+                    <div className="form-group">
+                      <label>Upload Video File *</label>
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            setVideoFile(file);
+                            setUploadedVideoData(null);
+                          }
+                        }}
+                        required={formData.videoType === "local" && !uploadedVideoData}
+                      />
+                      <small>Maximum file size: 500MB. Supported formats: MP4, AVI, MOV, etc.</small>
+                      {uploadingVideo && <div className="upload-status">Uploading video...</div>}
+                      {uploadedVideoData && (
+                        <div className="upload-success">
+                          Video uploaded: {uploadedVideoData.fileName} ({(uploadedVideoData.fileSize / 1024 / 1024).toFixed(2)} MB)
+                        </div>
+                      )}
+                      {videoFile && !uploadedVideoData && (
+                        <div className="file-info">
+                          Selected: {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(2)} MB)
+                        </div>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label>Thumbnail Image (Optional)</label>
+                      <input
+                        type="url"
+                        value={formData.thumbnail}
+                        onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+                        placeholder="Thumbnail image URL"
+                      />
+                      <small>URL to a thumbnail image for the video</small>
+                    </div>
+                  </>
+                )}
                 <div className="form-group">
                   <label>Category *</label>
                   <select
@@ -254,9 +367,13 @@ const AdminVideoManagement = () => {
                         title: "",
                         description: "",
                         youtubeUrl: "",
+                        videoType: "youtube",
                         category: "video_tutorial",
                         order: 0,
+                        thumbnail: "",
                       });
+                      setVideoFile(null);
+                      setUploadedVideoData(null);
                     }}
                     className="btn btn-secondary"
                   >
@@ -278,6 +395,7 @@ const AdminVideoManagement = () => {
                 <tr>
                   <th>Thumbnail</th>
                   <th>Title</th>
+                  <th>Type</th>
                   <th>Category</th>
                   <th>Order</th>
                   <th>Views</th>
@@ -300,6 +418,11 @@ const AdminVideoManagement = () => {
                           <small>{video.description.substring(0, 50)}...</small>
                         )}
                       </div>
+                    </td>
+                    <td>
+                      <span className={`video-type-badge ${video.videoType === "youtube" ? "youtube" : "local"}`}>
+                        {video.videoType === "youtube" ? "YouTube" : "Local"}
+                      </span>
                     </td>
                     <td>
                       <span className="category-badge">

@@ -57,30 +57,45 @@ exports.getVideo = async (req, res) => {
 // @access  Private (Admin only)
 exports.createVideo = async (req, res) => {
   try {
-    const { title, description, youtubeUrl, category, order } = req.body;
+    const { title, description, youtubeUrl, localVideoUrl, localVideoFilename, fileSize, category, order, videoType, thumbnail } = req.body;
 
-    // Extract YouTube ID
-    const youtubeIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-    const match = youtubeUrl.match(youtubeIdRegex);
-
-    if (!match || !match[1]) {
-      return res.status(400).json({ message: "Invalid YouTube URL" });
-    }
-
-    const youtubeId = match[1];
-    const thumbnail = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
-
-    const video = new Video({
+    let videoData = {
       title,
       description,
-      youtubeUrl,
-      youtubeId,
       category,
-      thumbnail,
       order: order || 0,
       addedBy: req.user._id,
-    });
+      videoType: videoType || "youtube",
+    };
 
+    if (videoType === "local") {
+      // Local video upload
+      if (!localVideoUrl) {
+        return res.status(400).json({ message: "Local video URL is required" });
+      }
+      videoData.localVideoUrl = localVideoUrl;
+      videoData.localVideoFilename = localVideoFilename;
+      videoData.fileSize = fileSize;
+      videoData.thumbnail = thumbnail || "/uploads/videos/default-thumbnail.jpg";
+    } else {
+      // YouTube video
+      if (!youtubeUrl) {
+        return res.status(400).json({ message: "YouTube URL is required" });
+      }
+      
+      const youtubeIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      const match = youtubeUrl.match(youtubeIdRegex);
+
+      if (!match || !match[1]) {
+        return res.status(400).json({ message: "Invalid YouTube URL" });
+      }
+
+      videoData.youtubeUrl = youtubeUrl;
+      videoData.youtubeId = match[1];
+      videoData.thumbnail = `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg`;
+    }
+
+    const video = new Video(videoData);
     await video.save();
     await video.populate("addedBy", "name");
 
@@ -104,17 +119,27 @@ exports.updateVideo = async (req, res) => {
       return res.status(404).json({ message: "Video not found" });
     }
 
-    // If YouTube URL is being updated, extract new ID
-    if (req.body.youtubeUrl && req.body.youtubeUrl !== video.youtubeUrl) {
-      const youtubeIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-      const match = req.body.youtubeUrl.match(youtubeIdRegex);
+    // Handle video type changes or updates
+    if (req.body.videoType === "youtube" && req.body.youtubeUrl) {
+      if (req.body.youtubeUrl !== video.youtubeUrl) {
+        const youtubeIdRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+        const match = req.body.youtubeUrl.match(youtubeIdRegex);
 
-      if (!match || !match[1]) {
-        return res.status(400).json({ message: "Invalid YouTube URL" });
+        if (!match || !match[1]) {
+          return res.status(400).json({ message: "Invalid YouTube URL" });
+        }
+
+        req.body.youtubeId = match[1];
+        req.body.thumbnail = `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg`;
+        // Clear local video data if switching to YouTube
+        req.body.localVideoUrl = undefined;
+        req.body.localVideoFilename = undefined;
+        req.body.fileSize = undefined;
       }
-
-      req.body.youtubeId = match[1];
-      req.body.thumbnail = `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg`;
+    } else if (req.body.videoType === "local" && req.body.localVideoUrl) {
+      // Clear YouTube data if switching to local
+      req.body.youtubeUrl = undefined;
+      req.body.youtubeId = undefined;
     }
 
     Object.assign(video, req.body);
@@ -139,6 +164,16 @@ exports.deleteVideo = async (req, res) => {
 
     if (!video) {
       return res.status(404).json({ message: "Video not found" });
+    }
+
+    // Delete local video file if it exists
+    if (video.videoType === "local" && video.localVideoFilename) {
+      const fs = require("fs");
+      const path = require("path");
+      const videoPath = path.join(__dirname, "../uploads/videos", video.localVideoFilename);
+      if (fs.existsSync(videoPath)) {
+        fs.unlinkSync(videoPath);
+      }
     }
 
     await video.deleteOne();

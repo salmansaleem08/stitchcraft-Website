@@ -90,6 +90,8 @@ const LearningPortal = () => {
                         title={video.title}
                         thumbnail={video.thumbnail}
                         description={video.description}
+                        videoType={video.videoType}
+                        localVideoUrl={video.localVideoUrl}
                       />
                     ))}
                   </div>
@@ -154,6 +156,8 @@ const LearningPortal = () => {
                         title={video.title}
                         thumbnail={video.thumbnail}
                         description={video.description}
+                        videoType={video.videoType}
+                        localVideoUrl={video.localVideoUrl}
                       />
                     ))}
                   </div>
@@ -211,6 +215,8 @@ const LearningPortal = () => {
                         title={video.title}
                         thumbnail={video.thumbnail}
                         description={video.description}
+                        videoType={video.videoType}
+                        localVideoUrl={video.localVideoUrl}
                       />
                     ))}
                   </div>
@@ -268,6 +274,8 @@ const LearningPortal = () => {
                         title={video.title}
                         thumbnail={video.thumbnail}
                         description={video.description}
+                        videoType={video.videoType}
+                        localVideoUrl={video.localVideoUrl}
                       />
                     ))}
                   </div>
@@ -325,6 +333,8 @@ const LearningPortal = () => {
                         title={video.title}
                         thumbnail={video.thumbnail}
                         description={video.description}
+                        videoType={video.videoType}
+                        localVideoUrl={video.localVideoUrl}
                       />
                     ))}
                   </div>

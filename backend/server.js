@@ -11,6 +11,7 @@ connectDB();
 
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads/videos", express.static(path.join(__dirname, "uploads", "videos")));
 app.get("/", (req, res) => {
   res.send("StitchCraft backend running");
 });

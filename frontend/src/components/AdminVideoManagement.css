@@ -281,6 +281,51 @@
   color: #5a4a3a;
 }
 
+.video-type-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.video-type-badge.youtube {
+  background: #ff0000;
+  color: #ffffff;
+}
+
+.video-type-badge.local {
+  background: #8b4513;
+  color: #ffffff;
+}
+
+.upload-status {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #fff3cd;
+  color: #856404;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.upload-success {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #d1e7dd;
+  color: #0f5132;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.file-info {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f9f7f4;
+  color: #5a4a3a;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
