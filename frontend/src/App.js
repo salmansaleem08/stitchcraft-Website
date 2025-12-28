@@ -406,9 +406,9 @@ function App() {
               <Route path="/mentorships" element={<MentorshipProgram />} />
               <Route path="/price-comparison" element={<PriceComparison />} />
               <Route path="/equipment" element={<EquipmentMarketplace />} />
-              <Route path="/equipment/new" element={<ProtectedRoute><EquipmentForm /></ProtectedRoute>} />
+              <Route path="/equipment/new" element={<ProtectedRoute requiredRole="supplier"><EquipmentForm /></ProtectedRoute>} />
               <Route path="/equipment/:id" element={<EquipmentDetail />} />
-              <Route path="/equipment/:id/edit" element={<ProtectedRoute><EquipmentForm /></ProtectedRoute>} />
+              <Route path="/equipment/:id/edit" element={<ProtectedRoute requiredRole="supplier"><EquipmentForm /></ProtectedRoute>} />
               <Route path="/maintenance" element={<ProtectedRoute><MaintenanceBooking /></ProtectedRoute>} />
               <Route path="/virtual-stylist" element={<VirtualStylist />} />
               <Route path="/virtual-tryon" element={<ProtectedRoute><VirtualTryOn /></ProtectedRoute>} />

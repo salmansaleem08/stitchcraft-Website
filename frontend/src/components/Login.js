@@ -37,7 +37,6 @@ const Login = () => {
       const result = await login(formData.email, formData.password);
 
       if (result.success) {
-        // Small delay to ensure state is updated
         setTimeout(() => {
           navigate("/");
         }, 100);
@@ -53,29 +52,34 @@ const Login = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
+      <div className="auth-wrapper">
         <div className="auth-header">
-          <h2>Login to StitchCraft</h2>
-          <p>Welcome back! Please login to your account.</p>
+          <h1>Sign in</h1>
+          <p>Welcome back to StitchCraft</p>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className="auth-error">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
+          <div className="form-field">
+            <label htmlFor="email">Email</label>
             <input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Enter your email"
+              placeholder="your@email.com"
               required
+              autoComplete="email"
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-field">
             <label htmlFor="password">Password</label>
             <input
               type="password"
@@ -85,17 +89,18 @@ const Login = () => {
               onChange={handleChange}
               placeholder="Enter your password"
               required
+              autoComplete="current-password"
             />
           </div>
 
           <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
         <div className="auth-footer">
           <p>
-            Don't have an account? <Link to="/signup">Sign up here</Link>
+            Don't have an account? <Link to="/signup">Create one</Link>
           </p>
         </div>
       </div>
@@ -104,4 +109,3 @@ const Login = () => {
 };
 
 export default Login;
-
