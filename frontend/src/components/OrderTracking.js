@@ -786,6 +786,15 @@ const OrderTracking = () => {
               </span>
             </div>
             <div className="design-tools-links">
+              {order.measurements && (
+                <Link
+                  to="/virtual-tryon"
+                  className="btn btn-secondary btn-sm"
+                  target="_blank"
+                >
+                  Virtual Try-On
+                </Link>
+              )}
               <Link
                 to={`/orders/${order._id}/mood-board`}
                 className="btn btn-secondary btn-sm"

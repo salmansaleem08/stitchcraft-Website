@@ -45,13 +45,17 @@ const MeasurementForm = ({ garmentType, onSave, initialData = null }) => {
     });
   };
 
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [newCustomName, setNewCustomName] = useState("");
+
   const handleCustomMeasurementAdd = () => {
-    const name = prompt("Enter measurement name:");
-    if (name) {
+    if (newCustomName.trim()) {
       setCustomMeasurements({
         ...customMeasurements,
-        [name]: 0,
+        [newCustomName.trim()]: 0,
       });
+      setNewCustomName("");
+      setShowCustomInput(false);
     }
   };
 
@@ -62,15 +66,21 @@ const MeasurementForm = ({ garmentType, onSave, initialData = null }) => {
     });
   };
 
+  const [showAdjustmentForm, setShowAdjustmentForm] = useState(false);
+  const [newAdjustment, setNewAdjustment] = useState({
+    area: "",
+    adjustment: "",
+    reason: "",
+  });
+
   const handleAddAdjustment = () => {
-    const area = prompt("Enter area (e.g., chest, waist):");
-    const adjustment = prompt("Enter adjustment (e.g., +2cm, -1cm):");
-    const reason = prompt("Enter reason:");
-    if (area && adjustment) {
+    if (newAdjustment.area && newAdjustment.adjustment) {
       setSizeAdjustments([
         ...sizeAdjustments,
-        { area, adjustment, reason: reason || "" },
+        { ...newAdjustment },
       ]);
+      setNewAdjustment({ area: "", adjustment: "", reason: "" });
+      setShowAdjustmentForm(false);
     }
   };
 
@@ -161,13 +171,46 @@ const MeasurementForm = ({ garmentType, onSave, initialData = null }) => {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={handleCustomMeasurementAdd}
-        className="btn btn-secondary"
-      >
-        Add Custom Measurement
-      </button>
+      <div className="custom-measurement-add">
+        {!showCustomInput ? (
+          <button
+            type="button"
+            onClick={() => setShowCustomInput(true)}
+            className="btn btn-secondary"
+          >
+            Add Custom Measurement
+          </button>
+        ) : (
+          <div className="custom-input-group">
+            <input
+              type="text"
+              placeholder="Measurement name (e.g., armhole, cuff)"
+              value={newCustomName}
+              onChange={(e) => setNewCustomName(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleCustomMeasurementAdd()}
+              className="custom-name-input"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={handleCustomMeasurementAdd}
+              className="btn btn-primary btn-small"
+            >
+              Add
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCustomInput(false);
+                setNewCustomName("");
+              }}
+              className="btn btn-text btn-small"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="form-group">
         <label htmlFor="recommendedSize">Recommended Size</label>
@@ -203,13 +246,72 @@ const MeasurementForm = ({ garmentType, onSave, initialData = null }) => {
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={handleAddAdjustment}
-        className="btn btn-secondary"
-      >
-        Add Size Adjustment
-      </button>
+      <div className="adjustment-add-section">
+        {!showAdjustmentForm ? (
+          <button
+            type="button"
+            onClick={() => setShowAdjustmentForm(true)}
+            className="btn btn-secondary"
+          >
+            Add Size Adjustment
+          </button>
+        ) : (
+          <div className="adjustment-form">
+            <div className="form-group">
+              <label>Area</label>
+              <input
+                type="text"
+                placeholder="e.g., chest, waist"
+                value={newAdjustment.area}
+                onChange={(e) =>
+                  setNewAdjustment({ ...newAdjustment, area: e.target.value })
+                }
+              />
+            </div>
+            <div className="form-group">
+              <label>Adjustment</label>
+              <input
+                type="text"
+                placeholder="e.g., +2cm, -1cm"
+                value={newAdjustment.adjustment}
+                onChange={(e) =>
+                  setNewAdjustment({ ...newAdjustment, adjustment: e.target.value })
+                }
+              />
+            </div>
+            <div className="form-group">
+              <label>Reason (optional)</label>
+              <input
+                type="text"
+                placeholder="Why this adjustment?"
+                value={newAdjustment.reason}
+                onChange={(e) =>
+                  setNewAdjustment({ ...newAdjustment, reason: e.target.value })
+                }
+              />
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                onClick={handleAddAdjustment}
+                className="btn btn-primary"
+              >
+                Add Adjustment
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAdjustmentForm(false);
+                  setNewAdjustment({ area: "", adjustment: "", reason: "" });
+                }}
+                className="btn btn-text"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="form-group">
         <label htmlFor="notes">Notes</label>

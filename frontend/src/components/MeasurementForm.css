@@ -1,7 +1,9 @@
 .measurement-form {
-  padding: 1.5rem;
-  background: #f5f1eb;
+  padding: 2rem;
+  background: #ffffff;
+  border: 1px solid #e8e0d6;
   border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .measurement-form h3 {
@@ -34,18 +36,20 @@
 .measurement-input-group input {
   padding: 0.75rem;
   padding-right: 3rem;
-  border: 1px solid #d4a574;
-  border-radius: 4px;
-  font-size: 1rem;
+  border: 1px solid #e8e0d6;
+  border-radius: 6px;
+  font-size: 0.9375rem;
   color: #2c1810;
   background-color: #ffffff;
-  transition: border-color 0.3s ease;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .measurement-input-group input:focus {
   outline: none;
   border-color: #8b4513;
-  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.08);
+  background-color: #fff;
 }
 
 .unit {
@@ -94,9 +98,85 @@
 
 .size-adjustments {
   margin-top: 1.5rem;
-  padding: 1rem;
-  background: #ffffff;
-  border-radius: 4px;
+  padding: 1.5rem;
+  background: #f5f1eb;
+  border: 1px solid #e8e0d6;
+  border-radius: 8px;
+}
+
+.custom-measurement-add {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.custom-input-group {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.custom-name-input {
+  flex: 1;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #e8e0d6;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.custom-name-input:focus {
+  outline: none;
+  border-color: #8b4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.08);
+}
+
+.adjustment-add-section {
+  margin-top: 1.5rem;
+}
+
+.adjustment-form {
+  padding: 1.5rem;
+  background: #f5f1eb;
+  border: 1px solid #e8e0d6;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.adjustment-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.adjustment-form .form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+}
+
+.adjustment-form .form-group input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #e8e0d6;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.adjustment-form .form-group input:focus {
+  outline: none;
+  border-color: #8b4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.08);
+}
+
+.adjustment-form .form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
 }
 
 .size-adjustments h4 {
@@ -110,11 +190,18 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem;
-  background: #f5f1eb;
-  border-radius: 4px;
+  padding: 0.875rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e8e0d6;
+  border-radius: 6px;
   margin-bottom: 0.5rem;
   position: relative;
+  transition: all 0.2s ease;
+}
+
+.adjustment-item:hover {
+  border-color: #8b4513;
+  background: #fff;
 }
 
 .adjustment-item strong {

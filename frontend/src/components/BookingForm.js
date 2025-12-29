@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import MeasurementForm from "./MeasurementForm";
@@ -471,10 +471,24 @@ const BookingForm = () => {
               )}
 
               {!useExistingMeasurements && (
-                <MeasurementForm
-                  garmentType={formData.garmentType}
-                  onSave={handleMeasurementSave}
-                />
+                <>
+                  <div className="virtual-tryon-link-section">
+                    <p className="virtual-tryon-text">
+                      Want to see how it fits? Use our Virtual Try-On to visualize your measurements.
+                    </p>
+                    <Link
+                      to="/virtual-tryon"
+                      className="btn btn-secondary"
+                      target="_blank"
+                    >
+                      Open Virtual Try-On
+                    </Link>
+                  </div>
+                  <MeasurementForm
+                    garmentType={formData.garmentType}
+                    onSave={handleMeasurementSave}
+                  />
+                </>
               )}
 
               <div className="form-actions">
