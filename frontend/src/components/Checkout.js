@@ -86,7 +86,6 @@ const Checkout = () => {
     }
   };
 
-  // Filter items by supplier if supplierId is provided
   const filteredItems = supplierId
     ? cart?.items.filter((item) => {
         const itemSupplierId = item.supplier._id || item.supplier;
@@ -94,7 +93,6 @@ const Checkout = () => {
       })
     : cart?.items || [];
 
-  // Group items by supplier
   const itemsBySupplier = {};
   filteredItems.forEach((item) => {
     const sid = item.supplier._id || item.supplier;
@@ -120,7 +118,6 @@ const Checkout = () => {
       <div className="checkout-container">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Loading checkout...</p>
         </div>
       </div>
     );
@@ -130,10 +127,10 @@ const Checkout = () => {
     return (
       <div className="checkout-container">
         <div className="container">
-          <div className="empty-cart">
+          <div className="empty-state">
             <p>No items to checkout</p>
             <button onClick={() => navigate("/cart")} className="btn btn-primary">
-              Go to Cart
+              Go to cart
             </button>
           </div>
         </div>
@@ -146,21 +143,21 @@ const Checkout = () => {
       <div className="container">
         <div className="checkout-header">
           <h1>Checkout</h1>
-          <button onClick={() => navigate("/cart")} className="btn btn-secondary">
-            Back to Cart
+          <button onClick={() => navigate("/cart")} className="btn btn-text">
+            Back to cart
           </button>
         </div>
 
         {error && <div className="error-message">{error}</div>}
 
-        <div className="checkout-content">
-          <div className="checkout-form-section">
+        <div className="checkout-layout">
+          <div className="checkout-form">
             <form onSubmit={handlePlaceOrder}>
               <div className="form-section">
-                <h2>Shipping Address</h2>
+                <h2>Shipping address</h2>
 
                 <div className="form-group">
-                  <label htmlFor="street">Street Address *</label>
+                  <label htmlFor="street">Street address *</label>
                   <input
                     type="text"
                     id="street"
@@ -200,7 +197,7 @@ const Checkout = () => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="postalCode">Postal Code *</label>
+                    <label htmlFor="postalCode">Postal code *</label>
                     <input
                       type="text"
                       id="postalCode"
@@ -212,7 +209,7 @@ const Checkout = () => {
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="phone">Phone Number *</label>
+                    <label htmlFor="phone">Phone number *</label>
                     <input
                       type="tel"
                       id="phone"
@@ -239,9 +236,9 @@ const Checkout = () => {
               </div>
 
               <div className="form-section">
-                <h2>Order Notes</h2>
+                <h2>Order notes</h2>
                 <div className="form-group">
-                  <label htmlFor="notes">Additional Instructions (Optional)</label>
+                  <label htmlFor="notes">Additional instructions (optional)</label>
                   <textarea
                     id="notes"
                     value={notes}
@@ -255,17 +252,17 @@ const Checkout = () => {
               <div className="form-actions">
                 <button
                   type="submit"
-                  className="btn btn-primary btn-large"
+                  className="btn btn-primary btn-block"
                   disabled={placingOrder}
                 >
-                  {placingOrder ? "Placing Order..." : "Place Order"}
+                  {placingOrder ? "Placing order..." : "Place order"}
                 </button>
               </div>
             </form>
           </div>
 
           <div className="checkout-summary">
-            <h2>Order Summary</h2>
+            <h2>Order summary</h2>
 
             {Object.entries(itemsBySupplier).map(([supplierId, group]) => (
               <div key={supplierId} className="supplier-summary">
@@ -284,14 +281,14 @@ const Checkout = () => {
                   ))}
                 </div>
                 <div className="supplier-subtotal">
-                  <span>Subtotal:</span>
+                  <span>Subtotal</span>
                   <span>PKR {group.total.toLocaleString()}</span>
                 </div>
               </div>
             ))}
 
             <div className="order-total">
-              <span>Total:</span>
+              <span>Total</span>
               <span>PKR {grandTotal.toLocaleString()}</span>
             </div>
           </div>
@@ -302,4 +299,3 @@ const Checkout = () => {
 };
 
 export default Checkout;
-

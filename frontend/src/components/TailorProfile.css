@@ -57,6 +57,7 @@
 
 .profile-badges-inline {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1rem;
   justify-content: center;
@@ -67,10 +68,39 @@
   background: #8b4513;
   color: #ffffff;
   border-radius: 12px;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.profile-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.profile-badges-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.badge-main {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  color: #ffffff;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  box-shadow: 0 2px 4px rgba(139, 69, 19, 0.2);
+  white-space: nowrap;
 }
 
 .profile-hero-content {
@@ -138,6 +168,22 @@
 
 .profile-stat {
   text-align: center;
+  padding: 1rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.profile-stat:hover {
+  background-color: rgba(139, 69, 19, 0.05);
+}
+
+.profile-stat.highlight-stat {
+  background-color: rgba(139, 69, 19, 0.08);
+  border: 1px solid rgba(139, 69, 19, 0.15);
+}
+
+.profile-stat.highlight-stat:hover {
+  background-color: rgba(139, 69, 19, 0.12);
 }
 
 .stat-number {
@@ -146,6 +192,10 @@
   color: #2c1810;
   margin-bottom: 0.5rem;
   letter-spacing: -0.02em;
+}
+
+.profile-stat.highlight-stat .stat-number {
+  color: #8b4513;
 }
 
 .stat-text {
@@ -206,7 +256,8 @@
   background: #ffffff;
   padding: 2.5rem;
   border: 1px solid #e8e0d6;
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .tab-content {
@@ -243,6 +294,56 @@
   font-size: 0.9375rem;
   color: #5a4a3a;
   font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tag:hover {
+  border-color: #8b4513;
+  background: #fff;
+}
+
+.tag-traditional {
+  background: #fef3e2;
+  border-color: #f4a460;
+  color: #8b4513;
+}
+
+.tag-western {
+  background: #e8f4f8;
+  border-color: #87ceeb;
+  color: #2c5282;
+}
+
+.tag-specialty {
+  background: #f0e6ff;
+  border-color: #ba8fff;
+  color: #6b46c1;
+}
+
+.tag-fabric {
+  background: #fff5e6;
+  border-color: #deb887;
+  color: #8b4513;
+}
+
+.specialization-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.spec-category {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.spec-category-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .hours-list {
@@ -278,14 +379,17 @@
 
 .portfolio-card {
   border: 1px solid #e8e0d6;
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
   background: #ffffff;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .portfolio-card:hover {
   border-color: #8b4513;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15);
+  transform: translateY(-2px);
 }
 
 .portfolio-image-container {
@@ -293,6 +397,43 @@
   height: 240px;
   overflow: hidden;
   background: #f5f1eb;
+}
+
+.portfolio-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  width: 100%;
+}
+
+.portfolio-comparison-item {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.comparison-label {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  background: rgba(139, 69, 19, 0.9);
+  color: #ffffff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 1;
+}
+
+.portfolio-comparison-item .portfolio-image-container {
+  height: 240px;
+  border-right: 1px solid #e8e0d6;
+}
+
+.portfolio-comparison-item:last-child .portfolio-image-container {
+  border-right: none;
 }
 
 .portfolio-image {
@@ -481,6 +622,16 @@
     gap: 2rem;
   }
 
+  .profile-header-top {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-badges-main {
+    justify-content: center;
+  }
+
   .profile-stats-row {
     flex-wrap: wrap;
     gap: 1.5rem;
@@ -488,6 +639,19 @@
 
   .portfolio-grid {
     grid-template-columns: 1fr;
+  }
+
+  .portfolio-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-comparison-item .portfolio-image-container {
+    border-right: none;
+    border-bottom: 1px solid #e8e0d6;
+  }
+
+  .portfolio-comparison-item:last-child .portfolio-image-container {
+    border-bottom: none;
   }
 
   .profile-content {

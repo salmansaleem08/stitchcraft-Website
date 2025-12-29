@@ -28,10 +28,12 @@ const Home = () => {
               </div>
             ) : (
               <div className="hero-actions">
-                <Link to="/tailors" className="btn btn-primary">
-                  Browse tailors
-                </Link>
-                {user.role === "tailor" && (
+                {user.role !== "supplier" && (
+                  <Link to="/tailors" className="btn btn-primary">
+                    Browse tailors
+                  </Link>
+                )}
+                {(user.role === "tailor" || user.role === "supplier") && (
                   <Link to="/dashboard" className="btn btn-text">
                     Go to dashboard
                   </Link>

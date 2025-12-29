@@ -10,17 +10,18 @@ const EquipmentDetail = () => {
   const { user } = useContext(AuthContext);
   const [equipment, setEquipment] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [showRentalForm, setShowRentalForm] = useState(false);
   const [rentalData, setRentalData] = useState({
-    startDate: "",
-    endDate: "",
-    rentalPeriod: "daily",
-    pickupAddress: {
+    rentalStartDate: "",
+    rentalEndDate: "",
+    deliveryAddress: {
       street: "",
       city: "",
       province: "",
       postalCode: "",
     },
+    notes: "",
   });
 
   useEffect(() => {
@@ -29,9 +30,12 @@ const EquipmentDetail = () => {
 
   const fetchEquipment = async () => {
     try {
+      setLoading(true);
       const response = await api.get(`/equipment/${id}`);
       setEquipment(response.data.data);
+      setError("");
     } catch (error) {
+      setError("Failed to load equipment details");
       console.error("Error fetching equipment:", error);
     } finally {
       setLoading(false);
@@ -44,221 +48,257 @@ const EquipmentDetail = () => {
       await api.post(`/equipment/${id}/rent`, rentalData);
       alert("Rental request submitted successfully!");
       setShowRentalForm(false);
-      navigate("/equipment/rentals/all");
+      navigate("/orders");
     } catch (error) {
       alert(error.response?.data?.message || "Failed to submit rental request");
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (!equipment) return <div>Equipment not found</div>;
+  const handleAddressChange = (e) => {
+    const { name, value } = e.target;
+    setRentalData((prev) => ({
+      ...prev,
+      deliveryAddress: {
+        ...prev.deliveryAddress,
+        [name]: value,
+      },
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="equipment-detail-container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !equipment) {
+    return (
+      <div className="equipment-detail-container">
+        <div className="container">
+          <div className="error-message">{error || "Equipment not found"}</div>
+          <Link to="/equipment" className="btn btn-secondary">
+            Back to marketplace
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const isSupplier = user?.role === "supplier" && user?._id === equipment.supplier._id;
 
   return (
     <div className="equipment-detail-container">
       <div className="container">
-        <div className="equipment-detail">
+        <Link to="/equipment" className="back-link">
+          ← Back
+        </Link>
+
+        <div className="equipment-detail-layout">
           <div className="equipment-images">
             {equipment.images && equipment.images.length > 0 ? (
-              <img src={equipment.images[0]} alt={equipment.name} />
+              <div className="main-image">
+                <img src={equipment.images[0]} alt={equipment.name} />
+              </div>
             ) : (
-              <div className="no-image">No image available</div>
+              <div className="image-placeholder">No image available</div>
+            )}
+            {equipment.images && equipment.images.length > 1 && (
+              <div className="image-thumbnails">
+                {equipment.images.map((image, idx) => (
+                  <img key={idx} src={image} alt={`${equipment.name} ${idx + 1}`} />
+                ))}
+              </div>
             )}
           </div>
 
           <div className="equipment-info">
             <div className="equipment-header">
               <h1>{equipment.name}</h1>
-              <span className={`condition-badge condition-${equipment.condition.toLowerCase().replace(" ", "-")}`}>
-                {equipment.condition}
-              </span>
+              {isSupplier && (
+                <Link to={`/equipment/${equipment._id}/edit`} className="btn btn-secondary btn-small">
+                  Edit
+                </Link>
+              )}
             </div>
 
             <div className="equipment-meta">
-              <p><strong>Category:</strong> {equipment.category}</p>
-              {equipment.brand && <p><strong>Brand:</strong> {equipment.brand}</p>}
-              {equipment.model && <p><strong>Model:</strong> {equipment.model}</p>}
-              {equipment.yearOfManufacture && (
-                <p><strong>Year:</strong> {equipment.yearOfManufacture}</p>
+              <div className="meta-item">
+                <span className="meta-label">Category</span>
+                <span className="meta-value">{equipment.category}</span>
+              </div>
+              {equipment.brand && (
+                <div className="meta-item">
+                  <span className="meta-label">Brand</span>
+                  <span className="meta-value">{equipment.brand}</span>
+                </div>
+              )}
+              {equipment.model && (
+                <div className="meta-item">
+                  <span className="meta-label">Model</span>
+                  <span className="meta-value">{equipment.model}</span>
+                </div>
               )}
             </div>
 
             {equipment.description && (
-              <div className="equipment-description">
+              <div className="description-section">
                 <h3>Description</h3>
                 <p>{equipment.description}</p>
               </div>
             )}
 
-            <div className="equipment-pricing-section">
-              {equipment.isAvailableForRental && equipment.rentalPrice && (
+            <div className="pricing-section">
+              {equipment.isRentable && equipment.rentalPricePerDay && (
                 <div className="pricing-card">
                   <h3>Rental</h3>
                   <div className="price-main">
-                    PKR {equipment.rentalPrice.toLocaleString()}/{equipment.rentalPeriod || "month"}
+                    PKR {equipment.rentalPricePerDay.toLocaleString()}/day
                   </div>
-                  {user && equipment.owner._id !== user._id && (
+                  {equipment.minRentalDays && (
+                    <p className="rental-info">Minimum rental: {equipment.minRentalDays} days</p>
+                  )}
+                  {equipment.rentalStock !== undefined && (
+                    <p className="stock-info">
+                      Available: {equipment.rentalStock} unit{equipment.rentalStock !== 1 ? "s" : ""}
+                    </p>
+                  )}
+                  {user && user.role !== "supplier" && (
                     <button
                       onClick={() => setShowRentalForm(true)}
                       className="btn btn-primary"
                     >
-                      Request Rental
+                      Request rental
                     </button>
                   )}
                 </div>
               )}
 
-              {equipment.isAvailableForSale && equipment.salePrice && (
+              {equipment.isSellable && equipment.salePrice && (
                 <div className="pricing-card">
-                  <h3>Sale Price</h3>
-                  <div className="price-main">PKR {equipment.salePrice.toLocaleString()}</div>
-                  {equipment.financingOptions?.available && (
+                  <h3>Sale price</h3>
+                  <div className="price-main">
+                    PKR {equipment.salePrice.toLocaleString()}
+                  </div>
+                  {equipment.saleStock !== undefined && (
+                    <p className="stock-info">
+                      In stock: {equipment.saleStock} unit{equipment.saleStock !== 1 ? "s" : ""}
+                    </p>
+                  )}
+                  {equipment.financingOptions?.enabled && (
                     <div className="financing-info">
-                      <h4>Financing Available</h4>
-                      <p>Down Payment: PKR {equipment.financingOptions.downPayment?.toLocaleString()}</p>
-                      <p>Monthly: PKR {equipment.financingOptions.monthlyPayment?.toLocaleString()}</p>
-                      <p>Tenure: {equipment.financingOptions.tenure} months</p>
-                      <p>Interest Rate: {equipment.financingOptions.interestRate}%</p>
+                      <h4>Financing available</h4>
+                      <p>Down payment: {equipment.financingOptions.downPaymentPercentage}%</p>
+                      <p>Monthly: PKR {equipment.financingOptions.monthlyPaymentEstimate?.toLocaleString()}</p>
+                      <p>Tenure: {equipment.financingOptions.tenureMonths} months</p>
                     </div>
                   )}
                 </div>
               )}
             </div>
 
-            {equipment.upgradeAdvisory && equipment.upgradeAdvisory.recommendedUpgrades?.length > 0 && (
-              <div className="upgrade-advisory">
-                <h3>Upgrade Recommendations</h3>
-                <p className="priority-badge">Priority: {equipment.upgradeAdvisory.priority}</p>
-                <ul>
-                  {equipment.upgradeAdvisory.recommendedUpgrades.map((upgrade, idx) => (
-                    <li key={idx}>{upgrade}</li>
-                  ))}
-                </ul>
-                {equipment.upgradeAdvisory.upgradeBenefits && (
-                  <p><strong>Benefits:</strong> {equipment.upgradeAdvisory.upgradeBenefits}</p>
+            {equipment.upgradeAdvisory?.recommendedUpgrade && (
+              <div className="upgrade-section">
+                <h3>Upgrade recommendations</h3>
+                <p className="upgrade-text">{equipment.upgradeAdvisory.recommendedUpgrade}</p>
+                {equipment.upgradeAdvisory.benefits && equipment.upgradeAdvisory.benefits.length > 0 && (
+                  <ul className="upgrade-benefits">
+                    {equipment.upgradeAdvisory.benefits.map((benefit, idx) => (
+                      <li key={idx}>{benefit}</li>
+                    ))}
+                  </ul>
                 )}
                 {equipment.upgradeAdvisory.estimatedCost && (
-                  <p><strong>Estimated Cost:</strong> PKR {equipment.upgradeAdvisory.estimatedCost.toLocaleString()}</p>
+                  <p className="upgrade-cost">
+                    Estimated cost: PKR {equipment.upgradeAdvisory.estimatedCost.toLocaleString()}
+                  </p>
                 )}
               </div>
             )}
 
-            {equipment.location && (
-              <div className="equipment-location">
-                <h3>Location</h3>
-                <p>
-                  {equipment.location.address && `${equipment.location.address}, `}
-                  {equipment.location.city}, {equipment.location.province}
-                </p>
-              </div>
-            )}
-
-            <div className="equipment-owner">
-              <h3>Owner</h3>
-              <Link to={`/suppliers/${equipment.owner._id}`}>
-                {equipment.owner.businessName || equipment.owner.name}
+            <div className="supplier-section">
+              <h3>Supplier</h3>
+              <Link to={`/suppliers/${equipment.supplier._id}`} className="supplier-link">
+                {equipment.supplier?.businessName || equipment.supplier?.name}
               </Link>
-              {equipment.owner.qualityRating > 0 && (
-                <p>Quality Rating: {equipment.owner.qualityRating.toFixed(1)}/5</p>
-              )}
             </div>
-
-            {equipment.maintenanceHistory && equipment.maintenanceHistory.length > 0 && (
-              <div className="maintenance-history">
-                <h3>Maintenance History</h3>
-                <div className="maintenance-list">
-                  {equipment.maintenanceHistory.slice(-5).map((maintenance, idx) => (
-                    <div key={idx} className="maintenance-item">
-                      <p><strong>{maintenance.serviceType}</strong> - {new Date(maintenance.date).toLocaleDateString()}</p>
-                      {maintenance.description && <p>{maintenance.description}</p>}
-                      {maintenance.cost && <p>Cost: PKR {maintenance.cost.toLocaleString()}</p>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
         {showRentalForm && (
           <div className="modal-overlay" onClick={() => setShowRentalForm(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h2>Request Equipment Rental</h2>
+              <h2>Request equipment rental</h2>
               <form onSubmit={handleRentalRequest}>
                 <div className="form-group">
-                  <label>Start Date *</label>
+                  <label>Start date *</label>
                   <input
                     type="date"
-                    value={rentalData.startDate}
-                    onChange={(e) => setRentalData({ ...rentalData, startDate: e.target.value })}
+                    value={rentalData.rentalStartDate}
+                    onChange={(e) => setRentalData({ ...rentalData, rentalStartDate: e.target.value })}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label>End Date *</label>
+                  <label>End date *</label>
                   <input
                     type="date"
-                    value={rentalData.endDate}
-                    onChange={(e) => setRentalData({ ...rentalData, endDate: e.target.value })}
+                    value={rentalData.rentalEndDate}
+                    onChange={(e) => setRentalData({ ...rentalData, rentalEndDate: e.target.value })}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Rental Period *</label>
-                  <select
-                    value={rentalData.rentalPeriod}
-                    onChange={(e) => setRentalData({ ...rentalData, rentalPeriod: e.target.value })}
-                    required
-                  >
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Pickup Address *</label>
+                  <label>Delivery address *</label>
                   <input
                     type="text"
+                    name="street"
                     placeholder="Street"
-                    value={rentalData.pickupAddress.street}
-                    onChange={(e) =>
-                      setRentalData({
-                        ...rentalData,
-                        pickupAddress: { ...rentalData.pickupAddress, street: e.target.value },
-                      })
-                    }
+                    value={rentalData.deliveryAddress.street}
+                    onChange={handleAddressChange}
                     required
                   />
                   <input
                     type="text"
+                    name="city"
                     placeholder="City"
-                    value={rentalData.pickupAddress.city}
-                    onChange={(e) =>
-                      setRentalData({
-                        ...rentalData,
-                        pickupAddress: { ...rentalData.pickupAddress, city: e.target.value },
-                      })
-                    }
+                    value={rentalData.deliveryAddress.city}
+                    onChange={handleAddressChange}
                     required
                   />
                   <input
                     type="text"
+                    name="province"
                     placeholder="Province"
-                    value={rentalData.pickupAddress.province}
-                    onChange={(e) =>
-                      setRentalData({
-                        ...rentalData,
-                        pickupAddress: { ...rentalData.pickupAddress, province: e.target.value },
-                      })
-                    }
+                    value={rentalData.deliveryAddress.province}
+                    onChange={handleAddressChange}
                     required
+                  />
+                  <input
+                    type="text"
+                    name="postalCode"
+                    placeholder="Postal code"
+                    value={rentalData.deliveryAddress.postalCode}
+                    onChange={handleAddressChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Notes (optional)</label>
+                  <textarea
+                    value={rentalData.notes}
+                    onChange={(e) => setRentalData({ ...rentalData, notes: e.target.value })}
+                    rows="3"
+                    placeholder="Any special instructions..."
                   />
                 </div>
                 <div className="form-actions">
                   <button type="button" onClick={() => setShowRentalForm(false)} className="btn btn-secondary">
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-primary">Submit Request</button>
+                  <button type="submit" className="btn btn-primary">Submit request</button>
                 </div>
               </form>
             </div>
@@ -270,4 +310,3 @@ const EquipmentDetail = () => {
 };
 
 export default EquipmentDetail;
-

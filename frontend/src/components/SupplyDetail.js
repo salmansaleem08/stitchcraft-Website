@@ -36,7 +36,6 @@ const SupplyDetail = () => {
       <div className="supply-detail-container">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Loading supply details...</p>
         </div>
       </div>
     );
@@ -45,10 +44,12 @@ const SupplyDetail = () => {
   if (error || !supply) {
     return (
       <div className="supply-detail-container">
-        <div className="error-message">{error || "Supply not found"}</div>
-        <Link to="/supplies" className="btn btn-primary">
-          Back to Supplies
-        </Link>
+        <div className="container">
+          <div className="error-message">{error || "Supply not found"}</div>
+          <Link to="/supplies" className="btn btn-secondary">
+            Back to supplies
+          </Link>
+        </div>
       </div>
     );
   }
@@ -59,11 +60,11 @@ const SupplyDetail = () => {
     <div className="supply-detail-container">
       <div className="container">
         <Link to="/supplies" className="back-link">
-          ← Back to Supplies
+          ← Back
         </Link>
 
-        <div className="supply-detail-grid">
-          <div className="supply-images-section">
+        <div className="supply-detail-layout">
+          <div className="supply-images">
             <div className="main-image">
               {supply.images && supply.images.length > 0 ? (
                 <img src={supply.images[selectedImageIndex]} alt={supply.name} />
@@ -88,15 +89,15 @@ const SupplyDetail = () => {
             )}
           </div>
 
-          <div className="supply-info-section">
+          <div className="supply-info">
             <div className="supply-header">
               <h1>{supply.name}</h1>
               {supply.supplier?.verificationStatus === "verified" && (
-                <span className="verified-badge-large">Verified Supplier</span>
+                <span className="verified-badge">Verified</span>
               )}
             </div>
 
-            <div className="supplier-info">
+            <div className="supplier-link-wrapper">
               <Link to={`/suppliers/${supply.supplier._id}`} className="supplier-link">
                 <span className="supplier-label">Supplier:</span>
                 <span className="supplier-name">
@@ -105,7 +106,7 @@ const SupplyDetail = () => {
               </Link>
               {supply.supplier?.qualityRating > 0 && (
                 <div className="supplier-rating">
-                  <span className="stars">
+                  <span className="rating-stars">
                     {"★".repeat(Math.floor(supply.supplier.qualityRating))}
                     {"☆".repeat(5 - Math.floor(supply.supplier.qualityRating))}
                   </span>
@@ -116,9 +117,9 @@ const SupplyDetail = () => {
               )}
             </div>
 
-            <div className="supply-price-section">
+            <div className="price-section">
               <div className="price-main">
-                <span className="price-label">Price:</span>
+                <span className="price-label">Price</span>
                 <span className="price-value">
                   PKR {supply.price?.toLocaleString()}
                 </span>
@@ -128,50 +129,51 @@ const SupplyDetail = () => {
 
             {supply.sustainability?.isSustainable && (
               <div className="sustainability-badge">
-                Sustainable: {supply.sustainability.certification || "Eco-Friendly"}
+                Sustainable: {supply.sustainability.certification || "Eco-friendly"}
               </div>
             )}
-            <div className="supply-specs">
+
+            <div className="specs-grid">
               <div className="spec-item">
-                <span className="spec-label">Category:</span>
+                <span className="spec-label">Category</span>
                 <span className="spec-value">{supply.category}</span>
               </div>
               {supply.subcategory && (
                 <div className="spec-item">
-                  <span className="spec-label">Subcategory:</span>
+                  <span className="spec-label">Subcategory</span>
                   <span className="spec-value">{supply.subcategory}</span>
                 </div>
               )}
               {supply.brand && (
                 <div className="spec-item">
-                  <span className="spec-label">Brand:</span>
+                  <span className="spec-label">Brand</span>
                   <span className="spec-value">{supply.brand}</span>
                 </div>
               )}
               {supply.color && (
                 <div className="spec-item">
-                  <span className="spec-label">Color:</span>
+                  <span className="spec-label">Color</span>
                   <span className="spec-value">{supply.color}</span>
                 </div>
               )}
               {supply.size && (
                 <div className="spec-item">
-                  <span className="spec-label">Size:</span>
+                  <span className="spec-label">Size</span>
                   <span className="spec-value">{supply.size}</span>
                 </div>
               )}
               {supply.material && (
                 <div className="spec-item">
-                  <span className="spec-label">Material:</span>
+                  <span className="spec-label">Material</span>
                   <span className="spec-value">{supply.material}</span>
                 </div>
               )}
             </div>
 
             {supply.specifications && Object.keys(supply.specifications).length > 0 && (
-              <div className="supply-specifications">
+              <div className="specifications-section">
                 <h3>Specifications</h3>
-                <div className="specs-grid">
+                <div className="specs-list">
                   {Object.entries(supply.specifications).map(([key, value]) => (
                     <div key={key} className="spec-entry">
                       <span className="spec-key">{key}:</span>
@@ -183,8 +185,8 @@ const SupplyDetail = () => {
             )}
 
             {supply.tags && supply.tags.length > 0 && (
-              <div className="supply-tags">
-                <span className="tags-label">Tags:</span>
+              <div className="tags-section">
+                <span className="tags-label">Tags</span>
                 <div className="tags-list">
                   {supply.tags.map((tag, idx) => (
                     <span key={idx} className="tag">
@@ -195,10 +197,10 @@ const SupplyDetail = () => {
               </div>
             )}
 
-            <div className="supply-stock-section">
+            <div className="stock-section">
               {supply.stockQuantity !== undefined && (
                 <div className="stock-info">
-                  <span className="stock-label">Stock:</span>
+                  <span className="stock-label">Stock</span>
                   <span
                     className={`stock-value ${
                       supply.stockQuantity > 0 ? "in-stock" : "out-of-stock"
@@ -206,13 +208,13 @@ const SupplyDetail = () => {
                   >
                     {supply.stockQuantity > 0
                       ? `${supply.stockQuantity} ${supply.unit || "pieces"} available`
-                      : "Out of Stock"}
+                      : "Out of stock"}
                   </span>
                 </div>
               )}
               {supply.minimumOrderQuantity && (
                 <div className="min-order">
-                  <span className="min-order-label">Minimum Order:</span>
+                  <span className="min-order-label">Minimum order</span>
                   <span className="min-order-value">
                     {supply.minimumOrderQuantity} {supply.unit || "pieces"}
                   </span>
@@ -221,17 +223,17 @@ const SupplyDetail = () => {
             </div>
 
             {supply.description && (
-              <div className="supply-description">
+              <div className="description-section">
                 <h3>Description</h3>
                 <p>{supply.description}</p>
               </div>
             )}
 
             {supply.rating > 0 && (
-              <div className="supply-rating-section">
+              <div className="rating-section">
                 <h3>Rating</h3>
                 <div className="rating-display">
-                  <span className="stars-large">
+                  <span className="rating-stars-large">
                     {"★".repeat(Math.floor(supply.rating))}
                     {"☆".repeat(5 - Math.floor(supply.rating))}
                   </span>
@@ -245,13 +247,13 @@ const SupplyDetail = () => {
               </div>
             )}
 
-            <div className="supply-actions">
+            <div className="actions-section">
               {isSupplier ? (
                 <Link
                   to={`/supplies/${supply._id}/edit`}
-                  className="btn btn-primary"
+                  className="btn btn-secondary"
                 >
-                  Edit Supply
+                  Edit supply
                 </Link>
               ) : user?.role === "customer" && supply.stockQuantity > 0 ? (
                 <button
@@ -269,7 +271,7 @@ const SupplyDetail = () => {
                   }}
                   className="btn btn-primary"
                 >
-                  Add to Cart
+                  Add to cart
                 </button>
               ) : null}
             </div>
@@ -279,7 +281,6 @@ const SupplyDetail = () => {
         <SupplyReviews
           supplyId={supply._id}
           onReviewSubmit={() => {
-            // Refresh supply data to update rating
             fetchSupply();
           }}
         />
@@ -289,4 +290,3 @@ const SupplyDetail = () => {
 };
 
 export default SupplyDetail;
-

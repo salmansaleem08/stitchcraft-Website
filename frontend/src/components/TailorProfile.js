@@ -43,25 +43,65 @@ const TailorProfile = () => {
     );
   }
 
+  // Organize specializations by category
+  const organizeSpecializations = () => {
+    const traditional = ["Traditional Wear", "Shalwar Kameez", "Sherwanis", "Lehengas"];
+    const western = ["Western Wear", "Suits", "Dresses", "Casual Wear"];
+    const specialty = ["Embroidery", "Bridal", "Custom Design", "Alterations"];
+    
+    const organized = {
+      traditional: tailor.specialization?.filter(spec => 
+        traditional.some(t => spec.toLowerCase().includes(t.toLowerCase()))
+      ) || [],
+      western: tailor.specialization?.filter(spec => 
+        western.some(w => spec.toLowerCase().includes(w.toLowerCase()))
+      ) || [],
+      specialty: tailor.specialization?.filter(spec => 
+        specialty.some(s => spec.toLowerCase().includes(s.toLowerCase()))
+      ) || [],
+      other: tailor.specialization?.filter(spec => 
+        ![...traditional, ...western, ...specialty].some(cat => 
+          spec.toLowerCase().includes(cat.toLowerCase())
+        )
+      ) || []
+    };
+    
+    return organized;
+  };
+
+  const specializations = organizeSpecializations();
+
   if (error || !tailor) {
     return (
       <div className="profile-container">
         <div className="container">
           <div className="error-message">{error || "Tailor not found"}</div>
-          <Link to="/tailors" className="btn btn-secondary">
-            Back to tailors
-          </Link>
+          {user?.role !== "supplier" && (
+            <Link to="/tailors" className="btn btn-secondary">
+              Back to tailors
+            </Link>
+          )}
         </div>
       </div>
     );
   }
 
+  // Format response time
+  const formatResponseTime = (hours) => {
+    if (!hours || hours === 0) return "N/A";
+    if (hours < 1) return `${Math.round(hours * 60)} min`;
+    if (hours < 24) return `${Math.round(hours)} hr`;
+    return `${Math.round(hours / 24)} days`;
+  };
+
   return (
     <div className="profile-container">
       <div className="container">
-        <Link to="/tailors" className="back-link">
-          ← Back
-        </Link>
+        {user?.role !== "supplier" && (
+          <Link to="/tailors" className="back-link">
+            ← Back
+          </Link>
+        )}
 
         <div className="profile-hero">
           <div className="profile-avatar-wrapper">
@@ -74,18 +114,38 @@ const TailorProfile = () => {
             )}
             {tailor.badges?.length > 0 && (
               <div className="profile-badges-inline">
-                {tailor.badges.slice(0, 2).map((badge, idx) => (
-                  <span key={idx} className="badge-tag" title={typeof badge === 'object' ? badge.name : badge}>
-                    {typeof badge === 'object' ? badge.name || badge.type : badge}
-                  </span>
-                ))}
+                {tailor.badges.map((badge, idx) => {
+                  const badgeName = typeof badge === 'object' ? (badge.name || badge.type) : badge;
+                  return (
+                    <span key={idx} className="badge-tag" title={badgeName}>
+                      {badgeName}
+                    </span>
+                  );
+                })}
               </div>
             )}
           </div>
 
           <div className="profile-hero-content">
-            <h1>{tailor.shopName || tailor.name}</h1>
-            <p className="profile-subtitle">{tailor.name}</p>
+            <div className="profile-header-top">
+              <div>
+                <h1>{tailor.shopName || tailor.name}</h1>
+                <p className="profile-subtitle">{tailor.name}</p>
+              </div>
+              {tailor.badges?.length > 0 && (
+                <div className="profile-badges-main">
+                  {tailor.badges.map((badge, idx) => {
+                    const badgeName = typeof badge === 'object' ? (badge.name || badge.type) : badge;
+                    return (
+                      <span key={idx} className="badge-main" title={badgeName}>
+                        {badgeName}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {tailor.address && (
               <p className="profile-location">
                 {tailor.address.street && `${tailor.address.street}, `}
@@ -125,13 +185,13 @@ const TailorProfile = () => {
             <div className="stat-number">{tailor.totalOrders || 0}</div>
             <div className="stat-text">Total orders</div>
           </div>
-          <div className="profile-stat">
-            <div className="stat-number">{tailor.completedOrders || 0}</div>
-            <div className="stat-text">Completed</div>
-          </div>
-          <div className="profile-stat">
+          <div className="profile-stat highlight-stat">
             <div className="stat-number">{tailor.completionRate?.toFixed(0) || 0}%</div>
             <div className="stat-text">Completion rate</div>
+          </div>
+          <div className="profile-stat highlight-stat">
+            <div className="stat-number">{formatResponseTime(tailor.averageResponseTime)}</div>
+            <div className="stat-text">Avg response time</div>
           </div>
         </div>
 
@@ -165,25 +225,71 @@ const TailorProfile = () => {
         <div className="profile-content">
           {activeTab === "overview" && (
             <div className="tab-content">
-              {tailor.specialization?.length > 0 && (
+              {(specializations.traditional.length > 0 || 
+                specializations.western.length > 0 || 
+                specializations.specialty.length > 0 || 
+                specializations.other.length > 0) && (
                 <div className="content-block">
-                  <h2>Specializations</h2>
-                  <div className="tags-list">
-                    {tailor.specialization.map((spec, idx) => (
-                      <span key={idx} className="tag">
-                        {spec}
-                      </span>
-                    ))}
+                  <h2>Specialization Matrix</h2>
+                  <div className="specialization-matrix">
+                    {specializations.traditional.length > 0 && (
+                      <div className="spec-category">
+                        <h3 className="spec-category-title">Traditional Wear</h3>
+                        <div className="tags-list">
+                          {specializations.traditional.map((spec, idx) => (
+                            <span key={idx} className="tag tag-traditional">
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {specializations.western.length > 0 && (
+                      <div className="spec-category">
+                        <h3 className="spec-category-title">Western Wear</h3>
+                        <div className="tags-list">
+                          {specializations.western.map((spec, idx) => (
+                            <span key={idx} className="tag tag-western">
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {specializations.specialty.length > 0 && (
+                      <div className="spec-category">
+                        <h3 className="spec-category-title">Specialty</h3>
+                        <div className="tags-list">
+                          {specializations.specialty.map((spec, idx) => (
+                            <span key={idx} className="tag tag-specialty">
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {specializations.other.length > 0 && (
+                      <div className="spec-category">
+                        <h3 className="spec-category-title">Other</h3>
+                        <div className="tags-list">
+                          {specializations.other.map((spec, idx) => (
+                            <span key={idx} className="tag">
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
               {tailor.fabricExpertise?.length > 0 && (
                 <div className="content-block">
-                  <h2>Fabric expertise</h2>
+                  <h2>Fabric Expertise</h2>
                   <div className="tags-list">
                     {tailor.fabricExpertise.map((fabric, idx) => (
-                      <span key={idx} className="tag">
+                      <span key={idx} className="tag tag-fabric">
                         {fabric}
                       </span>
                     ))}
@@ -193,7 +299,7 @@ const TailorProfile = () => {
 
               {tailor.workingHours && (
                 <div className="content-block">
-                  <h2>Working hours</h2>
+                  <h2>Working Hours</h2>
                   <div className="hours-list">
                     {Object.entries(tailor.workingHours).map(([day, hours]) => (
                       <div key={day} className="hours-item">
@@ -215,15 +321,34 @@ const TailorProfile = () => {
                 <div className="portfolio-grid">
                   {tailor.portfolio.map((item, idx) => (
                     <div key={idx} className="portfolio-card">
-                      <div className="portfolio-image-container">
-                        {item.afterImage ? (
-                          <img src={item.afterImage} alt={item.title || "Portfolio item"} className="portfolio-image" />
-                        ) : item.imageUrl ? (
-                          <img src={item.imageUrl} alt={item.title || "Portfolio item"} className="portfolio-image" />
-                        ) : (
-                          <div className="portfolio-placeholder">No image</div>
-                        )}
-                      </div>
+                      {(item.beforeImage || item.afterImage) ? (
+                        <div className="portfolio-comparison">
+                          {item.beforeImage && (
+                            <div className="portfolio-comparison-item">
+                              <div className="comparison-label">Before</div>
+                              <div className="portfolio-image-container">
+                                <img src={item.beforeImage} alt="Before" className="portfolio-image" />
+                              </div>
+                            </div>
+                          )}
+                          {item.afterImage && (
+                            <div className="portfolio-comparison-item">
+                              <div className="comparison-label">After</div>
+                              <div className="portfolio-image-container">
+                                <img src={item.afterImage} alt="After" className="portfolio-image" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="portfolio-image-container">
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.title || "Portfolio item"} className="portfolio-image" />
+                          ) : (
+                            <div className="portfolio-placeholder">No image</div>
+                          )}
+                        </div>
+                      )}
                       <div className="portfolio-info">
                         {item.title && <h3>{item.title}</h3>}
                         {item.description && <p className="portfolio-description">{item.description}</p>}

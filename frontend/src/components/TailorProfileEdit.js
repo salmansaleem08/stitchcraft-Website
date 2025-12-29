@@ -244,12 +244,12 @@ const TailorProfileEdit = () => {
   }
 
   return (
-    <div className="tailor-profile-edit-container">
+    <div className="profile-edit-container">
       <div className="container">
         <div className="edit-header">
-          <h1>Edit Your Profile</h1>
-          <button onClick={() => navigate(`/tailors/${user._id}`)} className="btn btn-secondary">
-            View Profile
+          <h1>Edit profile</h1>
+          <button onClick={() => navigate(`/tailors/${user._id}`)} className="btn btn-text">
+            View profile
           </button>
         </div>
 
@@ -258,10 +258,10 @@ const TailorProfileEdit = () => {
 
         <form onSubmit={handleSubmit} className="edit-form">
           <div className="form-section">
-            <h2>Basic Information</h2>
+            <h2>Basic information</h2>
             <div className="form-grid">
               <div className="form-group">
-                <label htmlFor="name">Full Name *</label>
+                <label htmlFor="name">Full name *</label>
                 <input
                   type="text"
                   id="name"
@@ -273,7 +273,7 @@ const TailorProfileEdit = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="shopName">Shop Name</label>
+                <label htmlFor="shopName">Shop name</label>
                 <input
                   type="text"
                   id="shopName"
@@ -285,7 +285,7 @@ const TailorProfileEdit = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="phone">Phone Number</label>
+                <label htmlFor="phone">Phone number</label>
                 <input
                   type="tel"
                   id="phone"
@@ -297,7 +297,7 @@ const TailorProfileEdit = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="experience">Years of Experience</label>
+                <label htmlFor="experience">Years of experience</label>
                 <input
                   type="number"
                   id="experience"
@@ -329,7 +329,7 @@ const TailorProfileEdit = () => {
             <h2>Address</h2>
             <div className="form-grid">
               <div className="form-group full-width">
-                <label htmlFor="address.street">Street Address</label>
+                <label htmlFor="address.street">Street address</label>
                 <input
                   type="text"
                   id="address.street"
@@ -360,7 +360,7 @@ const TailorProfileEdit = () => {
                   value={formData.address.province}
                   onChange={handleChange}
                 >
-                  <option value="">Select Province</option>
+                  <option value="">Select province</option>
                   {provinces.map((province) => (
                     <option key={province} value={province}>
                       {province}
@@ -370,7 +370,7 @@ const TailorProfileEdit = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="address.postalCode">Postal Code</label>
+                <label htmlFor="address.postalCode">Postal code</label>
                 <input
                   type="text"
                   id="address.postalCode"
@@ -401,7 +401,7 @@ const TailorProfileEdit = () => {
           </div>
 
           <div className="form-section">
-            <h2>Fabric Expertise</h2>
+            <h2>Fabric expertise</h2>
             <div className="checkbox-grid">
               {fabricTypes.map((fabric) => (
                 <label key={fabric} className="checkbox-label">
@@ -418,10 +418,10 @@ const TailorProfileEdit = () => {
           </div>
 
           <div className="form-section">
-            <h2>Working Hours</h2>
-            <div className="working-hours-edit">
+            <h2>Working hours</h2>
+            <div className="working-hours-list">
               {Object.entries(formData.workingHours).map(([day, hours]) => (
-                <div key={day} className="hours-edit-row">
+                <div key={day} className="hours-row">
                   <label className="day-checkbox">
                     <input
                       type="checkbox"
@@ -461,7 +461,7 @@ const TailorProfileEdit = () => {
 
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? "Saving..." : "Save Profile"}
+              {loading ? "Saving..." : "Save profile"}
             </button>
             <button
               type="button"
@@ -531,7 +531,7 @@ const TailorProfileEdit = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="beforeImage">Before Image URL</label>
+                <label htmlFor="beforeImage">Before image URL</label>
                 <input
                   type="url"
                   id="beforeImage"
@@ -543,7 +543,7 @@ const TailorProfileEdit = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="afterImage">After Image URL</label>
+                <label htmlFor="afterImage">After image URL</label>
                 <input
                   type="url"
                   id="afterImage"
@@ -556,13 +556,13 @@ const TailorProfileEdit = () => {
             </div>
 
             <button type="submit" className="btn btn-primary">
-              Add to Portfolio
+              Add to portfolio
             </button>
           </form>
 
           {portfolioItems.length > 0 && (
             <div className="portfolio-items">
-              <h3>Your Portfolio Items</h3>
+              <h3>Your portfolio items</h3>
               <div className="portfolio-grid">
                 {portfolioItems.map((item) => (
                   <div key={item._id} className="portfolio-item-card">
@@ -573,7 +573,7 @@ const TailorProfileEdit = () => {
                         className="portfolio-thumbnail"
                       />
                     ) : (
-                      <div className="portfolio-placeholder">No Image</div>
+                      <div className="portfolio-placeholder">No image</div>
                     )}
                     <div className="portfolio-item-info">
                       {item.title && <h4>{item.title}</h4>}
@@ -582,7 +582,7 @@ const TailorProfileEdit = () => {
                       )}
                       <button
                         onClick={() => handleDeletePortfolioItem(item._id)}
-                        className="delete-btn"
+                        className="btn-delete"
                       >
                         Delete
                       </button>
@@ -599,4 +599,3 @@ const TailorProfileEdit = () => {
 };
 
 export default TailorProfileEdit;
-

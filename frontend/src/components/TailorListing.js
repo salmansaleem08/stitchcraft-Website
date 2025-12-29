@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import "./TailorListing.css";
 
 const TailorListing = () => {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [tailors, setTailors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -34,9 +37,18 @@ const TailorListing = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
 
+  // Redirect suppliers away from tailor listings
   useEffect(() => {
-    fetchTailors();
-  }, [filters, pagination.page]);
+    if (user?.role === "supplier") {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
+    if (user?.role !== "supplier") {
+      fetchTailors();
+    }
+  }, [filters, pagination.page, user]);
 
   useEffect(() => {
     if (filters.useLocation && navigator.geolocation) {
@@ -149,6 +161,11 @@ const TailorListing = () => {
     "Gilgit-Baltistan",
     "Azad Jammu and Kashmir",
   ];
+
+  // Don't render for suppliers
+  if (user?.role === "supplier") {
+    return null;
+  }
 
   return (
     <div className="tailor-listing-container">

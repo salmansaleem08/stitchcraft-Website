@@ -73,7 +73,6 @@ const PatternDetail = () => {
     try {
       setDownloading(true);
       const response = await api.get(`/patterns/${id}/download`);
-      // In a real app, you would download the file
       window.open(response.data.data.downloadUrl, "_blank");
       alert("Download started!");
     } catch (error) {
@@ -104,19 +103,23 @@ const PatternDetail = () => {
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
+      <div className="pattern-detail-container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+        </div>
       </div>
     );
   }
 
   if (error || !pattern) {
     return (
-      <div className="container">
-        <div className="error-message">{error || "Pattern not found"}</div>
-        <Link to="/patterns" className="btn btn-primary">
-          Back to Patterns
-        </Link>
+      <div className="pattern-detail-container">
+        <div className="container">
+          <div className="error-message">{error || "Pattern not found"}</div>
+          <Link to="/patterns" className="btn btn-secondary">
+            Back to patterns
+          </Link>
+        </div>
       </div>
     );
   }
@@ -124,19 +127,19 @@ const PatternDetail = () => {
   const primaryImage = pattern.images?.[activeImageIndex] || pattern.images?.[0];
 
   return (
-    <div className="pattern-detail">
+    <div className="pattern-detail-container">
       <div className="container">
         <Link to="/patterns" className="back-link">
-          ← Back to Patterns
+          ← Back
         </Link>
 
-        <div className="pattern-detail-content">
+        <div className="pattern-detail-layout">
           <div className="pattern-images">
             <div className="main-image">
               {primaryImage ? (
-                <img src={primaryImage.url} alt={pattern.title} />
+                <img src={primaryImage.url || primaryImage} alt={pattern.title} />
               ) : (
-                <div className="image-placeholder">No Image</div>
+                <div className="image-placeholder">No image</div>
               )}
             </div>
             {pattern.images && pattern.images.length > 1 && (
@@ -147,57 +150,66 @@ const PatternDetail = () => {
                     onClick={() => setActiveImageIndex(index)}
                     className={`thumbnail ${activeImageIndex === index ? "active" : ""}`}
                   >
-                    <img src={img.url} alt={`${pattern.title} ${index + 1}`} />
+                    <img src={img.url || img} alt={`${pattern.title} ${index + 1}`} />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="pattern-info-section">
+          <div className="pattern-info">
             <div className="pattern-header">
               <h1>{pattern.title}</h1>
               <div className="pattern-badges">
                 {pattern.isFree && <span className="badge free">Free</span>}
                 {pattern.featured && <span className="badge featured">Featured</span>}
-                <span className="badge difficulty">{pattern.difficulty}</span>
+                {pattern.difficulty && (
+                  <span className="badge difficulty">{pattern.difficulty}</span>
+                )}
               </div>
             </div>
 
-            <div className="pattern-meta-info">
+            <div className="pattern-meta">
               <div className="meta-item">
-                <strong>Category:</strong> {pattern.category}
+                <span className="meta-label">Category</span>
+                <span className="meta-value">{pattern.category}</span>
               </div>
               <div className="meta-item">
-                <strong>Design Type:</strong> {pattern.designType}
+                <span className="meta-label">Design type</span>
+                <span className="meta-value">{pattern.designType}</span>
               </div>
-              <div className="meta-item">
-                <strong>Designer:</strong> {pattern.designer?.name || "Unknown"}
-              </div>
-              <div className="meta-item">
-                <strong>Rating:</strong>{" "}
-                <span className="rating">
-                  ★ {pattern.stats?.rating?.toFixed(1) || "0.0"} ({pattern.stats?.totalReviews || 0} reviews)
-                </span>
-              </div>
-            </div>
-
-            <div className="pattern-price-section">
-              {pattern.isFree ? (
-                <div className="price free-price">Free</div>
-              ) : (
-                <div className="price">PKR {pattern.price.toLocaleString()}</div>
+              {pattern.designer && (
+                <div className="meta-item">
+                  <span className="meta-label">Designer</span>
+                  <span className="meta-value">{pattern.designer.name || "Unknown"}</span>
+                </div>
+              )}
+              {pattern.stats?.rating > 0 && (
+                <div className="meta-item">
+                  <span className="meta-label">Rating</span>
+                  <span className="meta-value">
+                    ★ {pattern.stats.rating.toFixed(1)} ({pattern.stats.totalReviews || 0} reviews)
+                  </span>
+                </div>
               )}
             </div>
 
-            <div className="pattern-actions">
+            <div className="price-section">
+              {pattern.isFree ? (
+                <div className="price free-price">Free</div>
+              ) : (
+                <div className="price">PKR {pattern.price?.toLocaleString() || 0}</div>
+              )}
+            </div>
+
+            <div className="actions-section">
               {hasPurchased || pattern.isFree ? (
                 <button onClick={handleDownload} disabled={downloading} className="btn btn-primary">
-                  {downloading ? "Downloading..." : "Download Pattern"}
+                  {downloading ? "Downloading..." : "Download pattern"}
                 </button>
               ) : (
                 <button onClick={handlePurchase} disabled={purchasing} className="btn btn-primary">
-                  {purchasing ? "Processing..." : "Purchase Pattern"}
+                  {purchasing ? "Processing..." : "Purchase pattern"}
                 </button>
               )}
               {pattern.collaboration?.enabled && (
@@ -205,7 +217,7 @@ const PatternDetail = () => {
                   onClick={() => setShowCollaborationModal(true)}
                   className="btn btn-secondary"
                 >
-                  Request Collaboration
+                  Request collaboration
                 </button>
               )}
               {user && pattern.designer?._id === user._id && (
@@ -213,43 +225,47 @@ const PatternDetail = () => {
                   to={`/patterns/${id}/collaboration`}
                   className="btn btn-secondary"
                 >
-                  Manage Collaboration Requests
+                  Manage requests
                 </Link>
               )}
             </div>
 
-            <div className="pattern-description">
-              <h3>Description</h3>
-              <p>{pattern.description}</p>
-            </div>
+            {pattern.description && (
+              <div className="description-section">
+                <h3>Description</h3>
+                <p>{pattern.description}</p>
+              </div>
+            )}
 
             {pattern.fabricRequirements && (
-              <div className="pattern-fabric-requirements">
-                <h3>Fabric Requirements</h3>
+              <div className="requirements-section">
+                <h3>Fabric requirements</h3>
                 <ul>
                   {pattern.fabricRequirements.fabricType && (
                     <li>
-                      <strong>Fabric Type:</strong> {pattern.fabricRequirements.fabricType}
+                      <strong>Fabric type:</strong> {pattern.fabricRequirements.fabricType}
                     </li>
                   )}
                   {pattern.fabricRequirements.estimatedMeters && (
                     <li>
-                      <strong>Estimated Meters:</strong> {pattern.fabricRequirements.estimatedMeters} m
+                      <strong>Estimated meters:</strong> {pattern.fabricRequirements.estimatedMeters} m
                     </li>
                   )}
                   {pattern.fabricRequirements.estimatedYards && (
                     <li>
-                      <strong>Estimated Yards:</strong> {pattern.fabricRequirements.estimatedYards} yds
+                      <strong>Estimated yards:</strong> {pattern.fabricRequirements.estimatedYards} yds
                     </li>
                   )}
-                  {pattern.fabricRequirements.notes && <li>{pattern.fabricRequirements.notes}</li>}
+                  {pattern.fabricRequirements.notes && (
+                    <li>{pattern.fabricRequirements.notes}</li>
+                  )}
                 </ul>
               </div>
             )}
 
             {pattern.careInstructions && (
-              <div className="pattern-care-instructions">
-                <h3>Care Instructions</h3>
+              <div className="care-section">
+                <h3>Care instructions</h3>
                 <ul>
                   {pattern.careInstructions.washing && (
                     <li>
@@ -269,36 +285,43 @@ const PatternDetail = () => {
             )}
 
             {pattern.copyright && (
-              <div className="pattern-copyright">
-                <h3>Copyright Information</h3>
+              <div className="copyright-section">
+                <h3>Copyright</h3>
                 <p>
                   <strong>License:</strong> {pattern.copyright.license}
                 </p>
-                {pattern.copyright.licenseDetails && <p>{pattern.copyright.licenseDetails}</p>}
+                {pattern.copyright.licenseDetails && (
+                  <p>{pattern.copyright.licenseDetails}</p>
+                )}
               </div>
             )}
 
             {pattern.tags && pattern.tags.length > 0 && (
-              <div className="pattern-tags">
-                {pattern.tags.map((tag, index) => (
-                  <span key={index} className="tag">
-                    {tag}
-                  </span>
-                ))}
+              <div className="tags-section">
+                <div className="tags-list">
+                  {pattern.tags.map((tag, index) => (
+                    <span key={index} className="tag">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        <div className="pattern-3d-preview-section">
-          <GarmentPreview3D
-            pattern={pattern}
-            measurements={pattern.measurements}
-          />
-        </div>
+        {pattern.measurements && (
+          <div className="preview-section">
+            <h2>3D preview</h2>
+            <GarmentPreview3D
+              pattern={pattern}
+              measurements={pattern.measurements}
+            />
+          </div>
+        )}
 
         {reviews.length > 0 && (
-          <div className="pattern-reviews-section">
+          <div className="reviews-section">
             <h2>Reviews ({reviews.length})</h2>
             <div className="reviews-list">
               {reviews.map((review) => (
@@ -306,14 +329,18 @@ const PatternDetail = () => {
                   <div className="review-header">
                     <div className="reviewer-info">
                       <strong>{review.user?.name || "Anonymous"}</strong>
-                      {review.verifiedPurchase && <span className="verified-badge">Verified Purchase</span>}
+                      {review.verifiedPurchase && (
+                        <span className="verified-badge">Verified purchase</span>
+                      )}
                     </div>
                     <div className="review-rating">
                       {"★".repeat(review.rating)}
                       <span className="rating-number">{review.rating}/5</span>
                     </div>
                   </div>
-                  {review.comment && <p className="review-comment">{review.comment}</p>}
+                  {review.comment && (
+                    <p className="review-comment">{review.comment}</p>
+                  )}
                   {review.images && review.images.length > 0 && (
                     <div className="review-images">
                       {review.images.map((img, index) => (
@@ -330,16 +357,17 @@ const PatternDetail = () => {
         {showCollaborationModal && (
           <div className="modal-overlay" onClick={() => setShowCollaborationModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h3>Request Collaboration</h3>
+              <h3>Request collaboration</h3>
               <textarea
                 value={collaborationMessage}
                 onChange={(e) => setCollaborationMessage(e.target.value)}
                 placeholder="Tell the designer why you'd like to collaborate..."
                 rows="5"
+                className="collaboration-textarea"
               />
               <div className="modal-actions">
                 <button onClick={handleCollaborationRequest} className="btn btn-primary">
-                  Send Request
+                  Send request
                 </button>
                 <button onClick={() => setShowCollaborationModal(false)} className="btn btn-secondary">
                   Cancel
@@ -354,4 +382,3 @@ const PatternDetail = () => {
 };
 
 export default PatternDetail;
-
