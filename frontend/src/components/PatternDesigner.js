@@ -2,6 +2,20 @@ import React, { useRef, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import { AuthContext } from "../context/AuthContext";
+import {
+  FaPen,
+  FaMinus,
+  FaSquare,
+  FaCircle,
+  FaEraser,
+  FaPalette,
+  FaUndo,
+  FaTrash,
+  FaDownload,
+  FaUpload,
+  FaTimes,
+  FaInfoCircle,
+} from "react-icons/fa";
 import "./PatternDesigner.css";
 
 const PatternDesigner = () => {
@@ -250,91 +264,116 @@ const PatternDesigner = () => {
   return (
     <div className="pattern-designer">
       <div className="container">
-        <div className="designer-header">
-          <h1>Pattern Designer</h1>
-          <p>Draw and design your pattern on the canvas</p>
+        <div className="page-header">
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Pattern Designer</h1>
+              <p className="dashboard-subtitle">
+                Draw and design your pattern on the canvas. Create custom patterns with our intuitive design tools.
+              </p>
+            </div>
+            {user && (
+              <button onClick={() => setShowPublishModal(true)} className="btn-primary-header">
+                <FaUpload className="btn-icon" />
+                Create Pattern
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="designer-toolbar">
-          <div className="tool-group">
-            <label>Tool:</label>
-            <div className="tool-buttons">
-              <button
-                className={`tool-btn ${tool === "pen" ? "active" : ""}`}
-                onClick={() => setTool("pen")}
-                title="Pen"
-              >
-                Pen
-              </button>
-              <button
-                className={`tool-btn ${tool === "line" ? "active" : ""}`}
-                onClick={() => setTool("line")}
-                title="Line"
-              >
-                Line
-              </button>
-              <button
-                className={`tool-btn ${tool === "rectangle" ? "active" : ""}`}
-                onClick={() => setTool("rectangle")}
-                title="Rectangle"
-              >
-                Rect
-              </button>
-              <button
-                className={`tool-btn ${tool === "circle" ? "active" : ""}`}
-                onClick={() => setTool("circle")}
-                title="Circle"
-              >
-                Circle
-              </button>
-              <button
-                className={`tool-btn ${tool === "eraser" ? "active" : ""}`}
-                onClick={() => setTool("eraser")}
-                title="Eraser"
-              >
-                Erase
-              </button>
+          <div className="toolbar-section">
+            <div className="tool-group">
+              <label className="tool-label">Drawing Tools</label>
+              <div className="tool-buttons">
+                <button
+                  className={`tool-btn ${tool === "pen" ? "active" : ""}`}
+                  onClick={() => setTool("pen")}
+                  title="Pen"
+                >
+                  <FaPen className="tool-icon" />
+                </button>
+                <button
+                  className={`tool-btn ${tool === "line" ? "active" : ""}`}
+                  onClick={() => setTool("line")}
+                  title="Line"
+                >
+                  <FaMinus className="tool-icon" />
+                </button>
+                <button
+                  className={`tool-btn ${tool === "rectangle" ? "active" : ""}`}
+                  onClick={() => setTool("rectangle")}
+                  title="Rectangle"
+                >
+                  <FaSquare className="tool-icon" />
+                </button>
+                <button
+                  className={`tool-btn ${tool === "circle" ? "active" : ""}`}
+                  onClick={() => setTool("circle")}
+                  title="Circle"
+                >
+                  <FaCircle className="tool-icon" />
+                </button>
+                <button
+                  className={`tool-btn ${tool === "eraser" ? "active" : ""}`}
+                  onClick={() => setTool("eraser")}
+                  title="Eraser"
+                >
+                  <FaEraser className="tool-icon" />
+                </button>
+              </div>
+            </div>
+
+            <div className="tool-group">
+              <label className="tool-label">
+                <FaPalette className="label-icon" />
+                Color
+              </label>
+              <div className="color-picker-wrapper">
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="color-picker"
+                />
+                <span className="color-value">{color}</span>
+              </div>
+            </div>
+
+            <div className="tool-group">
+              <label className="tool-label">Line Width</label>
+              <div className="slider-wrapper">
+                <input
+                  type="range"
+                  min="1"
+                  max="20"
+                  value={lineWidth}
+                  onChange={(e) => setLineWidth(Number(e.target.value))}
+                  className="line-width-slider"
+                />
+                <span className="line-width-value">{lineWidth}px</span>
+              </div>
             </div>
           </div>
 
-          <div className="tool-group">
-            <label>Color:</label>
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="color-picker"
-            />
-          </div>
-
-          <div className="tool-group">
-            <label>Line Width:</label>
-            <input
-              type="range"
-              min="1"
-              max="20"
-              value={lineWidth}
-              onChange={(e) => setLineWidth(Number(e.target.value))}
-              className="line-width-slider"
-            />
-            <span className="line-width-value">{lineWidth}px</span>
-          </div>
-
-          <div className="tool-group">
-            <button onClick={undo} className="btn btn-secondary" disabled={historyIndex <= 0}>
+          <div className="toolbar-actions">
+            <button 
+              onClick={undo} 
+              className="action-btn" 
+              disabled={historyIndex <= 0}
+              title="Undo"
+            >
+              <FaUndo className="action-icon" />
               Undo
             </button>
-            <button onClick={clear} className="btn btn-secondary">
+            <button onClick={clear} className="action-btn" title="Clear Canvas">
+              <FaTrash className="action-icon" />
               Clear
             </button>
-            <button onClick={download} className="btn btn-secondary">
+            <button onClick={download} className="action-btn" title="Download Pattern">
+              <FaDownload className="action-icon" />
               Download
             </button>
-            {user && (
-              <button onClick={() => setShowPublishModal(true)} className="btn btn-primary">
-                Publish Pattern
-              </button>
-            )}
           </div>
         </div>
 
@@ -350,21 +389,29 @@ const PatternDesigner = () => {
         </div>
 
         <div className="designer-instructions">
-          <h3>Instructions:</h3>
+          <div className="instructions-header">
+            <FaInfoCircle className="instructions-icon" />
+            <h3>How to Use</h3>
+          </div>
           <ul>
-            <li>Select a tool from the toolbar</li>
-            <li>Choose a color and line width</li>
-            <li>Click and drag on the canvas to draw</li>
-            <li>Use Undo to revert changes</li>
-            <li>Click Download to save your design</li>
-            <li>Click Publish Pattern to create a pattern from your design</li>
+            <li>Select a drawing tool from the toolbar (Pen, Line, Rectangle, Circle, or Eraser)</li>
+            <li>Choose your preferred color and adjust the line width</li>
+            <li>Click and drag on the canvas to draw your pattern</li>
+            <li>Use Undo to revert your last action</li>
+            <li>Click Download to save your design as an image</li>
+            <li>Click "Create Pattern" to publish your design as a pattern</li>
           </ul>
         </div>
 
         {showPublishModal && (
           <div className="modal-overlay" onClick={() => setShowPublishModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h3>Publish Pattern</h3>
+              <div className="modal-header">
+                <h3>Create Pattern</h3>
+                <button className="modal-close" onClick={() => setShowPublishModal(false)}>
+                  <FaTimes />
+                </button>
+              </div>
               <div className="publish-form">
                 <div className="form-group">
                   <label>
@@ -459,11 +506,11 @@ const PatternDesigner = () => {
                 )}
               </div>
               <div className="modal-actions">
-                <button onClick={handlePublish} className="btn btn-primary" disabled={publishing}>
-                  {publishing ? "Publishing..." : "Publish"}
-                </button>
-                <button onClick={() => setShowPublishModal(false)} className="btn btn-secondary">
+                <button onClick={() => setShowPublishModal(false)} className="btn-secondary">
                   Cancel
+                </button>
+                <button onClick={handlePublish} className="btn-primary" disabled={publishing}>
+                  {publishing ? "Creating..." : "Create Pattern"}
                 </button>
               </div>
             </div>

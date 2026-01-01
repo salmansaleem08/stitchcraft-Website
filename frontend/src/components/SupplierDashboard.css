@@ -106,14 +106,20 @@
 }
 
 .stat-item-primary {
-  background: linear-gradient(135deg, #ff8c42 0%, #e67a33 100%);
-  color: #ffffff;
+  background: #ffffff;
+  color: #2c1810;
 }
 
-.stat-item-primary .stat-value,
-.stat-item-primary .stat-label,
+.stat-item-primary .stat-value {
+  color: #2c1810;
+}
+
+.stat-item-primary .stat-label {
+  color: #666;
+}
+
 .stat-item-primary .stat-trend {
-  color: rgba(255, 255, 255, 0.95);
+  color: #666;
 }
 
 .stat-item-primary .stat-trend span {
@@ -136,7 +142,7 @@
 }
 
 .stat-item-primary .stat-corner-icon {
-  background: #ffffff;
+  background: #fff8f5;
   color: #ff8c42;
 }
 

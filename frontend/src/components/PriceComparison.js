@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../utils/api";
+import {
+  FaSearch,
+  FaRulerCombined,
+  FaPalette,
+  FaTag,
+  FaCheckCircle,
+  FaStar,
+  FaMapMarkerAlt,
+  FaBox,
+  FaDollarSign,
+  FaChartLine,
+  FaSpinner,
+} from "react-icons/fa";
 import "./PriceComparison.css";
 
 const PriceComparison = () => {
@@ -47,8 +60,14 @@ const PriceComparison = () => {
     <div className="price-comparison-container">
       <div className="container">
         <div className="page-header">
-          <h1>Supplier Price Comparison</h1>
-          <p>Compare prices across different suppliers to find the best deals</p>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Supplier Price Comparison</h1>
+              <p className="dashboard-subtitle">
+                Compare prices across different suppliers to find the best deals. Make informed purchasing decisions with real-time price comparisons.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="comparison-filters">
@@ -57,12 +76,14 @@ const PriceComparison = () => {
               className={`tab-btn ${productType === "fabric" ? "active" : ""}`}
               onClick={() => setProductType("fabric")}
             >
+              <FaRulerCombined className="tab-icon" />
               Fabrics
             </button>
             <button
               className={`tab-btn ${productType === "supply" ? "active" : ""}`}
               onClick={() => setProductType("supply")}
             >
+              <FaBox className="tab-icon" />
               Supplies
             </button>
           </div>
@@ -70,80 +91,107 @@ const PriceComparison = () => {
           <div className="filter-form">
             {productType === "fabric" ? (
               <>
-                <select
-                  value={filters.fabricType}
-                  onChange={(e) => setFilters({ ...filters, fabricType: e.target.value })}
-                >
-                  <option value="">All Fabric Types</option>
-                  <option value="Cotton">Cotton</option>
-                  <option value="Silk">Silk</option>
-                  <option value="Linen">Linen</option>
-                  <option value="Wool">Wool</option>
-                  <option value="Polyester">Polyester</option>
-                  <option value="Chiffon">Chiffon</option>
-                  <option value="Georgette">Georgette</option>
-                  <option value="Velvet">Velvet</option>
-                  <option value="Denim">Denim</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="Color (optional)"
-                  value={filters.color}
-                  onChange={(e) => setFilters({ ...filters, color: e.target.value })}
-                />
+                <div className="filter-group">
+                  <FaRulerCombined className="filter-icon" />
+                  <select
+                    value={filters.fabricType}
+                    onChange={(e) => setFilters({ ...filters, fabricType: e.target.value })}
+                    className="filter-select"
+                  >
+                    <option value="">All Fabric Types</option>
+                    <option value="Cotton">Cotton</option>
+                    <option value="Silk">Silk</option>
+                    <option value="Linen">Linen</option>
+                    <option value="Wool">Wool</option>
+                    <option value="Polyester">Polyester</option>
+                    <option value="Chiffon">Chiffon</option>
+                    <option value="Georgette">Georgette</option>
+                    <option value="Velvet">Velvet</option>
+                    <option value="Denim">Denim</option>
+                  </select>
+                </div>
+                <div className="filter-group">
+                  <FaPalette className="filter-icon" />
+                  <input
+                    type="text"
+                    placeholder="Color (optional)"
+                    value={filters.color}
+                    onChange={(e) => setFilters({ ...filters, color: e.target.value })}
+                    className="filter-input"
+                  />
+                </div>
               </>
             ) : (
               <>
-                <select
-                  value={filters.category}
-                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                >
-                  <option value="">All Categories</option>
-                  <option value="Threads">Threads</option>
-                  <option value="Needles">Needles</option>
-                  <option value="Buttons">Buttons</option>
-                  <option value="Zippers">Zippers</option>
-                  <option value="Sewing Machines">Sewing Machines</option>
-                  <option value="Embroidery Materials">Embroidery Materials</option>
-                  <option value="Mannequins">Mannequins</option>
-                  <option value="Measuring Tools">Measuring Tools</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="Brand (optional)"
-                  value={filters.brand}
-                  onChange={(e) => setFilters({ ...filters, brand: e.target.value })}
-                />
+                <div className="filter-group">
+                  <FaTag className="filter-icon" />
+                  <select
+                    value={filters.category}
+                    onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                    className="filter-select"
+                  >
+                    <option value="">All Categories</option>
+                    <option value="Threads">Threads</option>
+                    <option value="Needles">Needles</option>
+                    <option value="Buttons">Buttons</option>
+                    <option value="Zippers">Zippers</option>
+                    <option value="Sewing Machines">Sewing Machines</option>
+                    <option value="Embroidery Materials">Embroidery Materials</option>
+                    <option value="Mannequins">Mannequins</option>
+                    <option value="Measuring Tools">Measuring Tools</option>
+                  </select>
+                </div>
+                <div className="filter-group">
+                  <FaTag className="filter-icon" />
+                  <input
+                    type="text"
+                    placeholder="Brand (optional)"
+                    value={filters.brand}
+                    onChange={(e) => setFilters({ ...filters, brand: e.target.value })}
+                    className="filter-input"
+                  />
+                </div>
               </>
             )}
-            <button onClick={fetchComparisons} className="btn btn-primary">
+            <button onClick={fetchComparisons} className="btn-primary-compare">
+              <FaSearch className="btn-icon" />
               Compare Prices
             </button>
           </div>
         </div>
 
-        {loading && <div className="loading-container">Loading comparisons...</div>}
+        {loading && (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Loading price comparisons...</p>
+          </div>
+        )}
 
         {!loading && comparisons.length > 0 && (
           <div className="comparisons-list">
             {comparisons.map((comparison, idx) => (
               <div key={idx} className="comparison-card">
                 <div className="comparison-header">
-                  <h3>
-                    {productType === "fabric"
-                      ? `${comparison.fabricType} - ${comparison.color} (${comparison.pattern})`
-                      : `${comparison.category} - ${comparison.brand}`}
-                  </h3>
+                  <div className="comparison-title-section">
+                    <h3>
+                      {productType === "fabric"
+                        ? `${comparison.fabricType} - ${comparison.color} (${comparison.pattern})`
+                        : `${comparison.category} - ${comparison.brand}`}
+                    </h3>
+                  </div>
                   <div className="comparison-stats">
-                    <span className="stat-item">
-                      {comparison.statistics.supplierCount} Suppliers
-                    </span>
-                    <span className="stat-item">
-                      Avg: PKR {comparison.statistics.averagePrice.toFixed(2)}
-                    </span>
-                    <span className="stat-item savings">
-                      Save up to: PKR {comparison.statistics.potentialSavings.toFixed(2)}
-                    </span>
+                    <div className="stat-item">
+                      <FaBox className="stat-icon" />
+                      <span>{comparison.statistics?.supplierCount || 0} Suppliers</span>
+                    </div>
+                    <div className="stat-item">
+                      <FaChartLine className="stat-icon" />
+                      <span>Avg: PKR {(comparison.statistics?.averagePrice || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="stat-item savings">
+                      <FaDollarSign className="stat-icon" />
+                      <span>Save up to: PKR {(comparison.statistics?.potentialSavings || 0).toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -161,47 +209,55 @@ const PriceComparison = () => {
                         >
                           <h4>{supplier.name}</h4>
                         </Link>
-                        {supplier.supplier.verified && (
-                          <span className="verified-badge">Verified</span>
+                        {supplier.supplier?.verificationStatus === "verified" && (
+                          <span className="verified-badge">
+                            <FaCheckCircle className="badge-icon" />
+                            Verified
+                          </span>
                         )}
                       </div>
                       <div className="supplier-info">
                         <Link
-                          to={`/suppliers/${supplier.supplier.id}`}
+                          to={`/suppliers/${supplier.supplier?._id || supplier.supplier?.id || ""}`}
                           className="supplier-name"
                         >
-                          {supplier.supplier.name}
+                          {supplier.supplier?.name || supplier.supplier?.businessName || "Unknown Supplier"}
                         </Link>
-                        {supplier.supplier.qualityRating > 0 && (
+                        {supplier.supplier?.qualityRating > 0 && (
                           <div className="quality-rating">
-                            Quality: {supplier.supplier.qualityRating.toFixed(1)}/5
+                            <FaStar className="rating-icon filled" />
+                            <span>Quality: {(supplier.supplier.qualityRating || 0).toFixed(1)}/5</span>
                           </div>
                         )}
                       </div>
                       <div className="price-section">
                         <div className="price-main">
+                          <FaDollarSign className="price-icon" />
                           PKR{" "}
                           {productType === "fabric"
-                            ? supplier.pricePerMeter.toLocaleString()
-                            : supplier.price.toLocaleString()}
+                            ? (supplier.pricePerMeter || 0).toLocaleString()
+                            : (supplier.price || 0).toLocaleString()}
                         </div>
                         <div className="price-unit">
-                          {productType === "fabric" ? "per meter" : `per ${supplier.unit}`}
+                          {productType === "fabric" ? "per meter" : `per ${supplier.unit || "unit"}`}
                         </div>
                         {supplier.stockQuantity !== undefined && (
                           <div className="stock-info">
-                            Stock: {supplier.stockQuantity > 0 ? supplier.stockQuantity : "Out of Stock"}
+                            <FaBox className="stock-icon" />
+                            <span>Stock: {supplier.stockQuantity > 0 ? supplier.stockQuantity : "Out of Stock"}</span>
                           </div>
                         )}
                       </div>
                       {supplier.rating > 0 && (
                         <div className="product-rating">
-                          Rating: {supplier.rating.toFixed(1)}/5
+                          <FaStar className="rating-icon filled" />
+                          <span>Rating: {(supplier.rating || 0).toFixed(1)}/5</span>
                         </div>
                       )}
-                      {supplier.supplier.location?.city && (
+                      {supplier.supplier?.location?.city && (
                         <div className="location">
-                          Location: {supplier.supplier.location.city}
+                          <FaMapMarkerAlt className="location-icon" />
+                          <span>{supplier.supplier.location.city}</span>
                         </div>
                       )}
                     </div>
@@ -214,6 +270,10 @@ const PriceComparison = () => {
 
         {!loading && comparisons.length === 0 && (
           <div className="no-comparisons">
+            <div className="empty-icon">
+              <FaChartLine />
+            </div>
+            <h3>No Comparisons Yet</h3>
             <p>Select filters and click "Compare Prices" to see supplier comparisons</p>
           </div>
         )}

@@ -3,6 +3,29 @@ import { useParams, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import SupplierReviews from "./SupplierReviews";
+import {
+  FaArrowLeft,
+  FaCheckCircle,
+  FaClock,
+  FaTimesCircle,
+  FaShieldAlt,
+  FaStar,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaEnvelope,
+  FaBuilding,
+  FaTag,
+  FaWarehouse,
+  FaPercent,
+  FaShoppingCart,
+  FaUser,
+  FaCalendarAlt,
+  FaBriefcase,
+  FaIdCard,
+  FaEllipsisV,
+  FaPlus,
+  FaEye,
+} from "react-icons/fa";
 import "./SupplierProfile.css";
 
 const SupplierProfile = () => {
@@ -11,6 +34,10 @@ const SupplierProfile = () => {
   const [supplier, setSupplier] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reviewsData, setReviewsData] = useState({
+    averageRating: 0,
+    totalReviews: 0,
+  });
 
   useEffect(() => {
     fetchSupplierProfile();
@@ -55,13 +82,33 @@ const SupplierProfile = () => {
   const getVerificationBadge = () => {
     switch (supplier.verificationStatus) {
       case "verified":
-        return <span className="verification-badge verified">Verified Supplier</span>;
+        return (
+          <span className="verification-badge verified">
+            <FaCheckCircle className="badge-icon" />
+            Verified Supplier
+          </span>
+        );
       case "under_review":
-        return <span className="verification-badge under-review">Under Review</span>;
+        return (
+          <span className="verification-badge under-review">
+            <FaClock className="badge-icon" />
+            Under Review
+          </span>
+        );
       case "rejected":
-        return <span className="verification-badge rejected">Verification Rejected</span>;
+        return (
+          <span className="verification-badge rejected">
+            <FaTimesCircle className="badge-icon" />
+            Verification Rejected
+          </span>
+        );
       default:
-        return <span className="verification-badge pending">Pending Verification</span>;
+        return (
+          <span className="verification-badge pending">
+            <FaClock className="badge-icon" />
+            Pending Verification
+          </span>
+        );
     }
   };
 
@@ -69,187 +116,303 @@ const SupplierProfile = () => {
     <div className="supplier-profile-container">
       <div className="container">
         <Link to="/suppliers" className="back-link">
-          ← Back to Suppliers
+          <FaArrowLeft className="back-icon" />
+          Back to Suppliers
         </Link>
 
-        <div className="profile-header">
-          <div className="profile-avatar-section">
-            {supplier.avatar ? (
-              <img src={supplier.avatar} alt={supplier.businessName} className="profile-avatar" />
-            ) : (
-              <div className="profile-avatar placeholder">
-                {supplier.businessName?.charAt(0).toUpperCase() || supplier.name.charAt(0).toUpperCase()}
+        <div className="profile-layout">
+          {/* Left Column - Profile Details */}
+          <div className="profile-left-column">
+            <div className="profile-card">
+              <div className="profile-header-section">
+                <div className="profile-avatar-wrapper">
+                  {supplier.avatar ? (
+                    <img src={supplier.avatar} alt={supplier.businessName} className="profile-avatar-img" />
+                  ) : (
+                    <div className="profile-avatar-img placeholder">
+                      {supplier.businessName?.charAt(0).toUpperCase() || supplier.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="profile-name-section">
+                  <h1 className="profile-name">{supplier.businessName || supplier.name}</h1>
+                  <p className="supplier-id">#{supplier._id?.slice(-8).toUpperCase() || "SUPPLIER"}</p>
+                </div>
+                <button className="profile-menu-btn">
+                  <FaEllipsisV />
+                </button>
               </div>
-            )}
-            {getVerificationBadge()}
-            {supplier.qualityGuarantee?.enabled && (
-              <span className="quality-badge">Quality Guaranteed</span>
-            )}
-          </div>
 
-          <div className="profile-info">
-            <h1>{supplier.businessName || supplier.name}</h1>
-            <p className="supplier-name">{supplier.name}</p>
-            {supplier.address && (
-              <p className="profile-location">
-                {supplier.address.street && `${supplier.address.street}, `}
-                {supplier.address.city && `${supplier.address.city}, `}
-                {supplier.address.province && supplier.address.province}
-              </p>
-            )}
+              {/* About Section */}
+              <div className="info-section">
+                <h3 className="section-title">About</h3>
+                {supplier.phone && (
+                  <div className="info-item">
+                    <FaPhone className="info-icon" />
+                    <span className="info-value">{supplier.phone}</span>
+                  </div>
+                )}
+                {supplier.email && (
+                  <div className="info-item">
+                    <FaEnvelope className="info-icon" />
+                    <span className="info-value">{supplier.email}</span>
+                  </div>
+                )}
+              </div>
 
-            <div className="profile-rating">
-              <span className="stars-large">
-                {"★".repeat(Math.floor(supplier.qualityRating || 0))}
-                {"☆".repeat(5 - Math.floor(supplier.qualityRating || 0))}
-              </span>
-              <span className="rating-value">
-                {supplier.qualityRating?.toFixed(1) || "0.0"}
-              </span>
-              <span className="reviews-count">
-                ({supplier.totalQualityReviews || 0} reviews)
-              </span>
-            </div>
-
-            {supplier.businessDescription && (
-              <p className="profile-bio">{supplier.businessDescription}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="profile-stats">
-          <div className="stat-card">
-            <div className="stat-value">{supplier.yearsInBusiness || 0}</div>
-            <div className="stat-label">Years in Business</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{supplier.businessType || "N/A"}</div>
-            <div className="stat-label">Business Type</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{supplier.productCategories?.length || 0}</div>
-            <div className="stat-label">Product Categories</div>
-          </div>
-          {supplier.distributionCenters && supplier.distributionCenters.length > 0 && (
-            <div className="stat-card">
-              <div className="stat-value">{supplier.distributionCenters.length}</div>
-              <div className="stat-label">Distribution Centers</div>
-            </div>
-          )}
-        </div>
-
-        <div className="profile-details">
-          <div className="detail-section">
-            <h3>Business Information</h3>
-            <div className="detail-grid">
-              {supplier.businessRegistrationNumber && (
-                <div className="detail-item">
-                  <span className="detail-label">Registration Number:</span>
-                  <span className="detail-value">{supplier.businessRegistrationNumber}</span>
+              {/* Address Section */}
+              {supplier.address && (
+                <div className="info-section">
+                  <h3 className="section-title">Address</h3>
+                  {supplier.address.street && (
+                    <div className="info-item">
+                      <FaBuilding className="info-icon" />
+                      <span className="info-value">{supplier.address.street}</span>
+                    </div>
+                  )}
+                  {supplier.address.city && supplier.address.province && (
+                    <div className="info-item">
+                      <FaMapMarkerAlt className="info-icon" />
+                      <span className="info-value">
+                        {supplier.address.city} {supplier.address.province}
+                      </span>
+                    </div>
+                  )}
+                  {supplier.address.postalCode && (
+                    <div className="info-item">
+                      <FaMapMarkerAlt className="info-icon" />
+                      <span className="info-value">{supplier.address.postalCode}</span>
+                    </div>
+                  )}
                 </div>
               )}
-              {supplier.taxId && (
-                <div className="detail-item">
-                  <span className="detail-label">Tax ID:</span>
-                  <span className="detail-value">{supplier.taxId}</span>
-                </div>
-              )}
-              {supplier.phone && (
-                <div className="detail-item">
-                  <span className="detail-label">Phone:</span>
-                  <span className="detail-value">{supplier.phone}</span>
-                </div>
-              )}
-              {supplier.email && (
-                <div className="detail-item">
-                  <span className="detail-label">Email:</span>
-                  <span className="detail-value">{supplier.email}</span>
-                </div>
-              )}
-            </div>
-          </div>
 
-          {supplier.productCategories && supplier.productCategories.length > 0 && (
-            <div className="detail-section">
-              <h3>Product Categories</h3>
-              <div className="categories-list">
-                {supplier.productCategories.map((category, idx) => (
-                  <span key={idx} className="category-tag">
-                    {category}
+              {/* Supplier Details Section */}
+              <div className="info-section">
+                <h3 className="section-title">Supplier details</h3>
+                {supplier.yearsInBusiness && (
+                  <div className="info-item">
+                    <FaCalendarAlt className="info-icon" />
+                    <span className="info-value">Established: {supplier.yearsInBusiness} years</span>
+                  </div>
+                )}
+                {supplier.businessRegistrationNumber && (
+                  <div className="info-item">
+                    <FaIdCard className="info-icon" />
+                    <span className="info-value">Reg: {supplier.businessRegistrationNumber}</span>
+                  </div>
+                )}
+                {supplier.businessType && (
+                  <div className="info-item">
+                    <FaBriefcase className="info-icon" />
+                    <span className="info-value">{supplier.businessType}</span>
+                  </div>
+                )}
+                <div className="info-item">
+                  <FaCalendarAlt className="info-icon" />
+                  <span className="info-value">
+                    Joined: {new Date(supplier.createdAt || Date.now()).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric', 
+                      year: 'numeric' 
+                    })}
                   </span>
-                ))}
+                </div>
               </div>
-            </div>
-          )}
 
-          {supplier.distributionCenters && supplier.distributionCenters.length > 0 && (
-            <div className="detail-section">
-              <h3>Distribution Centers</h3>
-              <div className="distribution-centers-list">
-                {supplier.distributionCenters.map((center, idx) => (
-                  <div key={idx} className="center-card">
-                    <h4>{center.name}</h4>
-                    {center.address && (
-                      <p>
-                        {center.address.street && `${center.address.street}, `}
-                        {center.address.city && `${center.address.city}, `}
-                        {center.address.province && center.address.province}
-                      </p>
-                    )}
-                    {center.phone && <p>Phone: {center.phone}</p>}
-                    {!center.isActive && <span className="inactive-badge">Inactive</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {supplier.qualityGuarantee?.enabled && (
-            <div className="detail-section">
-              <h3>Quality Guarantee</h3>
-              <div className="quality-guarantee-info">
-                {supplier.qualityGuarantee.description && (
-                  <p className="guarantee-description">{supplier.qualityGuarantee.description}</p>
-                )}
-                {supplier.qualityGuarantee.warrantyPeriod && (
-                  <div className="guarantee-item">
-                    <strong>Warranty Period:</strong> {supplier.qualityGuarantee.warrantyPeriod}
-                  </div>
-                )}
-                {supplier.qualityGuarantee.returnPolicy && (
-                  <div className="guarantee-item">
-                    <strong>Return Policy:</strong>
-                    <p>{supplier.qualityGuarantee.returnPolicy}</p>
-                  </div>
+              {/* Verification Status */}
+              <div className="verification-section">
+                {getVerificationBadge()}
+                {supplier.qualityGuarantee?.enabled && (
+                  <span className="quality-badge">
+                    <FaShieldAlt className="badge-icon" />
+                    Quality Guaranteed
+                  </span>
                 )}
               </div>
             </div>
-          )}
+          </div>
 
-          {supplier.bulkDiscountEnabled && (
-            <div className="detail-section">
-              <h3>Bulk Discounts</h3>
-              <div className="bulk-discounts">
-                {supplier.bulkDiscountTiers?.map((tier, idx) => (
-                  <div key={idx} className="discount-tier">
-                    <span>{tier.minQuantity}+ items: {tier.discountPercentage}% off</span>
+          {/* Right Column - Reviews & Details */}
+          <div className="profile-right-column">
+            {/* Reviews Section - Full Display */}
+            <div className="info-card reviews-card">
+              <div className="card-header">
+                <h3 className="card-title">Reviews</h3>
+                <div className="reviews-rating-header">
+                  <div className="stars-container">
+                    {[...Array(5)].map((_, i) => (
+                      <FaStar
+                        key={i}
+                        className={`star-icon ${i < Math.floor(reviewsData.averageRating || 0) ? "filled" : "empty"}`}
+                      />
+                    ))}
                   </div>
-                ))}
+                  <span className="rating-value">
+                    {reviewsData.averageRating?.toFixed(1) || "0.0"}
+                  </span>
+                  <span className="reviews-count">
+                    ({reviewsData.totalReviews || 0} reviews)
+                  </span>
+                </div>
               </div>
-              {user && user.role === "customer" && (
-                <Link
-                  to={`/suppliers/${supplier._id}/bulk-order`}
-                  className="btn btn-primary"
-                  style={{ marginTop: "1rem", display: "inline-block" }}
-                >
-                  Place Bulk Order
+              <div className="reviews-content">
+                <SupplierReviews 
+                  supplierId={supplier._id} 
+                  onDataLoad={(data) => setReviewsData(data)}
+                />
+              </div>
+            </div>
+
+            {/* Categories Tags */}
+            {supplier.productCategories && supplier.productCategories.length > 0 && (
+              <div className="info-card">
+                <div className="card-header">
+                  <h3 className="card-title">Product Categories</h3>
+                </div>
+                <div className="categories-tags-list">
+                  {supplier.productCategories.map((category, idx) => (
+                    <span key={idx} className="category-tag-orange">{category}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Activity Section */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3 className="card-title">Activity</h3>
+              </div>
+              <div className="activity-list">
+                {supplier.createdAt && (
+                  <div className="activity-item">
+                    <div className="activity-avatar">
+                      {supplier.avatar ? (
+                        <img src={supplier.avatar} alt="Supplier" />
+                      ) : (
+                        <span>{supplier.businessName?.charAt(0).toUpperCase() || supplier.name.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="activity-content">
+                      <p className="activity-name">{supplier.businessName || supplier.name}</p>
+                      <p className="activity-action">Account created</p>
+                    </div>
+                    <div className="activity-time">
+                      {new Date(supplier.createdAt).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+                )}
+                {supplier.updatedAt && supplier.updatedAt !== supplier.createdAt && (
+                  <div className="activity-item">
+                    <div className="activity-avatar">
+                      {supplier.avatar ? (
+                        <img src={supplier.avatar} alt="Supplier" />
+                      ) : (
+                        <span>{supplier.businessName?.charAt(0).toUpperCase() || supplier.name.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="activity-content">
+                      <p className="activity-name">{supplier.businessName || supplier.name}</p>
+                      <p className="activity-action">Profile updated</p>
+                    </div>
+                    <div className="activity-time">
+                      {new Date(supplier.updatedAt).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+                )}
+                <Link to={`/suppliers/${supplier._id}/reviews`} className="view-all-link">
+                  <FaEye className="link-icon" />
+                  View all
                 </Link>
+              </div>
+            </div>
+
+            {/* Additional Information and Distribution Centers - Side by Side */}
+            <div className="info-cards-grid">
+              {/* Additional Information - Left */}
+              <div className="info-card">
+                <div className="card-header">
+                  <h3 className="card-title">Additional Information</h3>
+                </div>
+                <div className="additional-details">
+                  {supplier.businessDescription && (
+                    <div className="detail-row">
+                      <span className="detail-label">Description:</span>
+                      <span className="detail-text">{supplier.businessDescription}</span>
+                    </div>
+                  )}
+                  {supplier.taxId && (
+                    <div className="detail-row">
+                      <span className="detail-label">Tax ID:</span>
+                      <span className="detail-text">{supplier.taxId}</span>
+                    </div>
+                  )}
+                  {supplier.businessRegistrationNumber && (
+                    <div className="detail-row">
+                      <span className="detail-label">Registration Number:</span>
+                      <span className="detail-text">{supplier.businessRegistrationNumber}</span>
+                    </div>
+                  )}
+                  {supplier.bulkDiscountEnabled && supplier.bulkDiscountTiers && supplier.bulkDiscountTiers.length > 0 && (
+                    <div className="detail-row">
+                      <span className="detail-label">Bulk Discounts:</span>
+                      <span className="detail-text">Available ({supplier.bulkDiscountTiers.length} tiers)</span>
+                    </div>
+                  )}
+                  {supplier.qualityGuarantee?.enabled && (
+                    <div className="detail-row">
+                      <span className="detail-label">Quality Guarantee:</span>
+                      <span className="detail-text">Enabled</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Distribution Centers - Right */}
+              {supplier.distributionCenters && supplier.distributionCenters.length > 0 && (
+                <div className="info-card">
+                  <div className="card-header">
+                    <h3 className="card-title">Distribution Centers</h3>
+                  </div>
+                  <div className="distribution-centers-list-compact">
+                    {supplier.distributionCenters.map((center, idx) => (
+                      <div key={idx} className="center-card-compact">
+                        <h4>{center.name}</h4>
+                        {center.address && (
+                          <p className="center-address">
+                            {center.address.street && `${center.address.street}, `}
+                            {center.address.city && `${center.address.city}, `}
+                            {center.address.province && center.address.province}
+                          </p>
+                        )}
+                        {center.phone && (
+                          <p className="center-phone">
+                            <FaPhone className="phone-icon" />
+                            {center.phone}
+                          </p>
+                        )}
+                        {!center.isActive && <span className="inactive-badge">Inactive</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-          )}
+          </div>
         </div>
 
-        <SupplierReviews supplierId={supplier._id} />
       </div>
     </div>
   );
