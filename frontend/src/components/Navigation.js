@@ -67,6 +67,8 @@ const Navigation = () => {
     // Home/Dashboard - All roles
     if (user.role === "customer") {
       links.push({ path: "/", label: "Home" });
+    } else if (user.role === "admin") {
+      links.push({ path: "/admin/dashboard", label: "Dashboard" });
     } else {
       links.push({ path: "/dashboard", label: "Dashboard" });
     }
@@ -141,7 +143,14 @@ const Navigation = () => {
         <div className="header-content">
           {/* Left: Logo */}
           <div className="header-left">
-            <Link to={user?.role === "tailor" ? "/dashboard" : "/"} className="logo">
+            <Link 
+              to={
+                user?.role === "tailor" ? "/dashboard" 
+                : user?.role === "admin" ? "/admin/dashboard"
+                : "/"
+              } 
+              className="logo"
+            >
               StitchCraft
             </Link>
           </div>

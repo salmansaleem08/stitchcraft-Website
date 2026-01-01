@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { FaArrowRight, FaCheck } from "react-icons/fa";
 import "./VirtualStylist.css";
 
 const VirtualStylist = () => {
@@ -112,14 +113,18 @@ const VirtualStylist = () => {
     <div className="virtual-stylist-container">
       <div className="container">
         <div className="page-header">
-          <h1>AI-Powered Virtual Stylist</h1>
-          <p>Get personalized style recommendations based on your body type, occasion, and preferences</p>
+          <div className="header-text">
+            <h1>AI-Powered Virtual Stylist</h1>
+            <p className="dashboard-subtitle">
+              Get personalized style recommendations based on your body type, occasion, and preferences. Discover the perfect fabrics, patterns, and styles tailored just for you.
+            </p>
+          </div>
         </div>
 
         {!user && (
           <div className="login-prompt">
             <p>Please log in to use the Virtual Stylist and save your recommendations.</p>
-            <Link to="/login" className="btn btn-primary">
+            <Link to="/login" className="btn-primary-header">
               Login
             </Link>
           </div>
@@ -127,180 +132,259 @@ const VirtualStylist = () => {
 
         {step === 1 && (
           <div className="stylist-form-section">
-            <h2>Step 1: Body Measurements</h2>
-            <p className="section-description">
-              Enter your measurements for accurate body type analysis and personalized recommendations
-            </p>
-            <form onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
-              <div className="measurements-grid">
-                <div className="form-group">
+            {/* Progress Indicator */}
+            <div className="progress-indicator">
+              <div className={`progress-step ${step >= 1 ? 'completed' : ''} ${step === 1 ? 'active' : ''}`}>
+                <div className="step-number">
+                  {step > 1 ? <FaCheck /> : '1'}
+                </div>
+                <span className="step-label">Measurements</span>
+              </div>
+              <div className="progress-line"></div>
+              <div className={`progress-step ${step >= 2 ? 'completed' : ''} ${step === 2 ? 'active' : ''}`}>
+                <div className="step-number">
+                  {step > 2 ? <FaCheck /> : '2'}
+                </div>
+                <span className="step-label">Preferences</span>
+              </div>
+              <div className="progress-line"></div>
+              <div className={`progress-step ${step >= 3 ? 'completed' : ''} ${step === 3 ? 'active' : ''}`}>
+                <div className="step-number">3</div>
+                <span className="step-label">Results</span>
+              </div>
+            </div>
+            <div className="form-header">
+              <h2>Step 1: Body Measurements</h2>
+              <p className="section-description">
+                Enter your measurements for accurate body type analysis and personalized recommendations
+              </p>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); setStep(2); }} className="form-column">
+                <div className="form-group creative-input">
                   <label>Height (cm) *</label>
-                  <input
-                    type="number"
-                    name="measurement.height"
-                    value={formData.bodyMeasurements.height}
-                    onChange={handleInputChange}
-                    required
-                    min="100"
-                    max="250"
-                  />
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      name="measurement.height"
+                      value={formData.bodyMeasurements.height}
+                      onChange={handleInputChange}
+                      required
+                      min="100"
+                      max="250"
+                      placeholder="Enter height"
+                    />
+                    <span className="input-unit">cm</span>
+                  </div>
                 </div>
-                <div className="form-group">
+                <div className="form-group creative-input">
                   <label>Weight (kg)</label>
-                  <input
-                    type="number"
-                    name="measurement.weight"
-                    value={formData.bodyMeasurements.weight}
-                    onChange={handleInputChange}
-                    min="30"
-                    max="200"
-                  />
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      name="measurement.weight"
+                      value={formData.bodyMeasurements.weight}
+                      onChange={handleInputChange}
+                      min="30"
+                      max="200"
+                      placeholder="Enter weight"
+                    />
+                    <span className="input-unit">kg</span>
+                  </div>
                 </div>
-                <div className="form-group">
+                <div className="form-group creative-input">
                   <label>Bust (cm) *</label>
-                  <input
-                    type="number"
-                    name="measurement.bust"
-                    value={formData.bodyMeasurements.bust}
-                    onChange={handleInputChange}
-                    required
-                    min="60"
-                    max="150"
-                  />
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      name="measurement.bust"
+                      value={formData.bodyMeasurements.bust}
+                      onChange={handleInputChange}
+                      required
+                      min="60"
+                      max="150"
+                      placeholder="Enter bust"
+                    />
+                    <span className="input-unit">cm</span>
+                  </div>
                 </div>
-                <div className="form-group">
+                <div className="form-group creative-input">
                   <label>Waist (cm) *</label>
-                  <input
-                    type="number"
-                    name="measurement.waist"
-                    value={formData.bodyMeasurements.waist}
-                    onChange={handleInputChange}
-                    required
-                    min="50"
-                    max="150"
-                  />
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      name="measurement.waist"
+                      value={formData.bodyMeasurements.waist}
+                      onChange={handleInputChange}
+                      required
+                      min="50"
+                      max="150"
+                      placeholder="Enter waist"
+                    />
+                    <span className="input-unit">cm</span>
+                  </div>
                 </div>
-                <div className="form-group">
+                <div className="form-group creative-input">
                   <label>Hips (cm) *</label>
-                  <input
-                    type="number"
-                    name="measurement.hips"
-                    value={formData.bodyMeasurements.hips}
-                    onChange={handleInputChange}
-                    required
-                    min="60"
-                    max="150"
-                  />
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      name="measurement.hips"
+                      value={formData.bodyMeasurements.hips}
+                      onChange={handleInputChange}
+                      required
+                      min="60"
+                      max="150"
+                      placeholder="Enter hips"
+                    />
+                    <span className="input-unit">cm</span>
+                  </div>
                 </div>
-                <div className="form-group">
+                <div className="form-group creative-input">
                   <label>Shoulder (cm)</label>
-                  <input
-                    type="number"
-                    name="measurement.shoulder"
-                    value={formData.bodyMeasurements.shoulder}
-                    onChange={handleInputChange}
-                    min="30"
-                    max="60"
-                  />
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      name="measurement.shoulder"
+                      value={formData.bodyMeasurements.shoulder}
+                      onChange={handleInputChange}
+                      min="30"
+                      max="60"
+                      placeholder="Enter shoulder"
+                    />
+                    <span className="input-unit">cm</span>
+                  </div>
                 </div>
-              </div>
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary" disabled={!isStepValid()}>
-                  Next: Select Occasion
-                </button>
-              </div>
-            </form>
+                <div className="form-actions">
+                  <button type="submit" className="btn-primary-header" disabled={!isStepValid()}>
+                    Next: Select Occasion
+                    <FaArrowRight className="btn-icon" />
+                  </button>
+                </div>
+              </form>
           </div>
         )}
 
         {step === 2 && (
           <div className="stylist-form-section">
-            <h2>Step 2: Occasion & Preferences</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Occasion *</label>
-                <select
-                  name="occasion"
-                  value={formData.occasion}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Select an occasion</option>
-                  {occasions.map((occ) => (
-                    <option key={occ} value={occ}>
-                      {occ}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Cultural Context</label>
-                <select
-                  name="culturalContext"
-                  value={formData.culturalContext}
-                  onChange={handleInputChange}
-                >
-                  {culturalContexts.map((ctx) => (
-                    <option key={ctx} value={ctx}>
-                      {ctx}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="preferences-section">
-                <h3>Fabric Preferences</h3>
-                <div className="checkbox-grid">
-                  {fabricTypes.map((fabric) => (
-                    <label key={fabric} className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={formData.preferences.fabricTypes.includes(fabric)}
-                        onChange={() => handleCheckboxChange("fabricTypes", fabric)}
-                      />
-                      {fabric}
-                    </label>
-                  ))}
+            {/* Progress Indicator */}
+            <div className="progress-indicator">
+              <div className={`progress-step ${step >= 1 ? 'completed' : ''} ${step === 1 ? 'active' : ''}`}>
+                <div className="step-number">
+                  {step > 1 ? <FaCheck /> : '1'}
                 </div>
+                <span className="step-label">Measurements</span>
               </div>
-
-              <div className="preferences-section">
-                <h3>Pattern Preferences</h3>
-                <div className="checkbox-grid">
-                  {patterns.map((pattern) => (
-                    <label key={pattern} className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={formData.preferences.patterns.includes(pattern)}
-                        onChange={() => handleCheckboxChange("patterns", pattern)}
-                      />
-                      {pattern}
-                    </label>
-                  ))}
+              <div className="progress-line"></div>
+              <div className={`progress-step ${step >= 2 ? 'completed' : ''} ${step === 2 ? 'active' : ''}`}>
+                <div className="step-number">
+                  {step > 2 ? <FaCheck /> : '2'}
                 </div>
+                <span className="step-label">Preferences</span>
               </div>
+              <div className="progress-line"></div>
+              <div className={`progress-step ${step >= 3 ? 'completed' : ''} ${step === 3 ? 'active' : ''}`}>
+                <div className="step-number">3</div>
+                <span className="step-label">Results</span>
+              </div>
+            </div>
+            <div className="form-header">
+              <h2>Step 2: Occasion & Preferences</h2>
+              <p className="section-description">
+                Tell us about your occasion and style preferences to get the perfect recommendations
+              </p>
+            </div>
+            <form onSubmit={handleSubmit} className="form-column">
+                <div className="form-group creative-select">
+                  <label>Occasion *</label>
+                  <div className="select-wrapper">
+                    <select
+                      name="occasion"
+                      value={formData.occasion}
+                      onChange={handleInputChange}
+                      required
+                      className="styled-select"
+                    >
+                      <option value="">Select an occasion</option>
+                      {occasions.map((occ) => (
+                        <option key={occ} value={occ}>
+                          {occ}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-              <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={formData.includeTrends}
-                    onChange={(e) => setFormData({ ...formData, includeTrends: e.target.checked })}
-                  />{" "}
-                  Include current fashion trends
-                </label>
-              </div>
+                <div className="form-group creative-select">
+                  <label>Cultural Context</label>
+                  <div className="select-wrapper">
+                    <select
+                      name="culturalContext"
+                      value={formData.culturalContext}
+                      onChange={handleInputChange}
+                      className="styled-select"
+                    >
+                      {culturalContexts.map((ctx) => (
+                        <option key={ctx} value={ctx}>
+                          {ctx}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-              <div className="form-actions">
-                <button type="button" onClick={() => setStep(1)} className="btn btn-secondary">
-                  Back
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={loading || !isStepValid()}>
-                  {loading ? "Analyzing..." : "Get Recommendations"}
-                </button>
-              </div>
-            </form>
+                <div className="preferences-section">
+                  <h3>Fabric Preferences</h3>
+                  <div className="checkbox-grid">
+                    {fabricTypes.map((fabric) => (
+                      <label key={fabric} className={`checkbox-label ${formData.preferences.fabricTypes.includes(fabric) ? 'checked' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={formData.preferences.fabricTypes.includes(fabric)}
+                          onChange={() => handleCheckboxChange("fabricTypes", fabric)}
+                        />
+                        <span>{fabric}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="preferences-section">
+                  <h3>Pattern Preferences</h3>
+                  <div className="checkbox-grid">
+                    {patterns.map((pattern) => (
+                      <label key={pattern} className={`checkbox-label ${formData.preferences.patterns.includes(pattern) ? 'checked' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={formData.preferences.patterns.includes(pattern)}
+                          onChange={() => handleCheckboxChange("patterns", pattern)}
+                        />
+                        <span>{pattern}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="checkbox-simple-label">
+                    <input
+                      type="checkbox"
+                      checked={formData.includeTrends}
+                      onChange={(e) => setFormData({ ...formData, includeTrends: e.target.checked })}
+                    />
+                    <span>Include current fashion trends</span>
+                  </label>
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" onClick={() => setStep(1)} className="btn-secondary-header">
+                    Back
+                  </button>
+                  <button type="submit" className="btn-primary-header" disabled={loading || !isStepValid()}>
+                    {loading ? "Analyzing..." : "Get Recommendations"}
+                    {!loading && <FaArrowRight className="btn-icon" />}
+                  </button>
+                </div>
+              </form>
           </div>
         )}
 
@@ -308,7 +392,7 @@ const VirtualStylist = () => {
           <div className="recommendations-section">
             <div className="recommendations-header">
               <h2>Your Personalized Style Recommendations</h2>
-              <button onClick={() => { setStep(1); setRecommendations(null); }} className="btn btn-secondary">
+              <button onClick={() => { setStep(1); setRecommendations(null); }} className="btn-secondary-header">
                 New Analysis
               </button>
             </div>
@@ -366,7 +450,7 @@ const VirtualStylist = () => {
                             )}
                             <Link
                               to={`/fabrics/${fabric.fabricId}`}
-                              className="btn btn-small btn-primary"
+                              className="btn-view-fabric"
                             >
                               View Fabric
                             </Link>

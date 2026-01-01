@@ -6,6 +6,11 @@
 
 .page-header {
   margin-bottom: 2.5rem;
+  background: transparent;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .header-content-wrapper {
@@ -13,6 +18,11 @@
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
+  background: transparent;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .header-text {
@@ -20,6 +30,11 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  background: transparent;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .page-header h1 {
@@ -30,11 +45,12 @@
   letter-spacing: -0.02em;
 }
 
-.page-header p {
+.dashboard-subtitle {
   font-size: 1rem;
   color: #666;
   margin: 0;
   line-height: 1.6;
+  text-align: left;
 }
 
 .view-toggle {
@@ -181,30 +197,30 @@
 .orders-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  gap: 1rem;
+}
+
+.tailor-orders-container .container {
+  max-width: 1400px;
 }
 
 .order-card {
   background: #ffffff;
   border: 1px solid #e0e0e0;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
+  text-decoration: none;
+  color: inherit;
 }
 
 .order-card:hover {
   border-color: #ff8c42;
-  background: #fff8f5;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
   transform: translateY(-4px);
-}
-
-.order-card {
-  text-decoration: none;
-  color: inherit;
 }
 
 .order-card-header {

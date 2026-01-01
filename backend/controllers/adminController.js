@@ -1,4 +1,13 @@
 const User = require("../models/User");
+const Order = require("../models/Order");
+const Fabric = require("../models/Fabric");
+const Supply = require("../models/Supply");
+const Equipment = require("../models/Equipment");
+const Course = require("../models/Course");
+const Workshop = require("../models/Workshop");
+const Pattern = require("../models/Pattern");
+const Video = require("../models/Video");
+const IndustryNews = require("../models/IndustryNews");
 
 // @desc    Get all suppliers pending verification
 // @route   GET /api/admin/verifications/pending
@@ -123,12 +132,60 @@ exports.rejectVerification = async (req, res) => {
 // @access  Private (Admin only)
 exports.getAdminDashboard = async (req, res) => {
   try {
-    const [pendingVerifications, totalSuppliers, totalTailors, totalCustomers] = await Promise.all([
+    const [
+      pendingVerifications,
+      totalSuppliers,
+      totalTailors,
+      totalCustomers,
+      totalMentors,
+      totalOrders,
+      pendingOrders,
+      completedOrders,
+      totalFabrics,
+      totalSupplies,
+      totalEquipment,
+      totalCourses,
+      totalWorkshops,
+      totalPatterns,
+      totalVideos,
+      totalNews,
+      verifiedSuppliers,
+      revenueResult,
+    ] = await Promise.all([
+      // User counts
       User.countDocuments({ role: "supplier", verificationStatus: "under_review" }),
       User.countDocuments({ role: "supplier" }),
       User.countDocuments({ role: "tailor" }),
       User.countDocuments({ role: "customer" }),
+      User.countDocuments({ "badges.type": "Mentor" }),
+      // Order counts
+      Order.countDocuments(),
+      Order.countDocuments({ status: { $in: ["pending", "confirmed", "in_progress"] } }),
+      Order.countDocuments({ status: "completed" }),
+      // Product counts
+      Fabric.countDocuments(),
+      Supply.countDocuments(),
+      Equipment.countDocuments(),
+      // Learning resources
+      Course.countDocuments(),
+      Workshop.countDocuments(),
+      Pattern.countDocuments(),
+      Video.countDocuments(),
+      IndustryNews.countDocuments(),
+      // Additional stats
+      User.countDocuments({ role: "supplier", verificationStatus: "verified" }),
+      // Revenue calculation
+      Order.aggregate([
+        { $match: { status: "completed" } },
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+      ]),
     ]);
+
+    // Calculate total products
+    const totalProducts = totalFabrics + totalSupplies + totalEquipment;
+    
+    // Extract revenue
+    const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
 
     res.json({
       success: true,
@@ -137,6 +194,21 @@ exports.getAdminDashboard = async (req, res) => {
         totalSuppliers,
         totalTailors,
         totalCustomers,
+        totalMentors,
+        totalOrders,
+        pendingOrders,
+        completedOrders,
+        totalFabrics,
+        totalSupplies,
+        totalEquipment,
+        totalProducts,
+        totalCourses,
+        totalWorkshops,
+        totalPatterns,
+        totalVideos,
+        totalNews,
+        verifiedSuppliers,
+        totalRevenue: totalRevenue || 0,
       },
     });
   } catch (error) {
