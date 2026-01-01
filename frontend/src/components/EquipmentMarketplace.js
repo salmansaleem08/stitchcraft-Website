@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { FaSearch, FaFilter, FaPlus } from "react-icons/fa";
 import "./EquipmentMarketplace.css";
 
 const EquipmentMarketplace = () => {
@@ -74,8 +75,11 @@ const EquipmentMarketplace = () => {
   if (loading) {
     return (
       <div className="equipment-marketplace-container">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
+        <div className="container">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Loading equipment...</p>
+          </div>
         </div>
       </div>
     );
@@ -85,31 +89,40 @@ const EquipmentMarketplace = () => {
     <div className="equipment-marketplace-container">
       <div className="container">
         <div className="page-header">
-          <div>
-            <h1>Equipment marketplace</h1>
-            <p>Rent or purchase sewing machines, equipment, and tools</p>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Equipment Marketplace</h1>
+              <p className="dashboard-subtitle">
+                Browse and discover sewing machines, equipment, and tools. Rent or purchase from verified suppliers.
+              </p>
+            </div>
+            {user && user.role === "supplier" && (
+              <Link to="/equipment/new" className="btn-primary-header">
+                <FaPlus className="btn-icon" />
+                List Equipment
+              </Link>
+            )}
           </div>
-          {user && user.role === "supplier" && (
-            <Link to="/equipment/new" className="btn btn-primary">
-              List equipment
-            </Link>
-          )}
         </div>
 
         <div className="marketplace-controls">
           <div className="search-controls">
-            <input
-              type="text"
-              name="search"
-              value={filters.search}
-              onChange={handleFilterChange}
-              placeholder="Search equipment..."
-              className="search-input"
-            />
+            <div className="input-wrapper">
+              <FaSearch className="input-icon" />
+              <input
+                type="text"
+                name="search"
+                value={filters.search}
+                onChange={handleFilterChange}
+                placeholder="Search equipment..."
+                className="search-input"
+              />
+            </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-secondary"
+              className="filter-toggle-btn"
             >
+              <FaFilter className="btn-icon" />
               {showFilters ? "Hide filters" : "Show filters"}
             </button>
           </div>

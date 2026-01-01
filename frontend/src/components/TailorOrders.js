@@ -2,6 +2,11 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { 
+  FaSearch, FaFilter, FaSort, FaCheckCircle, FaTimesCircle, 
+  FaClock, FaSpinner, FaExclamationTriangle, FaCalendarAlt,
+  FaEye, FaEdit
+} from "react-icons/fa";
 import "./TailorOrders.css";
 
 const TailorOrders = () => {
@@ -141,23 +146,28 @@ const TailorOrders = () => {
     <div className="tailor-orders-container">
       <div className="container">
         <div className="page-header">
-          <div>
-            <h1>Order Management</h1>
-            <p>Manage and track all your orders</p>
-          </div>
-          <div className="view-toggle">
-            <button
-              className={`view-btn ${viewMode === "grid" ? "active" : ""}`}
-              onClick={() => setViewMode("grid")}
-            >
-              Grid View
-            </button>
-            <button
-              className={`view-btn ${viewMode === "kanban" ? "active" : ""}`}
-              onClick={() => setViewMode("kanban")}
-            >
-              Queue View
-            </button>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Order Management</h1>
+              <p className="dashboard-subtitle">
+                Efficiently manage, track, and update all your tailoring orders. Monitor order status, 
+                communicate with customers, and ensure timely delivery of quality garments.
+              </p>
+            </div>
+            <div className="view-toggle">
+              <button
+                className={`view-btn ${viewMode === "grid" ? "active" : ""}`}
+                onClick={() => setViewMode("grid")}
+              >
+                Grid View
+              </button>
+              <button
+                className={`view-btn ${viewMode === "kanban" ? "active" : ""}`}
+                onClick={() => setViewMode("kanban")}
+              >
+                Queue View
+              </button>
+            </div>
           </div>
         </div>
 
@@ -166,45 +176,63 @@ const TailorOrders = () => {
 
         <div className="orders-filters">
           <div className="filter-group">
-            <label>Search Orders</label>
-            <input
-              type="text"
-              placeholder="Search by order number, customer, or garment type..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
+            <label>
+              <FaSearch className="filter-icon" />
+              Search Orders
+            </label>
+            <div className="input-wrapper">
+              <FaSearch className="input-icon" />
+              <input
+                type="text"
+                placeholder="Search by order number, customer, or garment type..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
           </div>
 
           <div className="filter-group">
-            <label>Filter by Status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="filter-select"
-            >
-              <option value="">All Orders ({statusCounts.all})</option>
-              <option value="pending">Pending ({statusCounts.pending})</option>
-              <option value="in_progress">In Progress ({statusCounts.in_progress})</option>
-              <option value="revision_requested">Revision Requested ({statusCounts.revision_requested})</option>
-              <option value="quality_check">Quality Check ({statusCounts.quality_check})</option>
-              <option value="completed">Completed ({statusCounts.completed})</option>
-              <option value="cancelled">Cancelled ({statusCounts.cancelled})</option>
-            </select>
+            <label>
+              <FaFilter className="filter-icon" />
+              Filter by Status
+            </label>
+            <div className="select-wrapper">
+              <FaFilter className="input-icon" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">All Orders ({statusCounts.all})</option>
+                <option value="pending">Pending ({statusCounts.pending})</option>
+                <option value="in_progress">In Progress ({statusCounts.in_progress})</option>
+                <option value="revision_requested">Revision Requested ({statusCounts.revision_requested})</option>
+                <option value="quality_check">Quality Check ({statusCounts.quality_check})</option>
+                <option value="completed">Completed ({statusCounts.completed})</option>
+                <option value="cancelled">Cancelled ({statusCounts.cancelled})</option>
+              </select>
+            </div>
           </div>
 
           <div className="filter-group">
-            <label>Sort By</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="filter-select"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="price-low">Price: Low to High</option>
-            </select>
+            <label>
+              <FaSort className="filter-icon" />
+              Sort By
+            </label>
+            <div className="select-wrapper">
+              <FaSort className="input-icon" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="filter-select"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="price-low">Price: Low to High</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -381,71 +409,40 @@ const TailorOrders = () => {
         ) : (
           <div className="orders-grid">
           {filteredOrders.length > 0 ? (
-            filteredOrders.map((order) => (
-              <div key={order._id} className="order-card">
-                <div className="order-card-header">
-                  <div>
-                    <h3>Order #{order.orderNumber || order._id.toString().slice(-6)}</h3>
-                    <p className="order-date">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
-                    {formatStatus(order.status)}
-                  </span>
-                </div>
+            filteredOrders.map((order) => {
+              const getStatusIcon = (status) => {
+                if (status === "completed") return <FaCheckCircle className="status-icon status-icon-success" />;
+                if (status === "cancelled") return <FaTimesCircle className="status-icon status-icon-danger" />;
+                if (status === "in_progress" || status === "fabric_selected") return <FaSpinner className="status-icon status-icon-warning" />;
+                if (status === "revision_requested" || status === "quality_check") return <FaExclamationTriangle className="status-icon status-icon-warning" />;
+                return <FaClock className="status-icon status-icon-info" />;
+              };
 
-                <div className="order-card-body">
-                  <div className="order-info-row">
-                    <span className="info-label">Customer:</span>
-                    <span className="info-value">{order.customer?.name || "N/A"}</span>
+              return (
+                <Link key={order._id} to={`/orders/${order._id}`} className="order-card">
+                  <div className="order-card-header">
+                    <div className="order-id">#{order.orderNumber || order._id}</div>
+                    <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                      {getStatusIcon(order.status)}
+                      {formatStatus(order.status)}
+                    </span>
                   </div>
-                  <div className="order-info-row">
-                    <span className="info-label">Service:</span>
-                    <span className="info-value">{order.serviceType}</span>
+                  <div className="order-card-body">
+                    <div className="order-service">{order.garmentType || "Garment"}</div>
+                    {order.customer?.name && (
+                      <div className="order-customer">{order.customer.name}</div>
+                    )}
                   </div>
-                  <div className="order-info-row">
-                    <span className="info-label">Garment:</span>
-                    <span className="info-value">{order.garmentType}</span>
-                  </div>
-                  <div className="order-info-row">
-                    <span className="info-label">Quantity:</span>
-                    <span className="info-value">{order.quantity || 1}</span>
-                  </div>
-                  <div className="order-info-row">
-                    <span className="info-label">Total Price:</span>
-                    <span className="info-value price">PKR {order.totalPrice?.toLocaleString() || 0}</span>
-                  </div>
-                  {order.estimatedCompletionDate && (
-                    <div className="order-info-row">
-                      <span className="info-label">Est. Completion:</span>
-                      <span className="info-value">
-                        {new Date(order.estimatedCompletionDate).toLocaleDateString()}
-                      </span>
+                  <div className="order-card-footer">
+                    <div className="order-amount">PKR {order.totalPrice?.toLocaleString() || 0}</div>
+                    <div className="order-date">
+                      <FaCalendarAlt className="date-icon" />
+                      {new Date(order.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
                     </div>
-                  )}
-                </div>
-
-                <div className="order-card-actions">
-                  <Link
-                    to={`/orders/${order._id}`}
-                    className="btn btn-primary btn-sm"
-                  >
-                    View Details
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setSelectedOrder(order);
-                      setNewStatus(order.status);
-                      setShowStatusUpdate(true);
-                    }}
-                    className="btn btn-secondary btn-sm"
-                  >
-                    Update Status
-                  </button>
-                </div>
-              </div>
-            ))
+                  </div>
+                </Link>
+              );
+            })
           ) : (
             <div className="no-orders">
               <p>No orders found</p>

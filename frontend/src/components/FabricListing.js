@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { FaSearch, FaFilter, FaPlus } from "react-icons/fa";
 import "./FabricListing.css";
 
 const FabricListing = () => {
+  const { user } = useContext(AuthContext);
   const [fabrics, setFabrics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -86,8 +89,11 @@ const FabricListing = () => {
   if (loading && fabrics.length === 0) {
     return (
       <div className="fabric-listing-container">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
+        <div className="container">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Loading fabrics...</p>
+          </div>
         </div>
       </div>
     );
@@ -97,24 +103,40 @@ const FabricListing = () => {
     <div className="fabric-listing-container">
       <div className="container">
         <div className="listing-header">
-          <h1>Fabrics</h1>
-          <p>Browse quality fabrics from verified suppliers</p>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Fabric Marketplace</h1>
+              <p className="dashboard-subtitle">
+                Browse and discover quality fabrics from verified suppliers. Find cotton, silk, linen, and more for your tailoring needs.
+              </p>
+            </div>
+            {user && user.role === "supplier" && (
+              <Link to="/fabrics/new" className="btn-primary-header">
+                <FaPlus className="btn-icon" />
+                Add Fabric
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="listing-controls">
           <div className="search-controls">
-            <input
-              type="text"
-              name="search"
-              value={filters.search}
-              onChange={handleFilterChange}
-              placeholder="Search fabrics..."
-              className="search-input"
-            />
+            <div className="input-wrapper">
+              <FaSearch className="input-icon" />
+              <input
+                type="text"
+                name="search"
+                value={filters.search}
+                onChange={handleFilterChange}
+                placeholder="Search fabrics..."
+                className="search-input"
+              />
+            </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-secondary"
+              className="filter-toggle-btn"
             >
+              <FaFilter className="btn-icon" />
               {showFilters ? "Hide filters" : "Show filters"}
             </button>
           </div>
@@ -123,97 +145,133 @@ const FabricListing = () => {
             <div className="filters-panel">
               <div className="filters-grid">
                 <div className="filter-field">
-                  <label htmlFor="fabricType">Fabric type</label>
-                  <select
-                    id="fabricType"
-                    name="fabricType"
-                    value={filters.fabricType}
-                    onChange={handleFilterChange}
-                  >
-                    <option value="">All types</option>
-                    <option value="Cotton">Cotton</option>
-                    <option value="Silk">Silk</option>
-                    <option value="Linen">Linen</option>
-                    <option value="Wool">Wool</option>
-                    <option value="Polyester">Polyester</option>
-                    <option value="Rayon">Rayon</option>
-                    <option value="Chiffon">Chiffon</option>
-                    <option value="Georgette">Georgette</option>
-                    <option value="Organza">Organza</option>
-                    <option value="Velvet">Velvet</option>
-                    <option value="Denim">Denim</option>
-                    <option value="Khadar">Khadar</option>
-                    <option value="Muslin">Muslin</option>
-                    <option value="Lawn">Lawn</option>
-                  </select>
+                  <label htmlFor="fabricType">
+                    <FaFilter className="label-icon" />
+                    Fabric Type
+                  </label>
+                  <div className="select-wrapper">
+                    <select
+                      id="fabricType"
+                      name="fabricType"
+                      value={filters.fabricType}
+                      onChange={handleFilterChange}
+                      className="filter-select"
+                    >
+                      <option value="">All types</option>
+                      <option value="Cotton">Cotton</option>
+                      <option value="Silk">Silk</option>
+                      <option value="Linen">Linen</option>
+                      <option value="Wool">Wool</option>
+                      <option value="Polyester">Polyester</option>
+                      <option value="Rayon">Rayon</option>
+                      <option value="Chiffon">Chiffon</option>
+                      <option value="Georgette">Georgette</option>
+                      <option value="Organza">Organza</option>
+                      <option value="Velvet">Velvet</option>
+                      <option value="Denim">Denim</option>
+                      <option value="Khadar">Khadar</option>
+                      <option value="Muslin">Muslin</option>
+                      <option value="Lawn">Lawn</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="weight">Weight</label>
-                  <select
-                    id="weight"
-                    name="weight"
-                    value={filters.weight}
-                    onChange={handleFilterChange}
-                  >
-                    <option value="">All weights</option>
-                    <option value="Light">Light</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Heavy">Heavy</option>
-                  </select>
+                  <label htmlFor="weight">
+                    <FaFilter className="label-icon" />
+                    Weight
+                  </label>
+                  <div className="select-wrapper">
+                    <select
+                      id="weight"
+                      name="weight"
+                      value={filters.weight}
+                      onChange={handleFilterChange}
+                      className="filter-select"
+                    >
+                      <option value="">All weights</option>
+                      <option value="Light">Light</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Heavy">Heavy</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="color">Color</label>
-                  <input
-                    type="text"
-                    id="color"
-                    name="color"
-                    value={filters.color}
-                    onChange={handleFilterChange}
-                    placeholder="Enter color"
-                  />
+                  <label htmlFor="color">
+                    <FaFilter className="label-icon" />
+                    Color
+                  </label>
+                  <div className="input-wrapper">
+                    <input
+                      type="text"
+                      id="color"
+                      name="color"
+                      value={filters.color}
+                      onChange={handleFilterChange}
+                      placeholder="Enter color"
+                      className="filter-input"
+                    />
+                  </div>
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="minPrice">Min price (PKR)</label>
-                  <input
-                    type="number"
-                    id="minPrice"
-                    name="minPrice"
-                    value={filters.minPrice}
-                    onChange={handleFilterChange}
-                    placeholder="0"
-                    min="0"
-                  />
+                  <label htmlFor="minPrice">
+                    <FaFilter className="label-icon" />
+                    Min Price
+                  </label>
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      id="minPrice"
+                      name="minPrice"
+                      value={filters.minPrice}
+                      onChange={handleFilterChange}
+                      placeholder="Min"
+                      min="0"
+                      className="filter-input"
+                    />
+                  </div>
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="maxPrice">Max price (PKR)</label>
-                  <input
-                    type="number"
-                    id="maxPrice"
-                    name="maxPrice"
-                    value={filters.maxPrice}
-                    onChange={handleFilterChange}
-                    placeholder="0"
-                    min="0"
-                  />
-                </div>
-
-                <div className="filter-field">
-                  <label htmlFor="sort">Sort by</label>
-                  <select id="sort" value={sort} onChange={handleSortChange}>
-                    <option value="newest">Newest first</option>
-                    <option value="price_low">Price: Low to high</option>
-                    <option value="price_high">Price: High to low</option>
-                    <option value="rating">Highest rated</option>
-                  </select>
+                  <label htmlFor="maxPrice">
+                    <FaFilter className="label-icon" />
+                    Max Price
+                  </label>
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      id="maxPrice"
+                      name="maxPrice"
+                      value={filters.maxPrice}
+                      onChange={handleFilterChange}
+                      placeholder="Max"
+                      min="0"
+                      className="filter-input"
+                    />
+                  </div>
                 </div>
               </div>
-              <button onClick={clearFilters} className="btn btn-text">
-                Clear all filters
-              </button>
+              <div className="filter-actions">
+                <div className="sort-controls">
+                  <label htmlFor="sort">
+                    <FaFilter className="label-icon" />
+                    Sort By
+                  </label>
+                  <div className="select-wrapper">
+                    <select id="sort" value={sort} onChange={handleSortChange} className="filter-select">
+                      <option value="newest">Newest first</option>
+                      <option value="price_low">Price: Low to high</option>
+                      <option value="price_high">Price: High to low</option>
+                      <option value="rating">Highest rated</option>
+                    </select>
+                  </div>
+                </div>
+                <button onClick={clearFilters} className="btn-clear-filters">
+                  Clear all filters
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -223,7 +281,7 @@ const FabricListing = () => {
         {fabrics.length === 0 && !loading ? (
           <div className="empty-state">
             <p>No fabrics found matching your criteria.</p>
-            <button onClick={clearFilters} className="btn btn-secondary">
+            <button onClick={clearFilters} className="btn-primary-header">
               Clear filters
             </button>
           </div>

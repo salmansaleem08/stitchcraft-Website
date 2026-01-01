@@ -1,7 +1,7 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { FaSearch, FaShoppingCart, FaBox, FaWarehouse, FaClipboardList } from "react-icons/fa";
+import { FaSearch, FaShoppingCart, FaBox, FaWarehouse, FaClipboardList, FaChevronDown } from "react-icons/fa";
 import "../App.css";
 import "./Navigation.css";
 
@@ -10,11 +10,28 @@ const Navigation = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [marketplaceDropdownOpen, setMarketplaceDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     setMobileMenuOpen(false);
     setSearchOpen(false);
+    setMarketplaceDropdownOpen(false);
   }, [location]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setMarketplaceDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const getProfilePath = () => {
     if (user?.role === "tailor") {
@@ -63,10 +80,8 @@ const Navigation = () => {
       }
     }
 
-    // Marketplace - Customer, Tailor, Supplier
-    if (["customer", "tailor", "supplier"].includes(user.role)) {
-      links.push({ path: "/fabrics", label: "Marketplace" });
-    }
+    // Marketplace - Customer, Tailor, Supplier (will be handled as dropdown)
+    // Removed from links array as it's now a dropdown
 
     // My Fabrics - Supplier only
     if (user.role === "supplier") {
@@ -143,6 +158,46 @@ const Navigation = () => {
                   {link.label}
                 </Link>
               ))}
+              
+              {/* Marketplace Dropdown */}
+              {["customer", "tailor", "supplier"].includes(user?.role) && (
+                <div className="dropdown-wrapper" ref={dropdownRef}>
+                  <button
+                    className={`nav-link dropdown-trigger ${marketplaceDropdownOpen ? "active" : ""} ${
+                      isActive("/fabrics") || isActive("/supplies") || isActive("/equipment") ? "active" : ""
+                    }`}
+                    onClick={() => setMarketplaceDropdownOpen(!marketplaceDropdownOpen)}
+                  >
+                    Marketplace
+                    <FaChevronDown className={`dropdown-icon ${marketplaceDropdownOpen ? "open" : ""}`} />
+                  </button>
+                  {marketplaceDropdownOpen && (
+                    <div className="dropdown-menu">
+                      <Link
+                        to="/fabrics"
+                        className={`dropdown-item ${isActive("/fabrics") ? "active" : ""}`}
+                        onClick={() => setMarketplaceDropdownOpen(false)}
+                      >
+                        Fabrics
+                      </Link>
+                      <Link
+                        to="/supplies"
+                        className={`dropdown-item ${isActive("/supplies") ? "active" : ""}`}
+                        onClick={() => setMarketplaceDropdownOpen(false)}
+                      >
+                        Supplies
+                      </Link>
+                      <Link
+                        to="/equipment"
+                        className={`dropdown-item ${isActive("/equipment") ? "active" : ""}`}
+                        onClick={() => setMarketplaceDropdownOpen(false)}
+                      >
+                        Equipment
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </nav>
 
@@ -222,6 +277,36 @@ const Navigation = () => {
                 {link.label}
               </Link>
             ))}
+            
+            {/* Marketplace Dropdown for Mobile */}
+            {["customer", "tailor", "supplier"].includes(user?.role) && (
+              <div className="mobile-dropdown-wrapper">
+                <div className="mobile-dropdown-trigger">Marketplace</div>
+                <div className="mobile-dropdown-items">
+                  <Link
+                    to="/fabrics"
+                    className={`mobile-nav-link ${isActive("/fabrics") ? "active" : ""}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Fabrics
+                  </Link>
+                  <Link
+                    to="/supplies"
+                    className={`mobile-nav-link ${isActive("/supplies") ? "active" : ""}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Supplies
+                  </Link>
+                  <Link
+                    to="/equipment"
+                    className={`mobile-nav-link ${isActive("/equipment") ? "active" : ""}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Equipment
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </nav>
       </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { FaPlus, FaEye, FaEdit, FaTrash, FaBox } from "react-icons/fa";
 import "./MyFabrics.css";
 
 const MyFabrics = () => {
@@ -48,9 +49,11 @@ const MyFabrics = () => {
   if (loading) {
     return (
       <div className="my-fabrics-container">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading your fabrics...</p>
+        <div className="container">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Loading your fabrics...</p>
+          </div>
         </div>
       </div>
     );
@@ -60,18 +63,28 @@ const MyFabrics = () => {
     <div className="my-fabrics-container">
       <div className="container">
         <div className="my-fabrics-header">
-          <h1>My Fabrics</h1>
-          <Link to="/fabrics/new" className="btn btn-primary">
-            Add New Fabric
-          </Link>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>My Fabrics</h1>
+              <p className="dashboard-subtitle">
+                Manage all your fabric listings. View, edit, or delete your fabrics and track their performance.
+              </p>
+            </div>
+            <Link to="/fabrics/new" className="btn-primary-header">
+              <FaPlus className="btn-icon" />
+              Add New Fabric
+            </Link>
+          </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
 
         {fabrics.length === 0 ? (
           <div className="no-fabrics">
+            <FaBox className="empty-icon" />
             <p>You haven't added any fabrics yet.</p>
-            <Link to="/fabrics/new" className="btn btn-primary">
+            <Link to="/fabrics/new" className="btn-primary-header">
+              <FaPlus className="btn-icon" />
               Add Your First Fabric
             </Link>
           </div>
@@ -95,28 +108,47 @@ const MyFabrics = () => {
                   )}
                 </div>
                 <div className="fabric-info">
-                  <h3>{fabric.name}</h3>
-                  <p className="fabric-type">{fabric.fabricType}</p>
-                  <p className="fabric-price">
-                    PKR {fabric.pricePerMeter?.toLocaleString()}/meter
-                  </p>
+                  <div className="fabric-header">
+                    <h3>{fabric.name}</h3>
+                    {fabric.stockQuantity !== undefined && (
+                      <span className={`stock-badge ${fabric.stockQuantity > 0 ? 'in-stock' : 'out-of-stock'}`}>
+                        {fabric.stockQuantity > 0 ? `${fabric.stockQuantity} m` : 'Out of Stock'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="fabric-type">{fabric.fabricType || 'Fabric'}</p>
+                  {fabric.color && (
+                    <p className="fabric-color">
+                      <span className="color-dot" style={{ backgroundColor: fabric.color || '#666' }}></span>
+                      {fabric.color}
+                    </p>
+                  )}
+                  <div className="fabric-price-section">
+                    <span className="fabric-price">
+                      PKR {fabric.pricePerMeter?.toLocaleString() || '0'}
+                    </span>
+                    <span className="fabric-unit">/meter</span>
+                  </div>
                   <div className="fabric-actions">
                     <Link
                       to={`/fabrics/${fabric._id}`}
-                      className="btn btn-secondary btn-small"
+                      className="action-btn view-btn"
                     >
+                      <FaEye className="btn-icon" />
                       View
                     </Link>
                     <Link
                       to={`/fabrics/${fabric._id}/edit`}
-                      className="btn btn-secondary btn-small"
+                      className="action-btn edit-btn"
                     >
+                      <FaEdit className="btn-icon" />
                       Edit
                     </Link>
                     <button
                       onClick={() => handleDelete(fabric._id)}
-                      className="btn btn-danger btn-small"
+                      className="action-btn delete-btn"
                     >
+                      <FaTrash className="btn-icon" />
                       Delete
                     </button>
                   </div>

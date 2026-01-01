@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { FaSearch, FaFilter, FaPlus } from "react-icons/fa";
 import "./SupplyListing.css";
 
 const SupplyListing = () => {
+  const { user } = useContext(AuthContext);
   const [supplies, setSupplies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -95,8 +98,11 @@ const SupplyListing = () => {
   if (loading && supplies.length === 0) {
     return (
       <div className="supply-listing-container">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
+        <div className="container">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Loading supplies...</p>
+          </div>
         </div>
       </div>
     );
@@ -106,24 +112,40 @@ const SupplyListing = () => {
     <div className="supply-listing-container">
       <div className="container">
         <div className="listing-header">
-          <h1>Supplies</h1>
-          <p>Find all your tailoring needs in one place</p>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Supplies Marketplace</h1>
+              <p className="dashboard-subtitle">
+                Browse and discover all your tailoring supplies. Find threads, needles, buttons, zippers, and more from verified suppliers.
+              </p>
+            </div>
+            {user && user.role === "supplier" && (
+              <Link to="/supplies/new" className="btn-primary-header">
+                <FaPlus className="btn-icon" />
+                Add Supply
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="listing-controls">
           <div className="search-controls">
-            <input
-              type="text"
-              name="search"
-              value={filters.search}
-              onChange={handleFilterChange}
-              placeholder="Search supplies..."
-              className="search-input"
-            />
+            <div className="input-wrapper">
+              <FaSearch className="input-icon" />
+              <input
+                type="text"
+                name="search"
+                value={filters.search}
+                onChange={handleFilterChange}
+                placeholder="Search supplies..."
+                className="search-input"
+              />
+            </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-secondary"
+              className="filter-toggle-btn"
             >
+              <FaFilter className="btn-icon" />
               {showFilters ? "Hide filters" : "Show filters"}
             </button>
           </div>
@@ -132,73 +154,103 @@ const SupplyListing = () => {
             <div className="filters-panel">
               <div className="filters-grid">
                 <div className="filter-field">
-                  <label htmlFor="category">Category</label>
-                  <select
-                    id="category"
-                    name="category"
-                    value={filters.category}
-                    onChange={handleFilterChange}
-                  >
-                    <option value="">All categories</option>
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
+                  <label htmlFor="category">
+                    <FaFilter className="label-icon" />
+                    Category
+                  </label>
+                  <div className="select-wrapper">
+                    <select
+                      id="category"
+                      name="category"
+                      value={filters.category}
+                      onChange={handleFilterChange}
+                      className="filter-select"
+                    >
+                      <option value="">All categories</option>
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="brand">Brand</label>
-                  <input
-                    type="text"
-                    id="brand"
-                    name="brand"
-                    value={filters.brand}
-                    onChange={handleFilterChange}
-                    placeholder="Enter brand name"
-                  />
+                  <label htmlFor="brand">
+                    <FaFilter className="label-icon" />
+                    Brand
+                  </label>
+                  <div className="input-wrapper">
+                    <input
+                      type="text"
+                      id="brand"
+                      name="brand"
+                      value={filters.brand}
+                      onChange={handleFilterChange}
+                      placeholder="Enter brand name"
+                      className="filter-input"
+                    />
+                  </div>
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="color">Color</label>
-                  <input
-                    type="text"
-                    id="color"
-                    name="color"
-                    value={filters.color}
-                    onChange={handleFilterChange}
-                    placeholder="Enter color"
-                  />
+                  <label htmlFor="color">
+                    <FaFilter className="label-icon" />
+                    Color
+                  </label>
+                  <div className="input-wrapper">
+                    <input
+                      type="text"
+                      id="color"
+                      name="color"
+                      value={filters.color}
+                      onChange={handleFilterChange}
+                      placeholder="Enter color"
+                      className="filter-input"
+                    />
+                  </div>
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="minPrice">Min price (PKR)</label>
-                  <input
-                    type="number"
-                    id="minPrice"
-                    name="minPrice"
-                    value={filters.minPrice}
-                    onChange={handleFilterChange}
-                    placeholder="Min"
-                    min="0"
-                  />
+                  <label htmlFor="minPrice">
+                    <FaFilter className="label-icon" />
+                    Min Price
+                  </label>
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      id="minPrice"
+                      name="minPrice"
+                      value={filters.minPrice}
+                      onChange={handleFilterChange}
+                      placeholder="Min"
+                      min="0"
+                      className="filter-input"
+                    />
+                  </div>
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="maxPrice">Max price (PKR)</label>
-                  <input
-                    type="number"
-                    id="maxPrice"
-                    name="maxPrice"
-                    value={filters.maxPrice}
-                    onChange={handleFilterChange}
-                    placeholder="Max"
-                    min="0"
-                  />
+                  <label htmlFor="maxPrice">
+                    <FaFilter className="label-icon" />
+                    Max Price
+                  </label>
+                  <div className="input-wrapper">
+                    <input
+                      type="number"
+                      id="maxPrice"
+                      name="maxPrice"
+                      value={filters.maxPrice}
+                      onChange={handleFilterChange}
+                      placeholder="Max"
+                      min="0"
+                      className="filter-input"
+                    />
+                  </div>
                 </div>
               </div>
-              <button onClick={clearFilters} className="btn btn-text">
+              <button onClick={clearFilters} className="btn-clear-filters">
                 Clear all filters
               </button>
             </div>
@@ -220,7 +272,7 @@ const SupplyListing = () => {
         {supplies.length === 0 && !loading ? (
           <div className="empty-state">
             <p>No supplies match your filters. Try adjusting your search criteria.</p>
-            <button onClick={clearFilters} className="btn btn-primary">
+            <button onClick={clearFilters} className="btn-primary-header">
               Clear filters
             </button>
           </div>

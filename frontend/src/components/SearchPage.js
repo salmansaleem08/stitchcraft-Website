@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import api from "../utils/api";
+import { FaSearch, FaFilter, FaTimes } from "react-icons/fa";
 import "./SearchPage.css";
 
 const SearchPage = () => {
@@ -76,81 +77,118 @@ const SearchPage = () => {
     <div className="search-page-container">
       <div className="container">
         <div className="search-header">
-          <h1>Search</h1>
-          <p>Find fabrics, supplies, and suppliers</p>
+          <div className="header-text">
+            <h1>Search</h1>
+            <p className="dashboard-subtitle">
+              Find fabrics, supplies, and suppliers. Use filters to narrow down your search and discover the perfect products for your needs.
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSearch} className="search-form">
           <div className="search-input-group">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for fabrics, supplies, or suppliers..."
-              className="search-input"
-            />
-            <button type="submit" className="btn btn-primary">
+            <div className="input-wrapper">
+              <FaSearch className="input-icon" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search for fabrics, supplies, or suppliers..."
+                className="search-input"
+              />
+            </div>
+            <button type="submit" className="btn-primary-header">
+              <FaSearch className="btn-icon" />
               Search
             </button>
           </div>
 
           <div className="search-filters">
             <div className="filter-group">
-              <label htmlFor="type">Type</label>
-              <select id="type" value={type} onChange={(e) => setType(e.target.value)}>
-                <option value="all">All</option>
-                <option value="fabric">Fabrics</option>
-                <option value="supply">Supplies</option>
-                <option value="supplier">Suppliers</option>
-              </select>
+              <label htmlFor="type">
+                <FaFilter className="label-icon" />
+                Type
+              </label>
+              <div className="select-wrapper">
+                <select id="type" value={type} onChange={(e) => setType(e.target.value)} className="filter-select">
+                  <option value="all">All</option>
+                  <option value="fabric">Fabrics</option>
+                  <option value="supply">Supplies</option>
+                  <option value="supplier">Suppliers</option>
+                </select>
+              </div>
             </div>
 
             <div className="filter-group">
-              <label htmlFor="category">Category</label>
-              <input
-                type="text"
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="Category"
-              />
+              <label htmlFor="category">
+                <FaFilter className="label-icon" />
+                Category
+              </label>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  id="category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="Category"
+                  className="filter-input"
+                />
+              </div>
             </div>
 
             <div className="filter-group">
-              <label htmlFor="minPrice">Min Price</label>
-              <input
-                type="number"
-                id="minPrice"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                placeholder="Min"
-                min="0"
-              />
+              <label htmlFor="minPrice">
+                <FaFilter className="label-icon" />
+                Min Price
+              </label>
+              <div className="input-wrapper">
+                <input
+                  type="number"
+                  id="minPrice"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  placeholder="Min"
+                  min="0"
+                  className="filter-input"
+                />
+              </div>
             </div>
 
             <div className="filter-group">
-              <label htmlFor="maxPrice">Max Price</label>
-              <input
-                type="number"
-                id="maxPrice"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                placeholder="Max"
-                min="0"
-              />
+              <label htmlFor="maxPrice">
+                <FaFilter className="label-icon" />
+                Max Price
+              </label>
+              <div className="input-wrapper">
+                <input
+                  type="number"
+                  id="maxPrice"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  placeholder="Max"
+                  min="0"
+                  className="filter-input"
+                />
+              </div>
             </div>
 
             <div className="filter-group">
-              <label htmlFor="sort">Sort By</label>
-              <select id="sort" value={sort} onChange={(e) => setSort(e.target.value)}>
-                <option value="newest">Newest First</option>
-                <option value="price_low">Price: Low to High</option>
-                <option value="price_high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-              </select>
+              <label htmlFor="sort">
+                <FaFilter className="label-icon" />
+                Sort By
+              </label>
+              <div className="select-wrapper">
+                <select id="sort" value={sort} onChange={(e) => setSort(e.target.value)} className="filter-select">
+                  <option value="newest">Newest First</option>
+                  <option value="price_low">Price: Low to High</option>
+                  <option value="price_high">Price: High to Low</option>
+                  <option value="rating">Highest Rated</option>
+                </select>
+              </div>
             </div>
 
-            <button type="button" onClick={clearFilters} className="btn btn-secondary">
+            <button type="button" onClick={clearFilters} className="btn-clear-filters">
+              <FaTimes className="btn-icon" />
               Clear Filters
             </button>
           </div>

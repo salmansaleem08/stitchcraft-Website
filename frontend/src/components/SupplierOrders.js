@@ -2,6 +2,11 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { 
+  FaCheckCircle, FaTimesCircle, 
+  FaClock, FaSpinner, FaCalendarAlt,
+  FaTruck
+} from "react-icons/fa";
 import "./SupplierOrders.css";
 
 const SupplierOrders = () => {
@@ -89,147 +94,146 @@ const SupplierOrders = () => {
   return (
     <div className="supplier-orders-container">
       <div className="container">
-        <div className="orders-header">
-          <h1>My Orders</h1>
-          <div className="orders-stats">
-            <div className="stat-box">
-              <span className="stat-label">Total Revenue</span>
-              <span className="stat-value">PKR {getTotalRevenue().toLocaleString()}</span>
+        <div className="page-header">
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Order Management</h1>
+              <p className="dashboard-subtitle">
+                Efficiently manage, track, and update all your supply and bulk orders. Monitor order status, 
+                track shipments, and ensure timely delivery to customers.
+              </p>
             </div>
-            <div className="stat-box">
-              <span className="stat-label">Pending Orders</span>
-              <span className="stat-value">{getPendingOrders()}</span>
+            <div className="view-toggle">
+              <button
+                className={`view-btn ${activeTab === "supplies" ? "active" : ""}`}
+                onClick={() => setActiveTab("supplies")}
+              >
+                Supply Orders
+              </button>
+              <button
+                className={`view-btn ${activeTab === "fabrics" ? "active" : ""}`}
+                onClick={() => setActiveTab("fabrics")}
+              >
+                Bulk Orders
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="orders-tabs">
-          <button
-            className={`tab-btn ${activeTab === "supplies" ? "active" : ""}`}
-            onClick={() => setActiveTab("supplies")}
-          >
-            Supply Orders ({orders.length})
-          </button>
-          <button
-            className={`tab-btn ${activeTab === "fabrics" ? "active" : ""}`}
-            onClick={() => setActiveTab("fabrics")}
-          >
-            Bulk Orders ({bulkOrders.length})
-          </button>
-        </div>
-
-        <div className="filters-section">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="booked">Booked</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="on_way">On Way</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-
         {error && <div className="error-message">{error}</div>}
+
+        <div className="orders-filters">
+          <div className="filter-badge-group">
+            <button
+              className={`filter-badge ${statusFilter === "" ? "active" : ""}`}
+              onClick={() => setStatusFilter("")}
+            >
+              All Status
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "pending" ? "active" : ""}`}
+              onClick={() => setStatusFilter("pending")}
+            >
+              Pending
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "confirmed" ? "active" : ""}`}
+              onClick={() => setStatusFilter("confirmed")}
+            >
+              Confirmed
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "booked" ? "active" : ""}`}
+              onClick={() => setStatusFilter("booked")}
+            >
+              Booked
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "processing" ? "active" : ""}`}
+              onClick={() => setStatusFilter("processing")}
+            >
+              Processing
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "shipped" ? "active" : ""}`}
+              onClick={() => setStatusFilter("shipped")}
+            >
+              Shipped
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "on_way" ? "active" : ""}`}
+              onClick={() => setStatusFilter("on_way")}
+            >
+              On Way
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "delivered" ? "active" : ""}`}
+              onClick={() => setStatusFilter("delivered")}
+            >
+              Delivered
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "cancelled" ? "active" : ""}`}
+              onClick={() => setStatusFilter("cancelled")}
+            >
+              Cancelled
+            </button>
+          </div>
+        </div>
 
         {currentOrders.length === 0 ? (
           <div className="no-orders">
             <p>No {activeTab === "supplies" ? "supply" : "bulk"} orders found</p>
           </div>
         ) : (
-          <div className="orders-list">
-            {currentOrders.map((order) => (
-              <div key={order._id} className="order-card">
-                <div className="order-card-header">
-                  <div>
-                    <h3>
-                      Order #{order.orderNumber || order._id.slice(-8)}
-                    </h3>
-                    <p className="order-date">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
-                    <p className="customer-name">
-                      Customer: {order.customer?.name || "Unknown"}
-                    </p>
-                  </div>
-                  <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
-                    {formatStatus(order.status)}
-                  </span>
-                </div>
+          <div className="orders-grid">
+            {currentOrders.map((order) => {
+              const getStatusIcon = (status) => {
+                if (status === "delivered") return <FaCheckCircle className="status-icon status-icon-success" />;
+                if (status === "cancelled") return <FaTimesCircle className="status-icon status-icon-danger" />;
+                if (status === "shipped" || status === "on_way") return <FaTruck className="status-icon status-icon-info" />;
+                if (status === "processing" || status === "confirmed" || status === "booked") return <FaSpinner className="status-icon status-icon-warning" />;
+                return <FaClock className="status-icon status-icon-info" />;
+              };
 
-                <div className="order-card-body">
-                  <div className="order-items">
-                    <h4>Items:</h4>
-                    {activeTab === "supplies" ? (
-                      <ul>
-                        {order.items?.map((item, idx) => (
-                          <li key={idx}>
-                            {item.supply?.name || "Supply"} - Qty: {item.quantity}{" "}
-                            {item.unit} - PKR {item.subtotal?.toLocaleString()}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <ul>
-                        {order.items?.map((item, idx) => (
-                          <li key={idx}>
-                            {item.fabric?.name || "Fabric"} - Qty: {item.quantity} meters -
-                            PKR {(item.price * item.quantity).toLocaleString()}
-                          </li>
-                        ))}
-                      </ul>
+              return (
+                <Link
+                  key={order._id}
+                  to={
+                    activeTab === "supplies"
+                      ? `/supply-orders/${order._id}`
+                      : `/bulk-orders/${order._id}`
+                  }
+                  className="order-card"
+                >
+                  <div className="order-card-header">
+                    <div className="order-id">#{order.orderNumber || order._id}</div>
+                    <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                      {getStatusIcon(order.status)}
+                      {formatStatus(order.status)}
+                    </span>
+                  </div>
+                  <div className="order-card-body">
+                    <div className="order-service">
+                      {activeTab === "supplies" 
+                        ? (order.items?.[0]?.supply?.name || "Supply Order")
+                        : (order.items?.[0]?.fabric?.name || "Bulk Order")
+                      }
+                    </div>
+                    {order.customer?.name && (
+                      <div className="order-customer">{order.customer.name}</div>
                     )}
                   </div>
-
-                  <div className="order-totals">
-                    <div className="total-row">
-                      <span>Subtotal:</span>
-                      <span>PKR {order.totalPrice?.toLocaleString()}</span>
-                    </div>
-                    {order.discount > 0 && (
-                      <div className="total-row">
-                        <span>Discount:</span>
-                        <span>- PKR {order.discount?.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className="total-row final">
-                      <span>Total:</span>
-                      <span>PKR {order.finalPrice?.toLocaleString()}</span>
+                  <div className="order-card-footer">
+                    <div className="order-amount">PKR {(order.finalPrice || order.totalPrice || 0).toLocaleString()}</div>
+                    <div className="order-date">
+                      <FaCalendarAlt className="date-icon" />
+                      {new Date(order.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
                     </div>
                   </div>
-
-                  {order.shippingAddress && (
-                    <div className="shipping-info">
-                      <h4>Shipping Address:</h4>
-                      <p>
-                        {order.shippingAddress.street}, {order.shippingAddress.city},{" "}
-                        {order.shippingAddress.province}
-                      </p>
-                      <p>Phone: {order.shippingAddress.phone}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="order-card-actions">
-                  <Link
-                    to={
-                      activeTab === "supplies"
-                        ? `/supply-orders/${order._id}`
-                        : `/bulk-orders/${order._id}`
-                    }
-                    className="btn btn-primary"
-                  >
-                    View & Update Status
-                  </Link>
-                </div>
-              </div>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

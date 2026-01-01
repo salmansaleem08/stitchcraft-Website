@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { 
+  FaArrowUp, FaBox, FaWarehouse, FaExclamationTriangle, 
+  FaDollarSign, FaCheckCircle, FaTimesCircle, FaPlus
+} from "react-icons/fa";
 import "./InventoryManagement.css";
 
 const InventoryManagement = () => {
@@ -13,6 +17,16 @@ const InventoryManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("summary");
+  
+  // Counter animation refs
+  const totalFabricsRef = useRef(null);
+  const totalSuppliesRef = useRef(null);
+  const activeFabricsRef = useRef(null);
+  const activeSuppliesRef = useRef(null);
+  const lowStockRef = useRef(null);
+  const outOfStockRef = useRef(null);
+  const totalValueRef = useRef(null);
+  const countersAnimated = useRef(false);
 
   useEffect(() => {
     if (!user || user.role !== "supplier") {
@@ -20,6 +34,16 @@ const InventoryManagement = () => {
     }
     fetchInventoryData();
   }, [user]);
+
+  useEffect(() => {
+    if (!loading && summary && !countersAnimated.current) {
+      const timer = setTimeout(() => {
+        animateCounters();
+        countersAnimated.current = true;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, summary]);
 
   const fetchInventoryData = async () => {
     try {
@@ -47,12 +71,71 @@ const InventoryManagement = () => {
     }
   };
 
+  // Counter animation function
+  const animateCounters = () => {
+    const duration = 1500;
+
+    const totalFabrics = summary?.totalFabrics || 0;
+    if (totalFabricsRef.current) {
+      animateValue(totalFabricsRef.current, 0, totalFabrics, duration);
+    }
+
+    const totalSupplies = summary?.totalSupplies || 0;
+    if (totalSuppliesRef.current) {
+      animateValue(totalSuppliesRef.current, 0, totalSupplies, duration);
+    }
+
+    const activeFabrics = summary?.activeFabrics || 0;
+    if (activeFabricsRef.current) {
+      animateValue(activeFabricsRef.current, 0, activeFabrics, duration);
+    }
+
+    const activeSupplies = summary?.activeSupplies || 0;
+    if (activeSuppliesRef.current) {
+      animateValue(activeSuppliesRef.current, 0, activeSupplies, duration);
+    }
+
+    const lowStock = (summary?.lowStockFabrics || 0) + (summary?.lowStockSupplies || 0);
+    if (lowStockRef.current) {
+      animateValue(lowStockRef.current, 0, lowStock, duration);
+    }
+
+    const outOfStock = (summary?.outOfStockFabrics || 0) + (summary?.outOfStockSupplies || 0);
+    if (outOfStockRef.current) {
+      animateValue(outOfStockRef.current, 0, outOfStock, duration);
+    }
+
+    const totalValue = (summary?.totalStockValue || 0) + (summary?.totalSuppliesValue || 0);
+    if (totalValueRef.current) {
+      animateValue(totalValueRef.current, 0, totalValue, duration);
+    }
+  };
+
+  const animateValue = (element, start, end, duration) => {
+    if (!element) return;
+    let startTimestamp = null;
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      const current = Math.floor(progress * (end - start) + start);
+      element.textContent = current.toLocaleString();
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      } else {
+        element.textContent = end.toLocaleString();
+      }
+    };
+    window.requestAnimationFrame(step);
+  };
+
   if (loading) {
     return (
       <div className="inventory-management-container">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading inventory...</p>
+        <div className="container">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Loading inventory...</p>
+          </div>
         </div>
       </div>
     );
@@ -62,14 +145,23 @@ const InventoryManagement = () => {
     <div className="inventory-management-container">
       <div className="container">
         <div className="inventory-header">
-          <h1>Inventory Management</h1>
-          <div className="header-actions">
-            <Link to="/fabrics/new" className="btn btn-primary">
-              Add Fabric
-            </Link>
-            <Link to="/supplies/new" className="btn btn-primary">
-              Add Supply
-            </Link>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Inventory Management</h1>
+              <p className="dashboard-subtitle">
+                Monitor your inventory levels, track stock quantities, manage low stock alerts, and analyze waste patterns to optimize your supply chain.
+              </p>
+            </div>
+            <div className="header-actions">
+              <Link to="/fabrics/new" className="btn-primary-header">
+                <FaPlus className="btn-icon" />
+                Add Fabric
+              </Link>
+              <Link to="/supplies/new" className="btn-primary-header">
+                <FaPlus className="btn-icon" />
+                Add Supply
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -77,19 +169,19 @@ const InventoryManagement = () => {
 
         <div className="inventory-tabs">
           <button
-            className={`tab-btn ${activeTab === "summary" ? "active" : ""}`}
+            className={`view-btn ${activeTab === "summary" ? "active" : ""}`}
             onClick={() => setActiveTab("summary")}
           >
             Summary
           </button>
           <button
-            className={`tab-btn ${activeTab === "low-stock" ? "active" : ""}`}
+            className={`view-btn ${activeTab === "low-stock" ? "active" : ""}`}
             onClick={() => setActiveTab("low-stock")}
           >
-            Low Stock ({lowStockFabrics.length + lowStockSupplies.length})
+            Low Stock
           </button>
           <button
-            className={`tab-btn ${activeTab === "waste" ? "active" : ""}`}
+            className={`view-btn ${activeTab === "waste" ? "active" : ""}`}
             onClick={() => setActiveTab("waste")}
           >
             Waste Analytics
@@ -98,40 +190,97 @@ const InventoryManagement = () => {
 
         {activeTab === "summary" && summary && (
           <div className="inventory-summary">
-            <div className="summary-cards">
-              <div className="summary-card">
-                <div className="card-value">{summary.totalFabrics || 0}</div>
-                <div className="card-label">Total Fabrics</div>
-              </div>
-              <div className="summary-card">
-                <div className="card-value">{summary.totalSupplies || 0}</div>
-                <div className="card-label">Total Supplies</div>
-              </div>
-              <div className="summary-card">
-                <div className="card-value">{summary.activeFabrics || 0}</div>
-                <div className="card-label">Active Fabrics</div>
-              </div>
-              <div className="summary-card">
-                <div className="card-value">{summary.activeSupplies || 0}</div>
-                <div className="card-label">Active Supplies</div>
-              </div>
-              <div className="summary-card">
-                <div className="card-value">
-                  {(summary.lowStockFabrics || 0) + (summary.lowStockSupplies || 0)}
+            <div className="stats-grid">
+              <div className="stat-item stat-item-primary">
+                <div className="stat-corner-icon">
+                  <FaBox />
                 </div>
-                <div className="card-label">Low Stock Items</div>
-              </div>
-              <div className="summary-card">
-                <div className="card-value">
-                  {(summary.outOfStockFabrics || 0) + (summary.outOfStockSupplies || 0)}
+                <div className="stat-content">
+                  <div className="stat-value"><span ref={totalFabricsRef}>0</span></div>
+                  <div className="stat-label">Total Fabrics</div>
+                  <div className="stat-trend">
+                    <FaArrowUp className="trend-icon" />
+                    <span>Increased from last month</span>
+                  </div>
                 </div>
-                <div className="card-label">Out of Stock</div>
               </div>
-              <div className="summary-card">
-                <div className="card-value">
-                  PKR {((summary.totalStockValue || 0) + (summary.totalSuppliesValue || 0)).toLocaleString()}
+              <div className="stat-item">
+                <div className="stat-corner-icon">
+                  <FaWarehouse />
                 </div>
-                <div className="card-label">Total Stock Value</div>
+                <div className="stat-content">
+                  <div className="stat-value"><span ref={totalSuppliesRef}>0</span></div>
+                  <div className="stat-label">Total Supplies</div>
+                  <div className="stat-trend">
+                    <FaArrowUp className="trend-icon" />
+                    <span>Increased from last month</span>
+                  </div>
+                </div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-corner-icon">
+                  <FaCheckCircle />
+                </div>
+                <div className="stat-content">
+                  <div className="stat-value"><span ref={activeFabricsRef}>0</span></div>
+                  <div className="stat-label">Active Fabrics</div>
+                  <div className="stat-trend">
+                    <FaArrowUp className="trend-icon" />
+                    <span>Increased from last month</span>
+                  </div>
+                </div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-corner-icon">
+                  <FaCheckCircle />
+                </div>
+                <div className="stat-content">
+                  <div className="stat-value"><span ref={activeSuppliesRef}>0</span></div>
+                  <div className="stat-label">Active Supplies</div>
+                  <div className="stat-trend">
+                    <FaArrowUp className="trend-icon" />
+                    <span>Increased from last month</span>
+                  </div>
+                </div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-corner-icon">
+                  <FaExclamationTriangle />
+                </div>
+                <div className="stat-content">
+                  <div className="stat-value"><span ref={lowStockRef}>0</span></div>
+                  <div className="stat-label">Low Stock Items</div>
+                  <div className="stat-trend">
+                    <FaArrowUp className="trend-icon" />
+                    <span>Increased from last month</span>
+                  </div>
+                </div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-corner-icon">
+                  <FaTimesCircle />
+                </div>
+                <div className="stat-content">
+                  <div className="stat-value"><span ref={outOfStockRef}>0</span></div>
+                  <div className="stat-label">Out of Stock</div>
+                  <div className="stat-trend">
+                    <FaArrowUp className="trend-icon" />
+                    <span>Increased from last month</span>
+                  </div>
+                </div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-corner-icon">
+                  <FaDollarSign />
+                </div>
+                <div className="stat-content">
+                  <div className="stat-value">PKR <span ref={totalValueRef}>0</span></div>
+                  <div className="stat-label">Total Stock Value</div>
+                  <div className="stat-trend">
+                    <FaArrowUp className="trend-icon" />
+                    <span>Increased from last month</span>
+                  </div>
+                </div>
               </div>
             </div>
 

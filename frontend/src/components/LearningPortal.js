@@ -33,37 +33,41 @@ const LearningPortal = () => {
     <div className="learning-portal-container">
       <div className="container">
         <div className="portal-header">
-          <h1>Skill Development Portal</h1>
-          <p>Enhance your tailoring skills with courses, workshops, and community support</p>
+          <div className="header-text">
+            <h1>Skill Development Portal</h1>
+            <p className="dashboard-subtitle">
+              Enhance your tailoring skills with courses, workshops, and community support. Learn from experts and grow your expertise.
+            </p>
+          </div>
         </div>
 
         <div className="portal-tabs">
           <button
-            className={`portal-tab ${activeTab === "courses" ? "active" : ""}`}
+            className={`view-btn ${activeTab === "courses" ? "active" : ""}`}
             onClick={() => setActiveTab("courses")}
           >
             Courses
           </button>
           <button
-            className={`portal-tab ${activeTab === "forums" ? "active" : ""}`}
+            className={`view-btn ${activeTab === "forums" ? "active" : ""}`}
             onClick={() => setActiveTab("forums")}
           >
             Forums
           </button>
           <button
-            className={`portal-tab ${activeTab === "workshops" ? "active" : ""}`}
+            className={`view-btn ${activeTab === "workshops" ? "active" : ""}`}
             onClick={() => setActiveTab("workshops")}
           >
             Workshops
           </button>
           <button
-            className={`portal-tab ${activeTab === "news" ? "active" : ""}`}
+            className={`view-btn ${activeTab === "news" ? "active" : ""}`}
             onClick={() => setActiveTab("news")}
           >
             Industry News
           </button>
           <button
-            className={`portal-tab ${activeTab === "mentorship" ? "active" : ""}`}
+            className={`view-btn ${activeTab === "mentorship" ? "active" : ""}`}
             onClick={() => setActiveTab("mentorship")}
           >
             Mentorship
@@ -75,7 +79,7 @@ const LearningPortal = () => {
             <div className="tab-content">
               <div className="content-header">
                 <h2>Learning Management System</h2>
-                <Link to="/courses" className="btn btn-primary">
+                <Link to="/courses" className="btn-primary-header">
                   Browse All Courses
                 </Link>
               </div>
@@ -141,7 +145,7 @@ const LearningPortal = () => {
             <div className="tab-content">
               <div className="content-header">
                 <h2>Tailor Forums & Discussion Groups</h2>
-                <Link to="/forums" className="btn btn-primary">
+                <Link to="/forums" className="btn-primary-header">
                   View All Forums
                 </Link>
               </div>
@@ -200,7 +204,7 @@ const LearningPortal = () => {
             <div className="tab-content">
               <div className="content-header">
                 <h2>Skill Sharing Workshops</h2>
-                <Link to="/workshops" className="btn btn-primary">
+                <Link to="/workshops" className="btn-primary-header">
                   Browse Workshops
                 </Link>
               </div>
@@ -259,7 +263,7 @@ const LearningPortal = () => {
             <div className="tab-content">
               <div className="content-header">
                 <h2>Industry News & Updates</h2>
-                <Link to="/news" className="btn btn-primary">
+                <Link to="/news" className="btn-primary-header">
                   Read All News
                 </Link>
               </div>
@@ -318,7 +322,7 @@ const LearningPortal = () => {
             <div className="tab-content">
               <div className="content-header">
                 <h2>Master Tailor Mentorship Programs</h2>
-                <Link to="/mentorships" className="btn btn-primary">
+                <Link to="/mentorships" className="btn-primary-header">
                   Find a Mentor
                 </Link>
               </div>
