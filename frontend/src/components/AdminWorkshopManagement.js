@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from "react";
 import api from "../utils/api";
+import {
+  FaChalkboardTeacher,
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaCalendarAlt,
+  FaMapMarkerAlt,
+  FaUsers,
+  FaDollarSign,
+  FaTag,
+  FaClock,
+  FaVideo,
+  FaBuilding,
+} from "react-icons/fa";
 import "./AdminWorkshopManagement.css";
 
 const AdminWorkshopManagement = () => {
@@ -157,26 +171,47 @@ const AdminWorkshopManagement = () => {
   };
 
   if (loading) {
-    return <div className="admin-workshop-container"><div className="loading-container">Loading...</div></div>;
+    return (
+      <div className="admin-workshop-container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading workshops...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="admin-workshop-container">
       <div className="container">
         <div className="page-header">
-          <h1>Workshop Management</h1>
-          <button onClick={() => setShowForm(true)} className="btn btn-primary">
-            Add New Workshop
-          </button>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Workshop Management</h1>
+              <p className="dashboard-subtitle">
+                Create and manage skill sharing workshops. Organize in-person and online events for the tailoring community.
+              </p>
+            </div>
+            <button onClick={() => setShowForm(true)} className="btn-primary-header">
+              <FaPlus className="btn-icon" />
+              Add New Workshop
+            </button>
+          </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
 
         {showForm && (
-          <div className="workshop-form-section">
-            <h2>{editingWorkshop ? "Edit Workshop" : "Create New Workshop"}</h2>
-            <form onSubmit={handleSubmit} className="workshop-form">
+          <div className="modal-overlay" onClick={handleCancel}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>{editingWorkshop ? "Edit Workshop" : "Create New Workshop"}</h2>
+                <button className="modal-close" onClick={handleCancel}>
+                  ×
+                </button>
+              </div>
+              <form onSubmit={handleSubmit} className="workshop-form">
               <div className="form-row">
                 <div className="form-group">
                   <label>Title *</label>
@@ -377,69 +412,129 @@ const AdminWorkshopManagement = () => {
                 />
               </div>
 
-              <div className="form-actions">
-                <button type="button" onClick={handleCancel} className="btn btn-secondary">
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingWorkshop ? "Update Workshop" : "Create Workshop"}
-                </button>
-              </div>
-            </form>
+                <div className="form-actions">
+                  <button type="button" onClick={handleCancel} className="btn-secondary">
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-primary">
+                    {editingWorkshop ? "Update Workshop" : "Create Workshop"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 
-        <div className="workshops-table">
-          <h2>All Workshops</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Date & Time</th>
-                <th>Location</th>
-                <th>Participants</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="workshops-list">
+          {workshops.length > 0 ? (
+            <div className="workshops-grid">
               {workshops.map((workshop) => (
-                <tr key={workshop._id}>
-                  <td>{workshop.title}</td>
-                  <td>{workshop.category.replace("_", " ")}</td>
-                  <td>
-                    {new Date(workshop.date).toLocaleDateString()} at{" "}
-                    {new Date(workshop.date).toLocaleTimeString()}
-                  </td>
-                  <td>
-                    {workshop.location?.type === "online"
-                      ? "Online"
-                      : `${workshop.location?.city || ""}, ${workshop.location?.province || ""}`}
-                  </td>
-                  <td>
-                    {workshop.registeredUsers?.length || 0}/{workshop.maxParticipants}
-                  </td>
-                  <td>
-                    <span className={`status-badge status-${workshop.status}`}>
-                      {workshop.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button onClick={() => handleEdit(workshop)} className="btn btn-small btn-secondary">
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(workshop._id)}
-                      className="btn btn-small btn-danger"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
+                <div key={workshop._id} className="workshop-card">
+                  <div className="workshop-card-header">
+                    {workshop.thumbnail ? (
+                      <img src={workshop.thumbnail} alt={workshop.title} className="workshop-thumbnail" />
+                    ) : (
+                      <div className="workshop-thumbnail-placeholder">
+                        <FaChalkboardTeacher className="placeholder-icon" />
+                      </div>
+                    )}
+                    <div className="workshop-status-overlay">
+                      <span className={`status-badge status-${workshop.status}`}>
+                        {workshop.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="workshop-card-body">
+                    <div className="workshop-title-section">
+                      <h3>{workshop.title}</h3>
+                      {workshop.description && (
+                        <p className="workshop-description">{workshop.description.substring(0, 100)}...</p>
+                      )}
+                    </div>
+                    <div className="workshop-meta">
+                      <div className="meta-item">
+                        <FaTag className="meta-icon" />
+                        <span className="category-badge">
+                          {workshop.category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="workshop-details">
+                      <div className="detail-item">
+                        <FaCalendarAlt className="detail-icon" />
+                        <span>
+                          {new Date(workshop.date).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })} at {new Date(workshop.date).toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </span>
+                      </div>
+                      <div className="detail-item">
+                        <FaClock className="detail-icon" />
+                        <span>{workshop.duration} minutes</span>
+                      </div>
+                      <div className="detail-item">
+                        {workshop.location?.type === "online" ? (
+                          <>
+                            <FaVideo className="detail-icon" />
+                            <span>Online</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaMapMarkerAlt className="detail-icon" />
+                            <span>
+                              {workshop.location?.city || ""}, {workshop.location?.province || ""}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div className="detail-item">
+                        <FaUsers className="detail-icon" />
+                        <span>
+                          {workshop.registeredUsers?.length || 0}/{workshop.maxParticipants} participants
+                        </span>
+                      </div>
+                      {!workshop.isFree && (
+                        <div className="detail-item">
+                          <FaDollarSign className="detail-icon" />
+                          <span>PKR {workshop.price?.toLocaleString() || 0}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="workshop-actions">
+                      <button
+                        onClick={() => handleEdit(workshop)}
+                        className="action-btn edit-btn"
+                      >
+                        <FaEdit className="btn-icon" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(workshop._id)}
+                        className="action-btn delete-btn"
+                      >
+                        <FaTrash className="btn-icon" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <div className="no-workshops">
+              <FaChalkboardTeacher className="empty-icon" />
+              <p>No workshops found. Create your first workshop to get started.</p>
+              <button onClick={() => setShowForm(true)} className="btn-primary-header">
+                <FaPlus className="btn-icon" />
+                Create Your First Workshop
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

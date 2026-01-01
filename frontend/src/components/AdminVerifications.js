@@ -2,6 +2,12 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import {
+  FaCheckCircle,
+  FaTimesCircle,
+  FaFileAlt,
+  FaEye,
+} from "react-icons/fa";
 import "./AdminVerifications.css";
 
 const AdminVerifications = () => {
@@ -111,28 +117,50 @@ const AdminVerifications = () => {
   return (
     <div className="admin-verifications-container">
       <div className="container">
-        <div className="verifications-header">
-          <div>
-            <h1>Supplier Verifications</h1>
-            <p>Review and manage supplier verification requests</p>
+        <div className="page-header">
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Supplier Verifications</h1>
+              <p className="dashboard-subtitle">
+                Review and manage supplier verification requests. Approve or reject applications based on submitted documents.
+              </p>
+            </div>
           </div>
-          <Link to="/admin/dashboard" className="btn btn-secondary">
-            Back to Dashboard
-          </Link>
         </div>
 
         <div className="filters-section">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="under_review">Under Review</option>
-            <option value="verified">Verified</option>
-            <option value="rejected">Rejected</option>
-          </select>
+          <div className="filter-badge-group">
+            <button
+              className={`filter-badge ${statusFilter === "" ? "active" : ""}`}
+              onClick={() => setStatusFilter("")}
+            >
+              All Status
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "under_review" ? "active" : ""}`}
+              onClick={() => setStatusFilter("under_review")}
+            >
+              Under Review
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "pending" ? "active" : ""}`}
+              onClick={() => setStatusFilter("pending")}
+            >
+              Pending
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "verified" ? "active" : ""}`}
+              onClick={() => setStatusFilter("verified")}
+            >
+              Verified
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "rejected" ? "active" : ""}`}
+              onClick={() => setStatusFilter("rejected")}
+            >
+              Rejected
+            </button>
+          </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
@@ -159,7 +187,10 @@ const AdminVerifications = () => {
                 </div>
 
                 <div className="verification-documents">
-                  <h4>Verification Documents:</h4>
+                  <h4>
+                    <FaFileAlt className="section-icon" />
+                    Verification Documents
+                  </h4>
                   {supplier.verificationDocuments && supplier.verificationDocuments.length > 0 ? (
                     <div className="documents-list">
                       {supplier.verificationDocuments.map((doc, idx) => (
@@ -174,8 +205,9 @@ const AdminVerifications = () => {
                             href={doc.documentUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-small btn-view"
+                            className="btn-view-document"
                           >
+                            <FaEye className="btn-icon" />
                             View Document
                           </a>
                         </div>
@@ -216,16 +248,18 @@ const AdminVerifications = () => {
                     <div className="action-buttons">
                       <button
                         onClick={() => handleApprove(supplier._id)}
-                        className="btn btn-success"
+                        className="btn-approve"
                         disabled={processing}
                       >
+                        <FaCheckCircle className="btn-icon" />
                         {processing ? "Processing..." : "Approve"}
                       </button>
                       <button
                         onClick={() => handleReject(supplier._id)}
-                        className="btn btn-danger"
+                        className="btn-reject"
                         disabled={processing}
                       >
+                        <FaTimesCircle className="btn-icon" />
                         {processing ? "Processing..." : "Reject"}
                       </button>
                     </div>

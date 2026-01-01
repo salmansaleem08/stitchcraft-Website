@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from "react";
 import api from "../utils/api";
+import {
+  FaNewspaper,
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaEye,
+  FaStar,
+  FaTag,
+  FaCalendarAlt,
+  FaCheckCircle,
+  FaClock,
+} from "react-icons/fa";
 import "./AdminNewsManagement.css";
 
 const AdminNewsManagement = () => {
@@ -116,26 +128,47 @@ const AdminNewsManagement = () => {
   };
 
   if (loading) {
-    return <div className="admin-news-container"><div className="loading-container">Loading...</div></div>;
+    return (
+      <div className="admin-news-container">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading news articles...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="admin-news-container">
       <div className="container">
         <div className="page-header">
-          <h1>Industry News Management</h1>
-          <button onClick={() => setShowForm(true)} className="btn btn-primary">
-            Add New Article
-          </button>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Industry News Management</h1>
+              <p className="dashboard-subtitle">
+                Create and manage industry news articles. Share trends, updates, and insights with the tailoring community.
+              </p>
+            </div>
+            <button onClick={() => setShowForm(true)} className="btn-primary-header">
+              <FaPlus className="btn-icon" />
+              Add New Article
+            </button>
+          </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
 
         {showForm && (
-          <div className="news-form-section">
-            <h2>{editingNews ? "Edit News Article" : "Create New News Article"}</h2>
-            <form onSubmit={handleSubmit} className="news-form">
+          <div className="modal-overlay" onClick={handleCancel}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>{editingNews ? "Edit News Article" : "Create New News Article"}</h2>
+                <button className="modal-close" onClick={handleCancel}>
+                  ×
+                </button>
+              </div>
+              <form onSubmit={handleSubmit} className="news-form">
               <div className="form-row">
                 <div className="form-group">
                   <label>Title *</label>
@@ -217,68 +250,125 @@ const AdminNewsManagement = () => {
                 </label>
               </div>
 
-              <div className="form-actions">
-                <button type="button" onClick={handleCancel} className="btn btn-secondary">
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingNews ? "Update Article" : "Create Article"}
-                </button>
-              </div>
-            </form>
+                <div className="form-actions">
+                  <button type="button" onClick={handleCancel} className="btn-secondary">
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-primary">
+                    {editingNews ? "Update Article" : "Create Article"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 
-        <div className="news-table">
-          <h2>All News Articles</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Published</th>
-                <th>Featured</th>
-                <th>Views</th>
-                <th>Created</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="news-list">
+          {news.length > 0 ? (
+            <div className="news-grid">
               {news.map((article) => (
-                <tr key={article._id}>
-                  <td>{article.title}</td>
-                  <td>{article.category.replace("_", " ")}</td>
-                  <td>
-                    {article.isPublished ? (
-                      <span className="status-badge status-published">Published</span>
+                <div key={article._id} className="news-card">
+                  <div className="news-card-header">
+                    {article.image ? (
+                      <img src={article.image} alt={article.title} className="news-image" />
                     ) : (
-                      <span className="status-badge status-draft">Draft</span>
+                      <div className="news-image-placeholder">
+                        <FaNewspaper className="placeholder-icon" />
+                      </div>
                     )}
-                  </td>
-                  <td>
-                    {article.isFeatured ? (
-                      <span className="featured-badge">Featured</span>
-                    ) : (
-                      <span>-</span>
+                    <div className="news-status-overlay">
+                      {article.isPublished ? (
+                        <span className="status-badge status-published">
+                          <FaCheckCircle className="badge-icon" />
+                          Published
+                        </span>
+                      ) : (
+                        <span className="status-badge status-draft">
+                          <FaClock className="badge-icon" />
+                          Draft
+                        </span>
+                      )}
+                      {article.isFeatured && (
+                        <span className="featured-badge">
+                          <FaStar className="badge-icon" />
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="news-card-body">
+                    <div className="news-title-section">
+                      <h3>{article.title}</h3>
+                      {article.content && (
+                        <p className="news-excerpt">{article.content.substring(0, 150)}...</p>
+                      )}
+                    </div>
+                    <div className="news-meta">
+                      <div className="meta-item">
+                        <FaTag className="meta-icon" />
+                        <span className="category-badge">
+                          {article.category.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </span>
+                      </div>
+                    </div>
+                    {article.tags && article.tags.length > 0 && (
+                      <div className="news-tags">
+                        {article.tags.slice(0, 3).map((tag, index) => (
+                          <span key={index} className="tag-item">
+                            {tag}
+                          </span>
+                        ))}
+                        {article.tags.length > 3 && (
+                          <span className="tag-item">+{article.tags.length - 3}</span>
+                        )}
+                      </div>
                     )}
-                  </td>
-                  <td>{article.views || 0}</td>
-                  <td>{new Date(article.createdAt).toLocaleDateString()}</td>
-                  <td>
-                    <button onClick={() => handleEdit(article)} className="btn btn-small btn-secondary">
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(article._id)}
-                      className="btn btn-small btn-danger"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
+                    <div className="news-details">
+                      <div className="detail-item">
+                        <FaEye className="detail-icon" />
+                        <span>{article.views || 0} views</span>
+                      </div>
+                      <div className="detail-item">
+                        <FaCalendarAlt className="detail-icon" />
+                        <span>
+                          {new Date(article.createdAt).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="news-actions">
+                      <button
+                        onClick={() => handleEdit(article)}
+                        className="action-btn edit-btn"
+                      >
+                        <FaEdit className="btn-icon" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(article._id)}
+                        className="action-btn delete-btn"
+                      >
+                        <FaTrash className="btn-icon" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <div className="no-news">
+              <FaNewspaper className="empty-icon" />
+              <p>No news articles found. Create your first article to get started.</p>
+              <button onClick={() => setShowForm(true)} className="btn-primary-header">
+                <FaPlus className="btn-icon" />
+                Create Your First Article
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

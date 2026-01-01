@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from "react";
 import api from "../utils/api";
+import {
+  FaVideo,
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaToggleOn,
+  FaToggleOff,
+  FaFilter,
+  FaEye,
+  FaYoutube,
+  FaFileVideo,
+} from "react-icons/fa";
 import "./AdminVideoManagement.css";
 
 const AdminVideoManagement = () => {
@@ -179,29 +191,41 @@ const AdminVideoManagement = () => {
     <div className="admin-video-management-container">
       <div className="container">
         <div className="page-header">
-          <h1>Video Management</h1>
-          <p>Manage YouTube videos for the Learning Portal</p>
-          <button onClick={() => setShowForm(true)} className="btn btn-primary">
-            Add New Video
-          </button>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Video Management</h1>
+              <p className="dashboard-subtitle">
+                Manage YouTube videos and local video uploads for the Learning Portal. Add, edit, and organize educational content.
+              </p>
+            </div>
+            <button onClick={() => setShowForm(true)} className="btn-primary-header">
+              <FaPlus className="btn-icon" />
+              Add New Video
+            </button>
+          </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}
 
         <div className="filters-section">
-          <div className="filter-group">
-            <label>Filter by Category</label>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              {categories.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
+          <div className="filter-badge-group">
+            {categories.map((cat) => (
+              <button
+                key={cat.value}
+                className={`filter-badge ${categoryFilter === cat.value ? "active" : ""}`}
+                onClick={() => setCategoryFilter(cat.value)}
+              >
+                {cat.value === "" ? (
+                  <>
+                    <FaFilter className="filter-icon" />
+                    {cat.label}
+                  </>
+                ) : (
+                  cat.label
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -390,81 +414,105 @@ const AdminVideoManagement = () => {
 
         <div className="videos-list">
           {videos.length > 0 ? (
-            <table className="videos-table">
-              <thead>
-                <tr>
-                  <th>Thumbnail</th>
-                  <th>Title</th>
-                  <th>Type</th>
-                  <th>Category</th>
-                  <th>Order</th>
-                  <th>Views</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {videos.map((video) => (
-                  <tr key={video._id}>
-                    <td>
-                      {video.thumbnail && (
-                        <img src={video.thumbnail} alt={video.title} className="video-thumbnail" />
-                      )}
-                    </td>
-                    <td>
-                      <div className="video-title-cell">
-                        <strong>{video.title}</strong>
-                        {video.description && (
-                          <small>{video.description.substring(0, 50)}...</small>
-                        )}
+            <div className="videos-grid">
+              {videos.map((video) => (
+                <div key={video._id} className="video-card">
+                  <div className="video-card-header">
+                    {video.thumbnail ? (
+                      <img src={video.thumbnail} alt={video.title} className="video-thumbnail" />
+                    ) : (
+                      <div className="video-thumbnail-placeholder">
+                        <FaVideo className="placeholder-icon" />
                       </div>
-                    </td>
-                    <td>
-                      <span className={`video-type-badge ${video.videoType === "youtube" ? "youtube" : "local"}`}>
-                        {video.videoType === "youtube" ? "YouTube" : "Local"}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="category-badge">
-                        {categories.find(c => c.value === video.category)?.label || video.category}
-                      </span>
-                    </td>
-                    <td>{video.order}</td>
-                    <td>{video.views || 0}</td>
-                    <td>
+                    )}
+                    <div className="video-status-overlay">
                       <span className={`status-badge ${video.isActive ? "active" : "inactive"}`}>
                         {video.isActive ? "Active" : "Inactive"}
                       </span>
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <button
-                          onClick={() => handleEdit(video)}
-                          className="btn btn-secondary btn-sm"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleToggleActive(video)}
-                          className="btn btn-secondary btn-sm"
-                        >
-                          {video.isActive ? "Deactivate" : "Activate"}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(video._id)}
-                          className="btn btn-danger btn-sm"
-                        >
-                          Delete
-                        </button>
+                    </div>
+                  </div>
+                  <div className="video-card-body">
+                    <div className="video-title-section">
+                      <h3>{video.title}</h3>
+                      {video.description && (
+                        <p className="video-description">{video.description.substring(0, 80)}...</p>
+                      )}
+                    </div>
+                    <div className="video-meta">
+                      <div className="meta-item">
+                        <span className={`video-type-badge ${video.videoType === "youtube" ? "youtube" : "local"}`}>
+                          {video.videoType === "youtube" ? (
+                            <>
+                              <FaYoutube className="type-icon" />
+                              YouTube
+                            </>
+                          ) : (
+                            <>
+                              <FaFileVideo className="type-icon" />
+                              Local
+                            </>
+                          )}
+                        </span>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <div className="meta-item">
+                        <span className="category-badge">
+                          {categories.find(c => c.value === video.category)?.label || video.category}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="video-stats">
+                      <div className="stat-item">
+                        <FaEye className="stat-icon" />
+                        <span>{video.views || 0} views</span>
+                      </div>
+                      <div className="stat-item">
+                        <span>Order: {video.order}</span>
+                      </div>
+                    </div>
+                    <div className="video-actions">
+                      <button
+                        onClick={() => handleEdit(video)}
+                        className="action-btn edit-btn"
+                      >
+                        <FaEdit className="btn-icon" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleToggleActive(video)}
+                        className={`action-btn ${video.isActive ? "deactivate-btn" : "activate-btn"}`}
+                      >
+                        {video.isActive ? (
+                          <>
+                            <FaToggleOn className="btn-icon" />
+                            Deactivate
+                          </>
+                        ) : (
+                          <>
+                            <FaToggleOff className="btn-icon" />
+                            Activate
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(video._id)}
+                        className="action-btn delete-btn"
+                      >
+                        <FaTrash className="btn-icon" />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="no-videos">
+              <FaVideo className="empty-icon" />
               <p>No videos found. Add your first video to get started.</p>
+              <button onClick={() => setShowForm(true)} className="btn-primary-header">
+                <FaPlus className="btn-icon" />
+                Add Your First Video
+              </button>
             </div>
           )}
         </div>
