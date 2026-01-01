@@ -1,38 +1,47 @@
 .package-builder-container {
   min-height: calc(100vh - 80px);
-  padding: 2rem 0;
-  background: linear-gradient(135deg, #f5f1eb 0%, #e8e0d6 100%);
+  padding: 3rem 0;
+  background: #f5f1eb;
 }
 
 .package-header {
-  text-align: center;
-  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e8e0d6;
 }
 
 .package-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 600;
   color: #2c1810;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
 }
 
 .package-header p {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #5a4a3a;
-  margin-bottom: 1.5rem;
+  margin: 0;
 }
 
 .package-form-section {
   background: #ffffff;
+  border: 1px solid #e8e0d6;
   border-radius: 8px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 2.5rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .package-form-section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
   color: #2c1810;
-  margin-bottom: 1.5rem;
+  margin: 0 0 2rem;
+  letter-spacing: -0.01em;
 }
 
 .package-form {
@@ -62,11 +71,14 @@
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 0.75rem;
+  padding: 0.75rem 1rem;
   border: 1px solid #e8e0d6;
-  border-radius: 4px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: #2c1810;
+  background: #ffffff;
+  transition: all 0.2s ease;
 }
 
 .form-group input:focus,
@@ -74,6 +86,8 @@
 .form-group textarea:focus {
   outline: none;
   border-color: #8b4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.08);
+  background-color: #fff;
 }
 
 .garment-item {
@@ -175,14 +189,18 @@
 }
 
 .packages-list h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
   color: #2c1810;
-  margin-bottom: 1.5rem;
+  margin: 0 0 2rem;
+  letter-spacing: -0.01em;
 }
 
 .no-packages {
   text-align: center;
-  padding: 3rem;
+  padding: 4rem 1rem;
   background: #ffffff;
+  border: 1px solid #e8e0d6;
   border-radius: 8px;
   color: #5a4a3a;
 }
@@ -195,15 +213,17 @@
 
 .package-card {
   background: #ffffff;
+  border: 1px solid #e8e0d6;
   border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 }
 
 .package-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-color: #8b4513;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15);
+  transform: translateY(-2px);
 }
 
 .package-card.unavailable {
@@ -214,13 +234,16 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  gap: 1rem;
 }
 
 .package-header-card h3 {
   color: #2c1810;
-  font-size: 1.3rem;
-  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
 }
 
 .unavailable-badge {
@@ -242,27 +265,32 @@
 }
 
 .package-price {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #8b4513;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e8e0d6;
 }
 
 .original-price {
+  display: block;
   text-decoration: line-through;
-  color: #9a8a7a;
-  font-size: 1rem;
-  margin-right: 0.5rem;
+  color: #5a4a3a;
+  font-size: 0.9375rem;
+  margin-bottom: 0.25rem;
+  opacity: 0.7;
 }
 
 .current-price {
+  font-size: 1.75rem;
+  font-weight: 600;
   color: #8b4513;
+  letter-spacing: -0.02em;
 }
 
 .package-description {
   color: #5a4a3a;
   margin-bottom: 1rem;
   line-height: 1.6;
+  font-size: 0.9375rem;
 }
 
 .package-details {
@@ -270,27 +298,41 @@
 }
 
 .package-details > div {
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e8e0d6;
+}
+
+.package-details > div:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
 .package-details strong {
   color: #2c1810;
   display: block;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .package-details span {
   display: inline-block;
   margin-right: 0.5rem;
-  margin-bottom: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.375rem 0.75rem;
   background: #f5f1eb;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  border: 1px solid #e8e0d6;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #5a4a3a;
 }
 
 .package-validity {
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
   color: #5a4a3a;
   font-style: italic;
   margin-top: 0.5rem;
@@ -298,8 +340,10 @@
 
 .package-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
 }
 
 .btn-danger {

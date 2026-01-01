@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const upload = require("../utils/upload");
 const {
   getTailors,
   getTailor,
@@ -14,7 +15,17 @@ router.get("/", getTailors);
 router.get("/stats", protect, authorize("tailor"), getTailorStats);
 router.get("/:id", getTailor);
 router.put("/profile", protect, authorize("tailor"), updateTailorProfile);
-router.post("/portfolio", protect, authorize("tailor"), addPortfolioItem);
+router.post(
+  "/portfolio",
+  protect,
+  authorize("tailor"),
+  upload.fields([
+    { name: "mainImage", maxCount: 1 },
+    { name: "beforeImage", maxCount: 1 },
+    { name: "afterImage", maxCount: 1 },
+  ]),
+  addPortfolioItem
+);
 router.delete("/portfolio/:itemId", protect, authorize("tailor"), deletePortfolioItem);
 
 module.exports = router;

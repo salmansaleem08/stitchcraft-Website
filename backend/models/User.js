@@ -49,12 +49,29 @@ const userSchema = mongoose.Schema(
       type: [String],
       default: [],
       enum: [
+        // Traditional Wear
         "Traditional Wear",
+        "Shalwar Kameez",
+        "Sherwanis",
+        "Lehengas",
+        "Kurtas",
+        "Peshawari Shalwar",
+        // Western Wear
         "Western Wear",
-        "Bridal Wear",
+        "Suits",
+        "Dresses",
+        "Casual Wear",
+        "Formal Wear",
+        "Blazers",
+        "Trousers",
+        "Shirts",
+        // Specialty
         "Embroidery",
-        "Alterations",
+        "Bridal Wear",
         "Custom Design",
+        "Alterations",
+        "Repairs",
+        "Design Consultation",
       ],
     },
     fabricExpertise: {

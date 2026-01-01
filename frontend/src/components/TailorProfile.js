@@ -26,8 +26,10 @@ const TailorProfile = () => {
       setReviews(response.data.data.recentReviews);
       setError("");
     } catch (error) {
-      setError("Failed to load tailor profile. Please try again.");
+      const errorMessage = error.response?.data?.message || error.message || "Failed to load tailor profile. Please try again.";
+      setError(errorMessage);
       console.error("Error fetching tailor profile:", error);
+      console.error("Error response:", error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -45,23 +47,32 @@ const TailorProfile = () => {
 
   // Organize specializations by category
   const organizeSpecializations = () => {
-    const traditional = ["Traditional Wear", "Shalwar Kameez", "Sherwanis", "Lehengas"];
-    const western = ["Western Wear", "Suits", "Dresses", "Casual Wear"];
-    const specialty = ["Embroidery", "Bridal", "Custom Design", "Alterations"];
+    if (!tailor || !tailor.specialization) {
+      return {
+        traditional: [],
+        western: [],
+        specialty: [],
+        other: []
+      };
+    }
+
+    const traditional = ["Traditional Wear", "Shalwar Kameez", "Sherwanis", "Lehengas", "Kurtas", "Peshawari Shalwar"];
+    const western = ["Western Wear", "Suits", "Dresses", "Casual Wear", "Formal Wear", "Blazers", "Trousers", "Shirts"];
+    const specialty = ["Embroidery", "Bridal Wear", "Custom Design", "Alterations", "Repairs", "Design Consultation"];
     
     const organized = {
-      traditional: tailor.specialization?.filter(spec => 
-        traditional.some(t => spec.toLowerCase().includes(t.toLowerCase()))
+      traditional: tailor.specialization.filter(spec => 
+        traditional.some(t => spec === t || spec.toLowerCase().includes(t.toLowerCase()))
       ) || [],
-      western: tailor.specialization?.filter(spec => 
-        western.some(w => spec.toLowerCase().includes(w.toLowerCase()))
+      western: tailor.specialization.filter(spec => 
+        western.some(w => spec === w || spec.toLowerCase().includes(w.toLowerCase()))
       ) || [],
-      specialty: tailor.specialization?.filter(spec => 
-        specialty.some(s => spec.toLowerCase().includes(s.toLowerCase()))
+      specialty: tailor.specialization.filter(spec => 
+        specialty.some(s => spec === s || spec.toLowerCase().includes(s.toLowerCase()))
       ) || [],
-      other: tailor.specialization?.filter(spec => 
+      other: tailor.specialization.filter(spec => 
         ![...traditional, ...western, ...specialty].some(cat => 
-          spec.toLowerCase().includes(cat.toLowerCase())
+          spec === cat || spec.toLowerCase().includes(cat.toLowerCase())
         )
       ) || []
     };
@@ -69,7 +80,7 @@ const TailorProfile = () => {
     return organized;
   };
 
-  const specializations = organizeSpecializations();
+  const specializations = tailor ? organizeSpecializations() : { traditional: [], western: [], specialty: [], other: [] };
 
   if (error || !tailor) {
     return (
@@ -94,6 +105,17 @@ const TailorProfile = () => {
     return `${Math.round(hours / 24)} days`;
   };
 
+  // Helper to get full image URL
+  const getImageUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+    const BASE_URL = API_BASE.replace("/api", "");
+    return `${BASE_URL}${url}`;
+  };
+
   return (
     <div className="profile-container">
       <div className="container">
@@ -112,18 +134,6 @@ const TailorProfile = () => {
                 {tailor.name.charAt(0).toUpperCase()}
               </div>
             )}
-            {tailor.badges?.length > 0 && (
-              <div className="profile-badges-inline">
-                {tailor.badges.map((badge, idx) => {
-                  const badgeName = typeof badge === 'object' ? (badge.name || badge.type) : badge;
-                  return (
-                    <span key={idx} className="badge-tag" title={badgeName}>
-                      {badgeName}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
           </div>
 
           <div className="profile-hero-content">
@@ -132,19 +142,20 @@ const TailorProfile = () => {
                 <h1>{tailor.shopName || tailor.name}</h1>
                 <p className="profile-subtitle">{tailor.name}</p>
               </div>
-              {tailor.badges?.length > 0 && (
-                <div className="profile-badges-main">
-                  {tailor.badges.map((badge, idx) => {
-                    const badgeName = typeof badge === 'object' ? (badge.name || badge.type) : badge;
-                    return (
-                      <span key={idx} className="badge-main" title={badgeName}>
-                        {badgeName}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
             </div>
+
+            {tailor.badges?.length > 0 && (
+              <div className="profile-badges-main">
+                {tailor.badges.map((badge, idx) => {
+                  const badgeName = typeof badge === 'object' ? (badge.name || badge.type) : badge;
+                  return (
+                    <span key={idx} className="badge-main" title={badgeName}>
+                      {badgeName}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
 
             {tailor.address && (
               <p className="profile-location">
@@ -327,7 +338,7 @@ const TailorProfile = () => {
                             <div className="portfolio-comparison-item">
                               <div className="comparison-label">Before</div>
                               <div className="portfolio-image-container">
-                                <img src={item.beforeImage} alt="Before" className="portfolio-image" />
+                                <img src={getImageUrl(item.beforeImage)} alt="Before" className="portfolio-image" />
                               </div>
                             </div>
                           )}
@@ -335,7 +346,7 @@ const TailorProfile = () => {
                             <div className="portfolio-comparison-item">
                               <div className="comparison-label">After</div>
                               <div className="portfolio-image-container">
-                                <img src={item.afterImage} alt="After" className="portfolio-image" />
+                                <img src={getImageUrl(item.afterImage)} alt="After" className="portfolio-image" />
                               </div>
                             </div>
                           )}
@@ -343,7 +354,7 @@ const TailorProfile = () => {
                       ) : (
                         <div className="portfolio-image-container">
                           {item.imageUrl ? (
-                            <img src={item.imageUrl} alt={item.title || "Portfolio item"} className="portfolio-image" />
+                            <img src={getImageUrl(item.imageUrl)} alt={item.title || "Portfolio item"} className="portfolio-image" />
                           ) : (
                             <div className="portfolio-placeholder">No image</div>
                           )}

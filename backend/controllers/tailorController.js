@@ -276,19 +276,41 @@ exports.addPortfolioItem = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    const { imageUrl, title, description, category, beforeImage, afterImage } = req.body;
+    const { title, description, category, imageUrl, beforeImageUrl, afterImageUrl } = req.body;
 
-    if (!imageUrl) {
-      return res.status(400).json({ message: "Please provide an image URL" });
+    // Handle file uploads - prioritize uploaded files over URLs
+    let mainImageUrl = imageUrl || "";
+    let beforeImg = beforeImageUrl || "";
+    let afterImg = afterImageUrl || "";
+
+    if (req.files) {
+      if (req.files.mainImage && req.files.mainImage[0]) {
+        mainImageUrl = `/uploads/images/${req.files.mainImage[0].filename}`;
+      }
+      if (req.files.beforeImage && req.files.beforeImage[0]) {
+        beforeImg = `/uploads/images/${req.files.beforeImage[0].filename}`;
+      }
+      if (req.files.afterImage && req.files.afterImage[0]) {
+        afterImg = `/uploads/images/${req.files.afterImage[0].filename}`;
+      }
+    }
+
+    // Use main image as fallback if afterImage is not provided
+    if (!afterImg && mainImageUrl) {
+      afterImg = mainImageUrl;
+    }
+
+    if (!mainImageUrl && !afterImg) {
+      return res.status(400).json({ message: "Please provide an image (upload or URL)" });
     }
 
     const portfolioItem = {
-      imageUrl,
+      imageUrl: mainImageUrl || afterImg,
       title: title || "",
       description: description || "",
       category: category || "",
-      beforeImage: beforeImage || "",
-      afterImage: afterImage || imageUrl,
+      beforeImage: beforeImg,
+      afterImage: afterImg || mainImageUrl,
     };
 
     tailor.portfolio.push(portfolioItem);

@@ -1,0 +1,508 @@
+.pricing-tier-manager-container {
+  min-height: calc(100vh - 80px);
+  padding: 3rem 0;
+  background: #f5f1eb;
+}
+
+.pricing-tier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e8e0d6;
+}
+
+.pricing-tier-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.pricing-tier-header p {
+  font-size: 1rem;
+  color: #5a4a3a;
+  margin: 0;
+}
+
+.tier-form-section {
+  background: #ffffff;
+  border: 1px solid #e8e0d6;
+  border-radius: 8px;
+  padding: 2.5rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.tier-form-section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0 0 2rem;
+  letter-spacing: -0.01em;
+}
+
+.tier-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2c1810;
+  letter-spacing: 0.01em;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e8e0d6;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: #2c1810;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #8b4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.08);
+  background-color: #fff;
+}
+
+.garment-pricing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.garment-pricing-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f5f1eb;
+  border: 1px solid #e8e0d6;
+  border-radius: 6px;
+}
+
+.garment-type {
+  flex: 1;
+  font-weight: 500;
+  color: #2c1810;
+}
+
+.garment-price {
+  font-weight: 600;
+  color: #8b4513;
+}
+
+.btn-remove-small {
+  background: none;
+  border: none;
+  color: #c53030;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-remove-small:hover {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.garment-pricing-add {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.garment-select {
+  flex: 2;
+}
+
+.garment-price-input {
+  flex: 1;
+}
+
+.additional-charges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.form-group-small {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group-small label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #5a4a3a;
+}
+
+.form-group-small input {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #e8e0d6;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.form-group-small input:focus {
+  outline: none;
+  border-color: #8b4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.08);
+}
+
+.discounts-section {
+  padding: 1.5rem;
+  background: #f5f1eb;
+  border: 1px solid #e8e0d6;
+  border-radius: 8px;
+}
+
+.discounts-section h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0 0 1.5rem;
+}
+
+.discount-group {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e8e0d6;
+}
+
+.discount-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  color: #2c1810;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.discount-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-left: 2rem;
+}
+
+.features-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.feature-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e8e0d6;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  color: #5a4a3a;
+}
+
+.feature-remove {
+  background: none;
+  border: none;
+  color: #8b4513;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.feature-remove:hover {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.feature-input {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.feature-input input {
+  flex: 1;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.tiers-list h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0 0 2rem;
+  letter-spacing: -0.01em;
+}
+
+.no-tiers {
+  text-align: center;
+  padding: 4rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e8e0d6;
+  border-radius: 8px;
+  color: #5a4a3a;
+}
+
+.tiers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.tier-card {
+  background: #ffffff;
+  border: 1px solid #e8e0d6;
+  border-radius: 8px;
+  padding: 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.tier-card:hover {
+  border-color: #8b4513;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15);
+  transform: translateY(-2px);
+}
+
+.tier-card.inactive {
+  opacity: 0.7;
+}
+
+.tier-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.tier-card-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.tier-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: #f5f1eb;
+  border: 1px solid #e8e0d6;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #8b4513;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inactive-badge {
+  padding: 0.25rem 0.75rem;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.tier-price-display {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e8e0d6;
+}
+
+.price-label {
+  display: block;
+  font-size: 0.8125rem;
+  color: #5a4a3a;
+  margin-bottom: 0.25rem;
+}
+
+.price-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #8b4513;
+  letter-spacing: -0.02em;
+}
+
+.tier-description {
+  font-size: 0.9375rem;
+  color: #5a4a3a;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.tier-features-list {
+  margin-bottom: 1rem;
+}
+
+.tier-features-list strong {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 0.5rem;
+}
+
+.tier-features-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tier-features-list li {
+  padding: 0.375rem 0;
+  padding-left: 1.25rem;
+  color: #5a4a3a;
+  font-size: 0.875rem;
+  position: relative;
+}
+
+.tier-features-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #8b4513;
+  font-weight: 600;
+}
+
+.tier-discounts-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.discount-info {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  background: #f5f1eb;
+  border: 1px solid #e8e0d6;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #5a4a3a;
+}
+
+.discount-info.seasonal {
+  background: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.discount-info.corporate {
+  background: #cfe2ff;
+  border-color: #0d6efd;
+  color: #084298;
+}
+
+.tier-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e0d6;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: #ffffff;
+  border: none;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+@media (max-width: 768px) {
+  .pricing-tier-header {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .tiers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .additional-charges-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .discount-inputs {
+    grid-template-columns: 1fr;
+    padding-left: 0;
+  }
+
+  .tier-form-section {
+    padding: 1.5rem;
+  }
+}

@@ -46,8 +46,7 @@ const cartSchema = mongoose.Schema(
   }
 );
 
-// Index for efficient querying
-cartSchema.index({ customer: 1 });
+// Note: Index on customer is automatically created by unique: true
 
 module.exports = mongoose.model("Cart", cartSchema);
 

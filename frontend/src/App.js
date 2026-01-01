@@ -12,6 +12,7 @@ import BookingForm from "./components/BookingForm";
 import OrderTracking from "./components/OrderTracking";
 import OrderDashboard from "./components/OrderDashboard";
 import PackageBuilder from "./components/PackageBuilder";
+import PricingTierManager from "./components/PricingTierManager";
 import SupplierListing from "./components/SupplierListing";
 import SupplierProfile from "./components/SupplierProfile";
 import SupplierProfileEdit from "./components/SupplierProfileEdit";
@@ -166,6 +167,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="tailor">
                     <PackageBuilder />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pricing/tiers/manage"
+                element={
+                  <ProtectedRoute requiredRole="tailor">
+                    <PricingTierManager />
                   </ProtectedRoute>
                 }
               />

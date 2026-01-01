@@ -37,12 +37,22 @@ const TailorProfileEdit = () => {
 
   const [portfolioItems, setPortfolioItems] = useState([]);
   const [newPortfolioItem, setNewPortfolioItem] = useState({
-    imageUrl: "",
     title: "",
     description: "",
     category: "",
-    beforeImage: "",
-    afterImage: "",
+    imageUrl: "",
+    beforeImageUrl: "",
+    afterImageUrl: "",
+  });
+  const [portfolioFiles, setPortfolioFiles] = useState({
+    mainImage: null,
+    beforeImage: null,
+    afterImage: null,
+  });
+  const [portfolioPreviews, setPortfolioPreviews] = useState({
+    mainImage: null,
+    beforeImage: null,
+    afterImage: null,
   });
 
   useEffect(() => {
@@ -153,6 +163,44 @@ const TailorProfileEdit = () => {
     });
   };
 
+  const handlePortfolioFileChange = (e, field) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPortfolioFiles({
+        ...portfolioFiles,
+        [field]: file,
+      });
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPortfolioPreviews({
+          ...portfolioPreviews,
+          [field]: reader.result,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePortfolioFile = (field) => {
+    setPortfolioFiles({
+      ...portfolioFiles,
+      [field]: null,
+    });
+    setPortfolioPreviews({
+      ...portfolioPreviews,
+      [field]: null,
+    });
+    // Clear corresponding URL field if it exists
+    if (field === "mainImage") {
+      setNewPortfolioItem({ ...newPortfolioItem, imageUrl: "" });
+    } else if (field === "beforeImage") {
+      setNewPortfolioItem({ ...newPortfolioItem, beforeImageUrl: "" });
+    } else if (field === "afterImage") {
+      setNewPortfolioItem({ ...newPortfolioItem, afterImageUrl: "" });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -182,23 +230,60 @@ const TailorProfileEdit = () => {
     e.preventDefault();
     setError("");
 
-    if (!newPortfolioItem.imageUrl) {
-      setError("Please provide an image URL");
+    if (!portfolioFiles.mainImage && !portfolioFiles.afterImage && !newPortfolioItem.imageUrl && !newPortfolioItem.afterImageUrl) {
+      setError("Please upload an image or provide an image URL");
       return;
     }
 
     try {
-      const response = await api.post("/tailors/portfolio", newPortfolioItem);
+      const formData = new FormData();
+      
+      // Append files if they exist
+      if (portfolioFiles.mainImage) {
+        formData.append("mainImage", portfolioFiles.mainImage);
+      }
+      if (portfolioFiles.beforeImage) {
+        formData.append("beforeImage", portfolioFiles.beforeImage);
+      }
+      if (portfolioFiles.afterImage) {
+        formData.append("afterImage", portfolioFiles.afterImage);
+      }
+      
+      // Append text fields
+      formData.append("title", newPortfolioItem.title || "");
+      formData.append("description", newPortfolioItem.description || "");
+      formData.append("category", newPortfolioItem.category || "");
+      formData.append("imageUrl", newPortfolioItem.imageUrl || "");
+      formData.append("beforeImageUrl", newPortfolioItem.beforeImageUrl || "");
+      formData.append("afterImageUrl", newPortfolioItem.afterImageUrl || "");
+
+      const response = await api.post("/tailors/portfolio", formData);
       setPortfolioItems([...portfolioItems, response.data.data]);
       setNewPortfolioItem({
-        imageUrl: "",
         title: "",
         description: "",
         category: "",
-        beforeImage: "",
-        afterImage: "",
+        imageUrl: "",
+        beforeImageUrl: "",
+        afterImageUrl: "",
+      });
+      setPortfolioFiles({
+        mainImage: null,
+        beforeImage: null,
+        afterImage: null,
+      });
+      setPortfolioPreviews({
+        mainImage: null,
+        beforeImage: null,
+        afterImage: null,
       });
       setSuccess("Portfolio item added successfully!");
+      // Clear file inputs
+      document.querySelectorAll('input[type="file"]').forEach(input => {
+        if (input.closest('.portfolio-form')) {
+          input.value = '';
+        }
+      });
     } catch (error) {
       setError(error.response?.data?.message || "Failed to add portfolio item");
     }
@@ -219,12 +304,29 @@ const TailorProfileEdit = () => {
   };
 
   const specializations = [
+    // Traditional Wear
     "Traditional Wear",
+    "Shalwar Kameez",
+    "Sherwanis",
+    "Lehengas",
+    "Kurtas",
+    "Peshawari Shalwar",
+    // Western Wear
     "Western Wear",
-    "Bridal Wear",
+    "Suits",
+    "Dresses",
+    "Casual Wear",
+    "Formal Wear",
+    "Blazers",
+    "Trousers",
+    "Shirts",
+    // Specialty
     "Embroidery",
-    "Alterations",
+    "Bridal Wear",
     "Custom Design",
+    "Alterations",
+    "Repairs",
+    "Design Consultation",
   ];
 
   const fabricTypes = ["Cotton", "Silk", "Linen", "Wool", "Synthetic", "Mixed"];
@@ -238,6 +340,17 @@ const TailorProfileEdit = () => {
     "Azad Kashmir",
     "Gilgit-Baltistan",
   ];
+
+  // Helper to get full image URL
+  const getImageUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+    const BASE_URL = API_BASE.replace("/api", "");
+    return `${BASE_URL}${url}`;
+  };
 
   if (!user || user.role !== "tailor") {
     return null;
@@ -476,33 +589,20 @@ const TailorProfileEdit = () => {
         <div className="portfolio-section">
           <h2>Portfolio</h2>
           <p className="section-description">
-            Showcase your work with before and after photos
+            Showcase your work with before and after photos. Upload images from your device or provide image URLs.
           </p>
 
           <form onSubmit={handleAddPortfolioItem} className="portfolio-form">
             <div className="form-grid">
               <div className="form-group full-width">
-                <label htmlFor="imageUrl">Image URL *</label>
-                <input
-                  type="url"
-                  id="imageUrl"
-                  name="imageUrl"
-                  value={newPortfolioItem.imageUrl}
-                  onChange={handlePortfolioChange}
-                  placeholder="https://example.com/image.jpg"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="title">Title</label>
+                <label htmlFor="title">Project Title</label>
                 <input
                   type="text"
                   id="title"
                   name="title"
                   value={newPortfolioItem.title}
                   onChange={handlePortfolioChange}
-                  placeholder="Project title"
+                  placeholder="e.g., Traditional Shalwar Kameez for Wedding"
                 />
               </div>
 
@@ -526,32 +626,132 @@ const TailorProfileEdit = () => {
                   value={newPortfolioItem.description}
                   onChange={handlePortfolioChange}
                   rows="3"
-                  placeholder="Describe this work..."
+                  placeholder="Describe this work, techniques used, materials, etc."
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="beforeImage">Before image URL</label>
-                <input
-                  type="url"
-                  id="beforeImage"
-                  name="beforeImage"
-                  value={newPortfolioItem.beforeImage}
-                  onChange={handlePortfolioChange}
-                  placeholder="Before photo URL (optional)"
-                />
+              <div className="form-group full-width">
+                <label>Main Image *</label>
+                <div className="file-upload-wrapper">
+                  {portfolioPreviews.mainImage ? (
+                    <div className="image-preview-container">
+                      <img src={portfolioPreviews.mainImage} alt="Preview" className="image-preview" />
+                      <button
+                        type="button"
+                        onClick={() => removePortfolioFile("mainImage")}
+                        className="remove-image-btn"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        type="file"
+                        id="mainImage"
+                        accept="image/*"
+                        onChange={(e) => handlePortfolioFileChange(e, "mainImage")}
+                        className="file-input"
+                      />
+                      <label htmlFor="mainImage" className="file-upload-label">
+                        <span className="file-upload-icon">📷</span>
+                        <span>Upload image from device</span>
+                      </label>
+                      <div className="file-upload-or">or</div>
+                      <input
+                        type="url"
+                        id="imageUrl"
+                        name="imageUrl"
+                        value={newPortfolioItem.imageUrl}
+                        onChange={handlePortfolioChange}
+                        placeholder="Enter image URL"
+                        className="url-input"
+                      />
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="form-group">
-                <label htmlFor="afterImage">After image URL</label>
-                <input
-                  type="url"
-                  id="afterImage"
-                  name="afterImage"
-                  value={newPortfolioItem.afterImage}
-                  onChange={handlePortfolioChange}
-                  placeholder="After photo URL (optional)"
-                />
+                <label>Before Image (Optional)</label>
+                <div className="file-upload-wrapper">
+                  {portfolioPreviews.beforeImage ? (
+                    <div className="image-preview-container">
+                      <img src={portfolioPreviews.beforeImage} alt="Before preview" className="image-preview" />
+                      <button
+                        type="button"
+                        onClick={() => removePortfolioFile("beforeImage")}
+                        className="remove-image-btn"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        type="file"
+                        id="beforeImage"
+                        accept="image/*"
+                        onChange={(e) => handlePortfolioFileChange(e, "beforeImage")}
+                        className="file-input"
+                      />
+                      <label htmlFor="beforeImage" className="file-upload-label">
+                        <span className="file-upload-icon">📷</span>
+                        <span>Upload</span>
+                      </label>
+                      <input
+                        type="url"
+                        id="beforeImageUrl"
+                        name="beforeImageUrl"
+                        value={newPortfolioItem.beforeImageUrl}
+                        onChange={handlePortfolioChange}
+                        placeholder="Or enter URL"
+                        className="url-input"
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>After Image (Optional)</label>
+                <div className="file-upload-wrapper">
+                  {portfolioPreviews.afterImage ? (
+                    <div className="image-preview-container">
+                      <img src={portfolioPreviews.afterImage} alt="After preview" className="image-preview" />
+                      <button
+                        type="button"
+                        onClick={() => removePortfolioFile("afterImage")}
+                        className="remove-image-btn"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        type="file"
+                        id="afterImage"
+                        accept="image/*"
+                        onChange={(e) => handlePortfolioFileChange(e, "afterImage")}
+                        className="file-input"
+                      />
+                      <label htmlFor="afterImage" className="file-upload-label">
+                        <span className="file-upload-icon">📷</span>
+                        <span>Upload</span>
+                      </label>
+                      <input
+                        type="url"
+                        id="afterImageUrl"
+                        name="afterImageUrl"
+                        value={newPortfolioItem.afterImageUrl}
+                        onChange={handlePortfolioChange}
+                        placeholder="Or enter URL"
+                        className="url-input"
+                      />
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -568,7 +768,7 @@ const TailorProfileEdit = () => {
                   <div key={item._id} className="portfolio-item-card">
                     {item.afterImage || item.imageUrl ? (
                       <img
-                        src={item.afterImage || item.imageUrl}
+                        src={getImageUrl(item.afterImage || item.imageUrl)}
                         alt={item.title || "Portfolio item"}
                         className="portfolio-thumbnail"
                       />

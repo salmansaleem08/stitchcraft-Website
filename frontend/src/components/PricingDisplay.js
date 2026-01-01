@@ -49,6 +49,13 @@ const PricingDisplay = ({ tailorId: propTailorId }) => {
     );
   }
 
+  const tierTypeLabels = {
+    basic: "Basic Stitching",
+    premium: "Premium Stitching",
+    luxury: "Luxury Tier",
+    bulk: "Bulk Orders",
+  };
+
   return (
     <div className="pricing-display-container">
       <div className="container">
@@ -70,7 +77,7 @@ const PricingDisplay = ({ tailorId: propTailorId }) => {
             className={`tab-btn ${activeTab === "packages" ? "active" : ""}`}
             onClick={() => setActiveTab("packages")}
           >
-            Packages ({packages.length})
+            Packages {packages.length > 0 && <span className="tab-count">({packages.length})</span>}
           </button>
         </div>
 
@@ -85,12 +92,14 @@ const PricingDisplay = ({ tailorId: propTailorId }) => {
                 {tiers.map((tier) => (
                   <div key={tier._id} className="tier-card">
                     <div className="tier-header">
-                      <h3>{tier.name}</h3>
-                      <span className="tier-type">{tier.tierType}</span>
+                      <div>
+                        <h3>{tier.name}</h3>
+                        <span className="tier-type">{tierTypeLabels[tier.tierType] || tier.tierType}</span>
+                      </div>
                     </div>
                     <div className="tier-price">
                       <span className="price-label">Starting from</span>
-                      <span className="price-value">PKR {tier.basePrice}</span>
+                      <span className="price-value">PKR {tier.basePrice?.toLocaleString()}</span>
                     </div>
                     {tier.description && (
                       <p className="tier-description">{tier.description}</p>

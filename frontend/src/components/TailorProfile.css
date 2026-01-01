@@ -1,12 +1,12 @@
 .profile-container {
   min-height: calc(100vh - 70px);
   padding: 3rem 0;
-  background: #f5f1eb;
+  background: #ffffff;
 }
 
 .back-link {
   display: inline-block;
-  color: #8b4513;
+  color: #5a4a3a;
   text-decoration: none;
   margin-bottom: 2rem;
   font-size: 0.9375rem;
@@ -15,7 +15,7 @@
 }
 
 .back-link:hover {
-  color: #6b3410;
+  color: #2c1810;
 }
 
 .profile-hero {
@@ -23,7 +23,7 @@
   gap: 2.5rem;
   margin-bottom: 3rem;
   padding-bottom: 2.5rem;
-  border-bottom: 1px solid #e8e0d6;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .profile-avatar-wrapper {
@@ -37,14 +37,14 @@
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .profile-avatar.placeholder {
   width: 140px;
   height: 140px;
   border-radius: 50%;
-  background: #8b4513;
+  background: #1a3a4a;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -52,27 +52,7 @@
   font-size: 3.5rem;
   font-weight: 600;
   border: 3px solid #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.profile-badges-inline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  justify-content: center;
-}
-
-.badge-tag {
-  padding: 0.375rem 0.875rem;
-  background: #8b4513;
-  color: #ffffff;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .profile-header-top {
@@ -80,27 +60,32 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 1.5rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .profile-badges-main {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  align-items: flex-start;
+  margin-bottom: 1rem;
 }
 
 .badge-main {
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
-  color: #ffffff;
-  border-radius: 20px;
+  padding: 0.375rem 0.875rem;
+  background: #f8f8f8;
+  border: 1px solid #e8e8e8;
+  color: #5a4a3a;
+  border-radius: 6px;
   font-size: 0.8125rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  box-shadow: 0 2px 4px rgba(139, 69, 19, 0.2);
+  font-weight: 500;
+  letter-spacing: 0.01em;
   white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.badge-main:hover {
+  background: #f0f0f0;
+  border-color: #d0d0d0;
 }
 
 .profile-hero-content {
@@ -162,8 +147,11 @@
   display: flex;
   gap: 2rem;
   margin-bottom: 3rem;
-  padding: 2rem 0;
-  border-bottom: 1px solid #e8e0d6;
+  padding: 2rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f0f0f0;
 }
 
 .profile-stat {
@@ -171,19 +159,20 @@
   padding: 1rem;
   border-radius: 8px;
   transition: background-color 0.2s ease;
+  flex: 1;
 }
 
 .profile-stat:hover {
-  background-color: rgba(139, 69, 19, 0.05);
+  background-color: #f8f8f8;
 }
 
 .profile-stat.highlight-stat {
-  background-color: rgba(139, 69, 19, 0.08);
-  border: 1px solid rgba(139, 69, 19, 0.15);
+  background-color: #f8f8f8;
+  border: none;
 }
 
 .profile-stat.highlight-stat:hover {
-  background-color: rgba(139, 69, 19, 0.12);
+  background-color: #f0f0f0;
 }
 
 .stat-number {
@@ -195,7 +184,7 @@
 }
 
 .profile-stat.highlight-stat .stat-number {
-  color: #8b4513;
+  color: #ff8c42;
 }
 
 .stat-text {
@@ -211,7 +200,7 @@
   gap: 0.5rem;
   margin-bottom: 2rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e8e0d6;
+  border-bottom: 1px solid #f0f0f0;
   overflow-x: auto;
 }
 
@@ -235,7 +224,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: #8b4513;
+  background: #ff8c42;
   transform: scaleX(0);
   transition: transform 0.2s ease;
 }
@@ -245,7 +234,8 @@
 }
 
 .tab-btn.active {
-  color: #8b4513;
+  color: #2c1810;
+  font-weight: 600;
 }
 
 .tab-btn.active::after {
@@ -255,9 +245,9 @@
 .profile-content {
   background: #ffffff;
   padding: 2.5rem;
-  border: 1px solid #e8e0d6;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .tab-content {
@@ -288,9 +278,9 @@
 
 .tag {
   padding: 0.5rem 1rem;
-  background: #f5f1eb;
-  border: 1px solid #e8e0d6;
-  border-radius: 16px;
+  background: #f8f8f8;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
   font-size: 0.9375rem;
   color: #5a4a3a;
   font-weight: 500;
@@ -298,32 +288,32 @@
 }
 
 .tag:hover {
-  border-color: #8b4513;
-  background: #fff;
+  border-color: #d0d0d0;
+  background: #f0f0f0;
 }
 
 .tag-traditional {
-  background: #fef3e2;
-  border-color: #f4a460;
-  color: #8b4513;
+  background: #fff5e6;
+  border-color: #ffe0b2;
+  color: #5a4a3a;
 }
 
 .tag-western {
-  background: #e8f4f8;
-  border-color: #87ceeb;
-  color: #2c5282;
+  background: #e3f2fd;
+  border-color: #bbdefb;
+  color: #5a4a3a;
 }
 
 .tag-specialty {
-  background: #f0e6ff;
-  border-color: #ba8fff;
-  color: #6b46c1;
+  background: #f3e5f5;
+  border-color: #e1bee7;
+  color: #5a4a3a;
 }
 
 .tag-fabric {
   background: #fff5e6;
-  border-color: #deb887;
-  color: #8b4513;
+  border-color: #ffe0b2;
+  color: #5a4a3a;
 }
 
 .specialization-matrix {
@@ -339,11 +329,13 @@
 }
 
 .spec-category-title {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 600;
-  color: #2c1810;
-  margin: 0;
-  letter-spacing: -0.01em;
+  color: #5a4a3a;
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .hours-list {
@@ -357,8 +349,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.875rem 1rem;
-  background: #f5f1eb;
-  border-radius: 4px;
+  background: #f8f8f8;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
 }
 
 .hours-day {
@@ -378,17 +371,17 @@
 }
 
 .portfolio-card {
-  border: 1px solid #e8e0d6;
-  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
   overflow: hidden;
   background: #ffffff;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .portfolio-card:hover {
-  border-color: #8b4513;
-  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15);
+  border-color: #e0e0e0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
 
@@ -396,7 +389,7 @@
   width: 100%;
   height: 240px;
   overflow: hidden;
-  background: #f5f1eb;
+  background: #f8f8f8;
 }
 
 .portfolio-comparison {
@@ -416,10 +409,10 @@
   position: absolute;
   top: 0.5rem;
   left: 0.5rem;
-  background: rgba(139, 69, 19, 0.9);
+  background: rgba(26, 58, 74, 0.9);
   color: #ffffff;
   padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+  border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -480,9 +473,9 @@
 
 .portfolio-category {
   padding: 0.375rem 0.75rem;
-  background: #8b4513;
+  background: #1a3a4a;
   color: #ffffff;
-  border-radius: 12px;
+  border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -502,9 +495,10 @@
 
 .review-item {
   padding: 1.75rem;
-  border: 1px solid #e8e0d6;
-  border-radius: 4px;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
   background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .review-header {
@@ -525,18 +519,18 @@
   height: 48px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #e8e0d6;
+  border: 2px solid #f0f0f0;
 }
 
 .reviewer-avatar.placeholder {
-  background: #8b4513;
+  background: #1a3a4a;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
   font-weight: 600;
-  border: 2px solid #e8e0d6;
+  border: 2px solid #f0f0f0;
 }
 
 .reviewer-name {
@@ -555,7 +549,7 @@
 }
 
 .rating-stars {
-  color: #8b4513;
+  color: #ff8c42;
   font-size: 1.125rem;
 }
 
@@ -577,14 +571,14 @@
   width: 80px;
   height: 80px;
   object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #e8e0d6;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
   cursor: pointer;
   transition: border-color 0.2s ease;
 }
 
 .review-photo:hover {
-  border-color: #8b4513;
+  border-color: #ff8c42;
 }
 
 .pricing-content {
