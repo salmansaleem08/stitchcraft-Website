@@ -2,6 +2,11 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { 
+  FaShoppingCart, FaTrash, FaMinus, FaPlus,
+  FaStore, FaEye, FaBox, FaRulerCombined,
+  FaDollarSign, FaCheckCircle, FaSpinner
+} from "react-icons/fa";
 import "./Cart.css";
 
 const Cart = () => {
@@ -111,26 +116,38 @@ const Cart = () => {
   return (
     <div className="cart-container">
       <div className="container">
-        <div className="cart-header">
-          <h1>Cart</h1>
-          {cart && cart.items.length > 0 && (
-            <button onClick={clearCart} className="btn btn-text">
-              Clear cart
-            </button>
-          )}
+        <div className="page-header">
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Shopping Cart</h1>
+              <p className="dashboard-subtitle">
+                Review your selected items, update quantities, and proceed to checkout. Items are grouped by supplier for easy management.
+              </p>
+            </div>
+            {cart && cart.items.length > 0 && (
+              <button onClick={clearCart} className="btn-clear-cart">
+                <FaTrash className="clear-icon" />
+                Clear Cart
+              </button>
+            )}
+          </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
 
         {!cart || cart.items.length === 0 ? (
           <div className="empty-cart">
+            <FaShoppingCart className="empty-icon" />
             <p>Your cart is empty</p>
+            <p className="empty-subtitle">Start adding items to your cart to continue shopping</p>
             <div className="empty-cart-actions">
               <Link to="/supplies" className="btn btn-primary">
-                Browse supplies
+                <FaBox className="btn-icon" />
+                Browse Supplies
               </Link>
               <Link to="/fabrics" className="btn btn-secondary">
-                Browse fabrics
+                <FaRulerCombined className="btn-icon" />
+                Browse Fabrics
               </Link>
             </div>
           </div>
@@ -140,9 +157,16 @@ const Cart = () => {
               {Object.entries(itemsBySupplier).map(([supplierId, group]) => (
                 <div key={supplierId} className="supplier-group">
                   <div className="supplier-header">
-                    <h2>{group.supplier?.businessName || group.supplier?.name || "Supplier"}</h2>
+                    <div className="supplier-header-left">
+                      <FaStore className="supplier-icon" />
+                      <div>
+                        <h2>{group.supplier?.businessName || group.supplier?.name || "Supplier"}</h2>
+                        <p className="supplier-item-count">{group.items.length} item{group.items.length !== 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
                     <Link to={`/suppliers/${supplierId}`} className="supplier-link">
-                      View supplier
+                      <FaEye className="link-icon" />
+                      View Supplier
                     </Link>
                   </div>
 
@@ -161,6 +185,19 @@ const Cart = () => {
 
                         <div className="item-main">
                           <div className="item-info">
+                            <div className="item-type-badge">
+                              {item.productType === "fabric" ? (
+                                <>
+                                  <FaRulerCombined className="type-icon" />
+                                  Fabric
+                                </>
+                              ) : (
+                                <>
+                                  <FaBox className="type-icon" />
+                                  Supply
+                                </>
+                              )}
+                            </div>
                             <h3>
                               <Link
                                 to={
@@ -173,11 +210,11 @@ const Cart = () => {
                               </Link>
                             </h3>
                             <p className="item-meta">
-                              {item.productType === "fabric" ? "Fabric" : "Supply"}
-                              {item.product?.fabricType && ` - ${item.product.fabricType}`}
-                              {item.product?.category && ` - ${item.product.category}`}
+                              {item.product?.fabricType && `${item.product.fabricType}`}
+                              {item.product?.category && ` • ${item.product.category}`}
                             </p>
                             <p className="item-price">
+                              <FaDollarSign className="price-icon" />
                               PKR {item.price?.toLocaleString()}/{item.unit}
                             </p>
                           </div>
@@ -191,7 +228,7 @@ const Cart = () => {
                                   className="quantity-btn"
                                   disabled={updating}
                                 >
-                                  −
+                                  <FaMinus />
                                 </button>
                                 <span className="quantity-value">{item.quantity}</span>
                                 <button
@@ -199,7 +236,7 @@ const Cart = () => {
                                   className="quantity-btn"
                                   disabled={updating}
                                 >
-                                  +
+                                  <FaPlus />
                                 </button>
                               </div>
                             </div>
@@ -207,6 +244,7 @@ const Cart = () => {
                             <div className="item-subtotal">
                               <span className="subtotal-label">Subtotal</span>
                               <span className="subtotal-value">
+                                <FaDollarSign className="subtotal-icon" />
                                 PKR {(item.price * item.quantity).toLocaleString()}
                               </span>
                             </div>
@@ -216,6 +254,7 @@ const Cart = () => {
                               className="btn-remove"
                               disabled={updating}
                             >
+                              <FaTrash className="remove-icon" />
                               Remove
                             </button>
                           </div>
@@ -226,13 +265,17 @@ const Cart = () => {
 
                   <div className="supplier-footer">
                     <div className="supplier-total">
-                      <span>Subtotal</span>
-                      <span className="total-amount">PKR {group.total.toLocaleString()}</span>
+                      <span className="total-label">Subtotal</span>
+                      <span className="total-amount">
+                        <FaDollarSign className="total-icon" />
+                        PKR {group.total.toLocaleString()}
+                      </span>
                     </div>
                     <Link
                       to={`/checkout?supplier=${supplierId}`}
-                      className="btn btn-primary"
+                      className="btn btn-primary btn-checkout"
                     >
+                      <FaCheckCircle className="checkout-icon" />
                       Checkout from {group.supplier?.businessName || group.supplier?.name}
                     </Link>
                   </div>
@@ -241,26 +284,44 @@ const Cart = () => {
             </div>
 
             <div className="cart-summary">
-              <h2>Summary</h2>
-              <div className="summary-row">
-                <span>Items</span>
-                <span>{cart.items.length}</span>
+              <h2>
+                <FaShoppingCart className="summary-icon" />
+                Order Summary
+              </h2>
+              <div className="summary-content">
+                <div className="summary-row">
+                  <span className="summary-label">
+                    <FaBox className="row-icon" />
+                    Items
+                  </span>
+                  <span className="summary-value">{cart.items.length}</span>
+                </div>
+                <div className="summary-row">
+                  <span className="summary-label">
+                    <FaStore className="row-icon" />
+                    Suppliers
+                  </span>
+                  <span className="summary-value">{Object.keys(itemsBySupplier).length}</span>
+                </div>
+                <div className="summary-divider"></div>
+                <div className="summary-row summary-total">
+                  <span className="summary-label">Total</span>
+                  <span className="summary-value">
+                    <FaDollarSign className="total-icon" />
+                    PKR {grandTotal.toLocaleString()}
+                  </span>
+                </div>
               </div>
-              <div className="summary-row">
-                <span>Suppliers</span>
-                <span>{Object.keys(itemsBySupplier).length}</span>
+              <div className="summary-actions">
+                <Link to="/checkout" className="btn btn-primary btn-block">
+                  <FaCheckCircle className="btn-icon" />
+                  Checkout All
+                </Link>
+                <Link to="/supplies" className="btn btn-secondary btn-block">
+                  <FaBox className="btn-icon" />
+                  Continue Shopping
+                </Link>
               </div>
-              <div className="summary-divider"></div>
-              <div className="summary-row summary-total">
-                <span>Total</span>
-                <span>PKR {grandTotal.toLocaleString()}</span>
-              </div>
-              <Link to="/checkout" className="btn btn-primary btn-block">
-                Checkout all
-              </Link>
-              <Link to="/supplies" className="btn btn-text btn-block">
-                Continue shopping
-              </Link>
             </div>
           </div>
         )}

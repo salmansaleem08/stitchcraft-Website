@@ -2,6 +2,11 @@ import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { 
+  FaCheckCircle, FaTimesCircle, 
+  FaClock, FaSpinner, FaCalendarAlt,
+  FaTruck, FaBox, FaFilter, FaShoppingBag
+} from "react-icons/fa";
 import "./OrderDashboard.css";
 
 const OrderDashboard = () => {
@@ -93,25 +98,42 @@ const OrderDashboard = () => {
     );
   }
 
+  const getStatusIcon = (status) => {
+    const statusIcons = {
+      pending: <FaClock />,
+      confirmed: <FaCheckCircle />,
+      approved: <FaCheckCircle />,
+      booked: <FaCheckCircle />,
+      consultation_scheduled: <FaCalendarAlt />,
+      consultation_completed: <FaCalendarAlt />,
+      fabric_selected: <FaSpinner />,
+      in_progress: <FaSpinner />,
+      processing: <FaSpinner />,
+      revision_requested: <FaClock />,
+      quality_check: <FaSpinner />,
+      shipped: <FaTruck />,
+      on_way: <FaTruck />,
+      delivered: <FaCheckCircle />,
+      completed: <FaCheckCircle />,
+      cancelled: <FaTimesCircle />,
+    };
+    return statusIcons[status] || <FaClock />;
+  };
+
   return (
     <div className="order-dashboard-container">
       <div className="container">
-        <div className="dashboard-header">
-          <h1>{user?.role === "customer" ? "My orders" : "Order management"}</h1>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="status-filter"
-          >
-            <option value="">All status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+        <div className="page-header">
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>{user?.role === "customer" ? "My Orders" : "Order Management"}</h1>
+              <p className="dashboard-subtitle">
+                {user?.role === "customer" 
+                  ? "Track and manage all your tailor and supply orders in one place. Monitor order status, view details, and stay updated on your purchases."
+                  : "Efficiently manage, track, and update all your orders. Monitor order status, track shipments, and ensure timely delivery to customers."}
+              </p>
+            </div>
+          </div>
         </div>
 
         {(user?.role === "customer" || user?.role === "supplier") && (
@@ -122,13 +144,15 @@ const OrderDashboard = () => {
                   className={`tab-btn ${activeTab === "tailor" ? "active" : ""}`}
                   onClick={() => setActiveTab("tailor")}
                 >
-                  Tailor orders ({orders.length})
+                  <FaShoppingBag className="tab-icon" />
+                  Tailor Orders
                 </button>
                 <button
                   className={`tab-btn ${activeTab === "supply" ? "active" : ""}`}
                   onClick={() => setActiveTab("supply")}
                 >
-                  Supply orders ({supplyOrders.length})
+                  <FaBox className="tab-icon" />
+                  Supply Orders
                 </button>
               </>
             )}
@@ -138,18 +162,74 @@ const OrderDashboard = () => {
                   className={`tab-btn ${activeTab === "supply" ? "active" : ""}`}
                   onClick={() => setActiveTab("supply")}
                 >
-                  Supply orders ({supplyOrders.length})
+                  <FaBox className="tab-icon" />
+                  Supply Orders
                 </button>
                 <button
                   className={`tab-btn ${activeTab === "bulk" ? "active" : ""}`}
                   onClick={() => setActiveTab("bulk")}
                 >
-                  Bulk orders ({bulkOrders.length})
+                  <FaBox className="tab-icon" />
+                  Bulk Orders
                 </button>
               </>
             )}
           </div>
         )}
+
+        <div className="filters-section">
+          <div className="filter-badge-group">
+            <button
+              className={`filter-badge ${statusFilter === "" ? "active" : ""}`}
+              onClick={() => setStatusFilter("")}
+            >
+              <FaFilter className="filter-icon" />
+              All Status
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "pending" ? "active" : ""}`}
+              onClick={() => setStatusFilter("pending")}
+            >
+              Pending
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "confirmed" ? "active" : ""}`}
+              onClick={() => setStatusFilter("confirmed")}
+            >
+              Confirmed
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "processing" ? "active" : ""}`}
+              onClick={() => setStatusFilter("processing")}
+            >
+              Processing
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "shipped" ? "active" : ""}`}
+              onClick={() => setStatusFilter("shipped")}
+            >
+              Shipped
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "delivered" ? "active" : ""}`}
+              onClick={() => setStatusFilter("delivered")}
+            >
+              Delivered
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "completed" ? "active" : ""}`}
+              onClick={() => setStatusFilter("completed")}
+            >
+              Completed
+            </button>
+            <button
+              className={`filter-badge ${statusFilter === "cancelled" ? "active" : ""}`}
+              onClick={() => setStatusFilter("cancelled")}
+            >
+              Cancelled
+            </button>
+          </div>
+        </div>
 
         {error && <div className="error-message">{error}</div>}
 
@@ -157,6 +237,7 @@ const OrderDashboard = () => {
           <>
             {orders.length === 0 ? (
               <div className="empty-state">
+                <FaShoppingBag className="empty-icon" />
                 <p>No tailor orders found</p>
                 {user?.role === "customer" && (
                   <Link to="/tailors" className="btn btn-primary">
@@ -165,52 +246,38 @@ const OrderDashboard = () => {
                 )}
               </div>
             ) : (
-              <div className="orders-list">
+              <div className="orders-grid">
                 {orders.map((order) => (
                   <Link key={order._id} to={`/orders/${order._id}`} className="order-card">
-                    <div className="order-header">
-                      <div>
-                        <h3>Order #{order.orderNumber}</h3>
-                        <p className="order-date">{new Date(order.createdAt).toLocaleDateString()}</p>
-                      </div>
+                    <div className="order-card-header">
+                      <div className="order-id">#{order.orderNumber || order._id.slice(-8)}</div>
                       <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                        {getStatusIcon(order.status)}
                         {formatStatus(order.status)}
                       </span>
                     </div>
-                    <div className="order-details">
-                      <div className="order-detail-row">
-                        <span className="detail-label">Garment:</span>
-                        <span className="detail-value">{order.garmentType}</span>
-                      </div>
-                      <div className="order-detail-row">
-                        <span className="detail-label">Service:</span>
-                        <span className="detail-value">{order.serviceType}</span>
-                      </div>
-                      <div className="order-detail-row">
-                        <span className="detail-label">Total:</span>
-                        <span className="detail-value">PKR {order.totalPrice?.toLocaleString() || 0}</span>
-                      </div>
-                      {user?.role === "customer" ? (
-                        <div className="order-detail-row">
-                          <span className="detail-label">Tailor:</span>
-                          <span className="detail-value">
-                            {order.tailor?.shopName || order.tailor?.name}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="order-detail-row">
-                          <span className="detail-label">Customer:</span>
-                          <span className="detail-value">{order.customer?.name}</span>
+                    <div className="order-card-body">
+                      <div className="order-service">{order.garmentType || "Garment"}</div>
+                      {order.serviceType && (
+                        <div className="order-service-type">{order.serviceType}</div>
+                      )}
+                      {user?.role === "customer" && order.tailor && (
+                        <div className="order-customer">
+                          <span className="order-label">Tailor:</span> {order.tailor?.shopName || order.tailor?.name}
                         </div>
                       )}
-                      {order.estimatedCompletionDate && (
-                        <div className="order-detail-row">
-                          <span className="detail-label">Due:</span>
-                          <span className="detail-value">
-                            {new Date(order.estimatedCompletionDate).toLocaleDateString()}
-                          </span>
+                      {user?.role !== "customer" && order.customer && (
+                        <div className="order-customer">
+                          <span className="order-label">Customer:</span> {order.customer?.name}
                         </div>
                       )}
+                    </div>
+                    <div className="order-card-footer">
+                      <div className="order-amount">PKR {order.totalPrice?.toLocaleString() || 0}</div>
+                      <div className="order-date">
+                        <FaCalendarAlt className="date-icon" />
+                        {new Date(order.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -223,6 +290,7 @@ const OrderDashboard = () => {
           <>
             {supplyOrders.length === 0 ? (
               <div className="empty-state">
+                <FaBox className="empty-icon" />
                 <p>No supply orders found</p>
                 {user?.role === "customer" && (
                   <Link to="/supplies" className="btn btn-primary">
@@ -231,44 +299,41 @@ const OrderDashboard = () => {
                 )}
               </div>
             ) : (
-              <div className="orders-list">
+              <div className="orders-grid">
                 {supplyOrders.map((order) => (
                   <Link key={order._id} to={`/supply-orders/${order._id}`} className="order-card">
-                    <div className="order-header">
-                      <div>
-                        <h3>Supply Order #{order.orderNumber || order._id.slice(-8)}</h3>
-                        <p className="order-date">{new Date(order.createdAt).toLocaleDateString()}</p>
-                        {user?.role === "supplier" && (
-                          <p className="order-customer">Customer: {order.customer?.name}</p>
-                        )}
-                      </div>
+                    <div className="order-card-header">
+                      <div className="order-id">Supply #{order.orderNumber || order._id.slice(-8)}</div>
                       <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                        {getStatusIcon(order.status)}
                         {formatStatus(order.status)}
                       </span>
                     </div>
-                    <div className="order-details">
-                      <div className="order-detail-row">
-                        <span className="detail-label">Items:</span>
-                        <span className="detail-value">{order.items?.length || 0} item(s)</span>
-                      </div>
-                      <div className="order-detail-row">
-                        <span className="detail-label">Total:</span>
-                        <span className="detail-value">PKR {order.finalPrice?.toLocaleString() || 0}</span>
-                      </div>
-                      {user?.role === "customer" && (
-                        <div className="order-detail-row">
-                          <span className="detail-label">Supplier:</span>
-                          <span className="detail-value">
-                            {order.supplier?.businessName || order.supplier?.name}
-                          </span>
+                    <div className="order-card-body">
+                      <div className="order-service">{order.items?.length || 0} Item(s)</div>
+                      {user?.role === "customer" && order.supplier && (
+                        <div className="order-customer">
+                          <span className="order-label">Supplier:</span> {order.supplier?.businessName || order.supplier?.name}
+                        </div>
+                      )}
+                      {user?.role === "supplier" && order.customer && (
+                        <div className="order-customer">
+                          <span className="order-label">Customer:</span> {order.customer?.name}
                         </div>
                       )}
                       {order.trackingNumber && (
-                        <div className="order-detail-row">
-                          <span className="detail-label">Tracking:</span>
-                          <span className="detail-value">{order.trackingNumber}</span>
+                        <div className="order-tracking">
+                          <FaTruck className="tracking-icon" />
+                          <span>{order.trackingNumber}</span>
                         </div>
                       )}
+                    </div>
+                    <div className="order-card-footer">
+                      <div className="order-amount">PKR {order.finalPrice?.toLocaleString() || 0}</div>
+                      <div className="order-date">
+                        <FaCalendarAlt className="date-icon" />
+                        {new Date(order.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                      </div>
                     </div>
                   </Link>
                 ))}
@@ -281,37 +346,40 @@ const OrderDashboard = () => {
           <>
             {bulkOrders.length === 0 ? (
               <div className="empty-state">
+                <FaBox className="empty-icon" />
                 <p>No bulk orders found</p>
               </div>
             ) : (
-              <div className="orders-list">
+              <div className="orders-grid">
                 {bulkOrders.map((order) => (
                   <Link key={order._id} to={`/bulk-orders/${order._id}`} className="order-card">
-                    <div className="order-header">
-                      <div>
-                        <h3>Bulk Order #{order.orderNumber || order._id.slice(-8)}</h3>
-                        <p className="order-date">{new Date(order.createdAt).toLocaleDateString()}</p>
-                        <p className="order-customer">Customer: {order.customer?.name}</p>
-                      </div>
+                    <div className="order-card-header">
+                      <div className="order-id">Bulk #{order.orderNumber || order._id.slice(-8)}</div>
                       <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
+                        {getStatusIcon(order.status)}
                         {formatStatus(order.status)}
                       </span>
                     </div>
-                    <div className="order-details">
-                      <div className="order-detail-row">
-                        <span className="detail-label">Items:</span>
-                        <span className="detail-value">{order.items?.length || 0} fabric(s)</span>
-                      </div>
-                      <div className="order-detail-row">
-                        <span className="detail-label">Total:</span>
-                        <span className="detail-value">PKR {order.totalPrice?.toLocaleString() || 0}</span>
-                      </div>
-                      {order.trackingNumber && (
-                        <div className="order-detail-row">
-                          <span className="detail-label">Tracking:</span>
-                          <span className="detail-value">{order.trackingNumber}</span>
+                    <div className="order-card-body">
+                      <div className="order-service">{order.items?.length || 0} Fabric(s)</div>
+                      {order.customer && (
+                        <div className="order-customer">
+                          <span className="order-label">Customer:</span> {order.customer?.name}
                         </div>
                       )}
+                      {order.trackingNumber && (
+                        <div className="order-tracking">
+                          <FaTruck className="tracking-icon" />
+                          <span>{order.trackingNumber}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="order-card-footer">
+                      <div className="order-amount">PKR {order.totalPrice?.toLocaleString() || 0}</div>
+                      <div className="order-date">
+                        <FaCalendarAlt className="date-icon" />
+                        {new Date(order.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                      </div>
                     </div>
                   </Link>
                 ))}

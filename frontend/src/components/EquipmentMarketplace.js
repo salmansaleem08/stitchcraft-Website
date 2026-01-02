@@ -76,8 +76,8 @@ const EquipmentMarketplace = () => {
     return (
       <div className="equipment-marketplace-container">
         <div className="container">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
             <p>Loading equipment...</p>
           </div>
         </div>
@@ -95,13 +95,13 @@ const EquipmentMarketplace = () => {
               <p className="dashboard-subtitle">
                 Browse and discover sewing machines, equipment, and tools. Rent or purchase from verified suppliers.
               </p>
-            </div>
-            {user && user.role === "supplier" && (
+          </div>
+          {user && user.role === "supplier" && (
               <Link to="/equipment/new" className="btn-primary-header">
                 <FaPlus className="btn-icon" />
                 List Equipment
-              </Link>
-            )}
+            </Link>
+          )}
           </div>
         </div>
 
@@ -109,14 +109,14 @@ const EquipmentMarketplace = () => {
           <div className="search-controls">
             <div className="input-wrapper">
               <FaSearch className="input-icon" />
-              <input
-                type="text"
-                name="search"
-                value={filters.search}
-                onChange={handleFilterChange}
-                placeholder="Search equipment..."
-                className="search-input"
-              />
+            <input
+              type="text"
+              name="search"
+              value={filters.search}
+              onChange={handleFilterChange}
+              placeholder="Search equipment..."
+              className="search-input"
+            />
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
