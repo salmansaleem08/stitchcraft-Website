@@ -170,26 +170,32 @@ const TailorListing = () => {
   return (
     <div className="tailor-listing-container">
       <div className="container">
-        <div className="listing-header">
-          <h1>Find a tailor</h1>
-          <p>Browse skilled artisans in your area</p>
+        <div className="page-header">
+          <div className="header-text">
+            <h1>Find a Tailor</h1>
+            <p className="dashboard-subtitle">
+              Discover skilled tailors in your area. Browse profiles, read reviews, and find the perfect artisan for your tailoring needs.
+            </p>
+          </div>
         </div>
 
         <div className="listing-controls">
           <div className="search-controls">
-            <input
-              type="text"
-              name="search"
-              value={filters.search}
-              onChange={handleFilterChange}
-              placeholder="Search by name, specialization, or location..."
-              className="search-input"
-            />
+            <div className="search-wrapper">
+              <input
+                type="text"
+                name="search"
+                value={filters.search}
+                onChange={handleFilterChange}
+                placeholder="Search by name, specialization, or location..."
+                className="search-input"
+              />
+            </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="btn btn-secondary"
+              className={`btn-toggle-filters ${showFilters ? "active" : ""}`}
             >
-              {showFilters ? "Hide filters" : "Show filters"}
+              {showFilters ? "Hide Filters" : "Show Filters"}
             </button>
           </div>
 
@@ -204,7 +210,7 @@ const TailorListing = () => {
                     value={filters.specialization}
                     onChange={handleFilterChange}
                   >
-                    <option value="">All specializations</option>
+                    <option value="">All Specializations</option>
                     {specializations.map((spec) => (
                       <option key={spec} value={spec}>
                         {spec}
@@ -221,7 +227,7 @@ const TailorListing = () => {
                     value={filters.province}
                     onChange={handleFilterChange}
                   >
-                    <option value="">All provinces</option>
+                    <option value="">All Provinces</option>
                     {provinces.map((province) => (
                       <option key={province} value={province}>
                         {province}
@@ -238,26 +244,26 @@ const TailorListing = () => {
                     name="city"
                     value={filters.city}
                     onChange={handleFilterChange}
-                    placeholder="Enter city"
+                    placeholder="Enter city name"
                   />
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="minRating">Minimum rating</label>
+                  <label htmlFor="minRating">Minimum Rating</label>
                   <select
                     id="minRating"
                     name="minRating"
                     value={filters.minRating}
                     onChange={handleFilterChange}
                   >
-                    <option value="">Any rating</option>
-                    <option value="4">4+ stars</option>
-                    <option value="3">3+ stars</option>
+                    <option value="">Any Rating</option>
+                    <option value="4">4+ Stars</option>
+                    <option value="3">3+ Stars</option>
                   </select>
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="minExperience">Min experience (years)</label>
+                  <label htmlFor="minExperience">Min Experience (Years)</label>
                   <input
                     type="number"
                     id="minExperience"
@@ -270,23 +276,25 @@ const TailorListing = () => {
                 </div>
 
                 <div className="filter-field">
-                  <label htmlFor="sortBy">Sort by</label>
+                  <label htmlFor="sortBy">Sort By</label>
                   <select
                     id="sortBy"
                     name="sortBy"
                     value={filters.sortBy}
                     onChange={handleFilterChange}
                   >
-                    <option value="rating">Highest rated</option>
-                    <option value="experience">Most experienced</option>
-                    <option value="orders">Most orders</option>
-                    <option value="response">Fastest response</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="experience">Most Experienced</option>
+                    <option value="orders">Most Orders</option>
+                    <option value="response">Fastest Response</option>
                   </select>
                 </div>
               </div>
-              <button onClick={clearFilters} className="btn btn-text">
-                Clear all filters
-              </button>
+              <div className="filters-actions">
+                <button onClick={clearFilters} className="btn-clear-filters">
+                  Clear All Filters
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -299,15 +307,17 @@ const TailorListing = () => {
           <div className="error-message">{error}</div>
         ) : tailors.length === 0 ? (
           <div className="empty-state">
-            <p>No tailors found matching your criteria.</p>
-            <button onClick={clearFilters} className="btn btn-secondary">
-              Clear filters
+            <div className="empty-icon">👔</div>
+            <p>No tailors found matching your criteria</p>
+            <p className="empty-subtitle">Try adjusting your filters or search terms to find more tailors</p>
+            <button onClick={clearFilters} className="btn btn-primary">
+              Clear Filters
             </button>
           </div>
         ) : (
           <>
             <div className="results-count">
-              <span>{pagination.total} tailors found</span>
+              <span className="results-text">{pagination.total} {pagination.total === 1 ? 'tailor' : 'tailors'} found</span>
             </div>
             <div className="tailors-grid">
               {tailors.map((tailor) => (
@@ -339,12 +349,24 @@ const TailorListing = () => {
                   </div>
 
                   <div className="tailor-rating">
-                    <span className="rating-value">
-                      {tailor.rating?.toFixed(1) || "0.0"}
-                    </span>
-                    <span className="rating-count">
-                      ({tailor.totalReviews || 0} reviews)
-                    </span>
+                    <div className="rating-stars">
+                      {[...Array(5)].map((_, i) => (
+                        <span
+                          key={i}
+                          className={`star ${i < Math.floor(tailor.rating || 0) ? "filled" : ""}`}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    <div className="rating-info">
+                      <span className="rating-value">
+                        {tailor.rating?.toFixed(1) || "0.0"}
+                      </span>
+                      <span className="rating-count">
+                        ({tailor.totalReviews || 0} {tailor.totalReviews === 1 ? 'review' : 'reviews'})
+                      </span>
+                    </div>
                   </div>
 
                   {tailor.specialization?.length > 0 && (

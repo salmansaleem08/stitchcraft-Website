@@ -212,17 +212,32 @@ const PackageBuilder = () => {
   return (
     <div className="package-builder-container">
       <div className="container">
-        <div className="package-header">
-          <h1>Package Builder</h1>
-          <p>Create and manage service packages for your customers</p>
-          <button onClick={() => { setShowForm(true); resetForm(); setEditingPackage(null); }} className="btn btn-primary">
-            Create New Package
-          </button>
+        <div className="page-header">
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Package Builder</h1>
+              <p className="dashboard-subtitle">
+                Create and manage service packages for your customers. Build custom packages with multiple garments, fabric options, and special features to attract more bookings.
+              </p>
+            </div>
+            <button onClick={() => { setShowForm(true); resetForm(); setEditingPackage(null); }} className="btn-create-package">
+              + Create New Package
+            </button>
+          </div>
         </div>
 
         {showForm && (
           <div className="package-form-section">
-            <h2>{editingPackage ? "Edit Package" : "Create New Package"}</h2>
+            <div className="form-header">
+              <h2>{editingPackage ? "Edit Package" : "Create New Package"}</h2>
+              <button 
+                type="button" 
+                onClick={() => { setShowForm(false); resetForm(); setEditingPackage(null); }} 
+                className="btn-close-form"
+              >
+                ×
+              </button>
+            </div>
             <form onSubmit={handleSubmit} className="package-form">
               <div className="form-group">
                 <label htmlFor="name">Package Name *</label>
@@ -431,10 +446,18 @@ const PackageBuilder = () => {
         )}
 
         <div className="packages-list">
-          <h2>Your Packages ({packages?.length || 0})</h2>
+          <div className="packages-header">
+            <h2>Your Packages</h2>
+            <span className="package-count">{packages?.length || 0} {packages?.length === 1 ? 'package' : 'packages'}</span>
+          </div>
           {!packages || packages.length === 0 ? (
             <div className="no-packages">
-              <p>No packages created yet. Create your first package to get started!</p>
+              <div className="empty-icon">📦</div>
+              <p>No packages created yet</p>
+              <p className="empty-subtitle">Create your first package to attract more customers and increase bookings</p>
+              <button onClick={() => { setShowForm(true); resetForm(); setEditingPackage(null); }} className="btn btn-primary">
+                Create Your First Package
+              </button>
             </div>
           ) : (
             <div className="packages-grid">
@@ -449,9 +472,13 @@ const PackageBuilder = () => {
                   </div>
                   <div className="package-price">
                     {pkg.originalPrice > pkg.packagePrice && (
-                      <span className="original-price">PKR {pkg.originalPrice.toLocaleString()}</span>
+                      <span className="original-price">
+                        <span className="currency">PKR</span> {pkg.originalPrice.toLocaleString()}
+                      </span>
                     )}
-                    <span className="current-price">PKR {pkg.packagePrice.toLocaleString()}</span>
+                    <span className="current-price">
+                      <span className="currency">PKR</span> {pkg.packagePrice.toLocaleString()}
+                    </span>
                   </div>
                   {pkg.description && <p className="package-description">{pkg.description}</p>}
                   <div className="package-details">

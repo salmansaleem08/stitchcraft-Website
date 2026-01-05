@@ -2,6 +2,9 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { 
+  FaSpinner
+} from "react-icons/fa";
 import "./Checkout.css";
 
 const Checkout = () => {
@@ -128,9 +131,11 @@ const Checkout = () => {
       <div className="checkout-container">
         <div className="container">
           <div className="empty-state">
+            <div className="empty-cart-icon">🛒</div>
             <p>No items to checkout</p>
+            <p className="empty-subtitle">Your cart is empty or the selected items are no longer available</p>
             <button onClick={() => navigate("/cart")} className="btn btn-primary">
-              Go to cart
+              Go to Cart
             </button>
           </div>
         </div>
@@ -141,11 +146,18 @@ const Checkout = () => {
   return (
     <div className="checkout-container">
       <div className="container">
-        <div className="checkout-header">
-          <h1>Checkout</h1>
-          <button onClick={() => navigate("/cart")} className="btn btn-text">
-            Back to cart
-          </button>
+        <div className="page-header">
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Checkout</h1>
+              <p className="dashboard-subtitle">
+                Complete your order by providing shipping details and reviewing your order summary.
+              </p>
+            </div>
+            <button onClick={() => navigate("/cart")} className="btn-back">
+              ← Back to Cart
+            </button>
+          </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
@@ -154,10 +166,10 @@ const Checkout = () => {
           <div className="checkout-form">
             <form onSubmit={handlePlaceOrder}>
               <div className="form-section">
-                <h2>Shipping address</h2>
+                <h2>Shipping Address</h2>
 
                 <div className="form-group">
-                  <label htmlFor="street">Street address *</label>
+                  <label htmlFor="street">Street Address *</label>
                   <input
                     type="text"
                     id="street"
@@ -179,6 +191,7 @@ const Checkout = () => {
                       value={shippingAddress.city}
                       onChange={handleAddressChange}
                       required
+                      placeholder="Enter city name"
                     />
                   </div>
 
@@ -191,13 +204,14 @@ const Checkout = () => {
                       value={shippingAddress.province}
                       onChange={handleAddressChange}
                       required
+                      placeholder="Enter province"
                     />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="postalCode">Postal code *</label>
+                    <label htmlFor="postalCode">Postal Code *</label>
                     <input
                       type="text"
                       id="postalCode"
@@ -205,11 +219,12 @@ const Checkout = () => {
                       value={shippingAddress.postalCode}
                       onChange={handleAddressChange}
                       required
+                      placeholder="e.g., 54000"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label htmlFor="phone">Phone number *</label>
+                    <label htmlFor="phone">Phone Number *</label>
                     <input
                       type="tel"
                       id="phone"
@@ -236,9 +251,9 @@ const Checkout = () => {
               </div>
 
               <div className="form-section">
-                <h2>Order notes</h2>
+                <h2>Order Notes</h2>
                 <div className="form-group">
-                  <label htmlFor="notes">Additional instructions (optional)</label>
+                  <label htmlFor="notes">Additional Instructions (Optional)</label>
                   <textarea
                     id="notes"
                     value={notes}
@@ -255,41 +270,48 @@ const Checkout = () => {
                   className="btn btn-primary btn-block"
                   disabled={placingOrder}
                 >
-                  {placingOrder ? "Placing order..." : "Place order"}
+                  {placingOrder ? "Placing Order..." : "Place Order"}
                 </button>
               </div>
             </form>
           </div>
 
           <div className="checkout-summary">
-            <h2>Order summary</h2>
+            <h2>Order Summary</h2>
 
             {Object.entries(itemsBySupplier).map(([supplierId, group]) => (
               <div key={supplierId} className="supplier-summary">
-                <h3>{group.supplier?.businessName || group.supplier?.name || "Supplier"}</h3>
+                <div className="supplier-header">
+                  <div className="supplier-avatar">
+                    {(group.supplier?.businessName || group.supplier?.name || "S").charAt(0).toUpperCase()}
+                  </div>
+                  <h3>{group.supplier?.businessName || group.supplier?.name || "Supplier"}</h3>
+                </div>
                 <div className="items-summary">
                   {group.items.map((item) => (
                     <div key={item._id} className="summary-item">
                       <div className="item-name">
-                        {item.product?.name || "Product"}
-                        <span className="item-qty">x{item.quantity}</span>
+                        <span className="item-text">
+                          {item.product?.name || "Product"}
+                          <span className="item-qty">x{item.quantity}</span>
+                        </span>
                       </div>
                       <div className="item-price">
-                        PKR {(item.price * item.quantity).toLocaleString()}
+                        <span className="currency">PKR</span> {(item.price * item.quantity).toLocaleString()}
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className="supplier-subtotal">
                   <span>Subtotal</span>
-                  <span>PKR {group.total.toLocaleString()}</span>
+                  <span><span className="currency">PKR</span> {group.total.toLocaleString()}</span>
                 </div>
               </div>
             ))}
 
             <div className="order-total">
               <span>Total</span>
-              <span>PKR {grandTotal.toLocaleString()}</span>
+              <span><span className="currency">PKR</span> {grandTotal.toLocaleString()}</span>
             </div>
           </div>
         </div>

@@ -3,9 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import { 
-  FaShoppingCart, FaTrash, FaMinus, FaPlus,
-  FaStore, FaEye, FaBox, FaRulerCombined,
-  FaDollarSign, FaCheckCircle, FaSpinner
+  FaMinus, FaPlus, FaTrash
 } from "react-icons/fa";
 import "./Cart.css";
 
@@ -126,7 +124,6 @@ const Cart = () => {
             </div>
             {cart && cart.items.length > 0 && (
               <button onClick={clearCart} className="btn-clear-cart">
-                <FaTrash className="clear-icon" />
                 Clear Cart
               </button>
             )}
@@ -137,16 +134,14 @@ const Cart = () => {
 
         {!cart || cart.items.length === 0 ? (
           <div className="empty-cart">
-            <FaShoppingCart className="empty-icon" />
+            <div className="empty-cart-icon">🛒</div>
             <p>Your cart is empty</p>
             <p className="empty-subtitle">Start adding items to your cart to continue shopping</p>
             <div className="empty-cart-actions">
               <Link to="/supplies" className="btn btn-primary">
-                <FaBox className="btn-icon" />
                 Browse Supplies
               </Link>
               <Link to="/fabrics" className="btn btn-secondary">
-                <FaRulerCombined className="btn-icon" />
                 Browse Fabrics
               </Link>
             </div>
@@ -158,14 +153,15 @@ const Cart = () => {
                 <div key={supplierId} className="supplier-group">
                   <div className="supplier-header">
                     <div className="supplier-header-left">
-                      <FaStore className="supplier-icon" />
+                      <div className="supplier-avatar">
+                        {(group.supplier?.businessName || group.supplier?.name || "S").charAt(0).toUpperCase()}
+                      </div>
                       <div>
                         <h2>{group.supplier?.businessName || group.supplier?.name || "Supplier"}</h2>
                         <p className="supplier-item-count">{group.items.length} item{group.items.length !== 1 ? 's' : ''}</p>
                       </div>
                     </div>
                     <Link to={`/suppliers/${supplierId}`} className="supplier-link">
-                      <FaEye className="link-icon" />
                       View Supplier
                     </Link>
                   </div>
@@ -185,18 +181,8 @@ const Cart = () => {
 
                         <div className="item-main">
                           <div className="item-info">
-                            <div className="item-type-badge">
-                              {item.productType === "fabric" ? (
-                                <>
-                                  <FaRulerCombined className="type-icon" />
-                                  Fabric
-                                </>
-                              ) : (
-                                <>
-                                  <FaBox className="type-icon" />
-                                  Supply
-                                </>
-                              )}
+                            <div className={`item-type-badge ${item.productType === "fabric" ? "badge-fabric" : "badge-supply"}`}>
+                              {item.productType === "fabric" ? "Fabric" : "Supply"}
                             </div>
                             <h3>
                               <Link
@@ -214,8 +200,7 @@ const Cart = () => {
                               {item.product?.category && ` • ${item.product.category}`}
                             </p>
                             <p className="item-price">
-                              <FaDollarSign className="price-icon" />
-                              PKR {item.price?.toLocaleString()}/{item.unit}
+                              <span className="currency">PKR</span> {item.price?.toLocaleString()}/{item.unit}
                             </p>
                           </div>
 
@@ -244,7 +229,6 @@ const Cart = () => {
                             <div className="item-subtotal">
                               <span className="subtotal-label">Subtotal</span>
                               <span className="subtotal-value">
-                                <FaDollarSign className="subtotal-icon" />
                                 PKR {(item.price * item.quantity).toLocaleString()}
                               </span>
                             </div>
@@ -254,7 +238,6 @@ const Cart = () => {
                               className="btn-remove"
                               disabled={updating}
                             >
-                              <FaTrash className="remove-icon" />
                               Remove
                             </button>
                           </div>
@@ -267,58 +250,36 @@ const Cart = () => {
                     <div className="supplier-total">
                       <span className="total-label">Subtotal</span>
                       <span className="total-amount">
-                        <FaDollarSign className="total-icon" />
-                        PKR {group.total.toLocaleString()}
+                        <span className="currency">PKR</span> {group.total.toLocaleString()}
                       </span>
                     </div>
-                    <Link
-                      to={`/checkout?supplier=${supplierId}`}
-                      className="btn btn-primary btn-checkout"
-                    >
-                      <FaCheckCircle className="checkout-icon" />
-                      Checkout from {group.supplier?.businessName || group.supplier?.name}
-                    </Link>
                   </div>
                 </div>
               ))}
             </div>
 
             <div className="cart-summary">
-              <h2>
-                <FaShoppingCart className="summary-icon" />
-                Order Summary
-              </h2>
+              <h2>Order Summary</h2>
               <div className="summary-content">
                 <div className="summary-row">
-                  <span className="summary-label">
-                    <FaBox className="row-icon" />
-                    Items
-                  </span>
+                  <span className="summary-label">Items</span>
                   <span className="summary-value">{cart.items.length}</span>
                 </div>
                 <div className="summary-row">
-                  <span className="summary-label">
-                    <FaStore className="row-icon" />
-                    Suppliers
-                  </span>
+                  <span className="summary-label">Suppliers</span>
                   <span className="summary-value">{Object.keys(itemsBySupplier).length}</span>
                 </div>
                 <div className="summary-divider"></div>
                 <div className="summary-row summary-total">
                   <span className="summary-label">Total</span>
-                  <span className="summary-value">
-                    <FaDollarSign className="total-icon" />
-                    PKR {grandTotal.toLocaleString()}
-                  </span>
+                  <span className="summary-value"><span className="currency">PKR</span> {grandTotal.toLocaleString()}</span>
                 </div>
               </div>
               <div className="summary-actions">
                 <Link to="/checkout" className="btn btn-primary btn-block">
-                  <FaCheckCircle className="btn-icon" />
                   Checkout All
                 </Link>
                 <Link to="/supplies" className="btn btn-secondary btn-block">
-                  <FaBox className="btn-icon" />
                   Continue Shopping
                 </Link>
               </div>

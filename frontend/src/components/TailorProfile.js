@@ -3,6 +3,17 @@ import { useParams, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import PricingDisplay from "./PricingDisplay";
+import {
+  FaArrowLeft,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaEnvelope,
+  FaBuilding,
+  FaCalendarAlt,
+  FaBriefcase,
+  FaUser,
+  FaEllipsisV,
+} from "react-icons/fa";
 import "./TailorProfile.css";
 
 const TailorProfile = () => {
@@ -37,9 +48,10 @@ const TailorProfile = () => {
 
   if (loading) {
     return (
-      <div className="profile-container">
+      <div className="tailor-profile-container">
         <div className="loading-container">
           <div className="loading-spinner"></div>
+          <p>Loading tailor profile...</p>
         </div>
       </div>
     );
@@ -84,12 +96,12 @@ const TailorProfile = () => {
 
   if (error || !tailor) {
     return (
-      <div className="profile-container">
+      <div className="tailor-profile-container">
         <div className="container">
           <div className="error-message">{error || "Tailor not found"}</div>
           {user?.role !== "supplier" && (
-            <Link to="/tailors" className="btn btn-secondary">
-              Back to tailors
+            <Link to="/tailors" className="btn btn-primary">
+              Back to Tailors
             </Link>
           )}
         </div>
@@ -117,96 +129,157 @@ const TailorProfile = () => {
   };
 
   return (
-    <div className="profile-container">
+    <div className="tailor-profile-container">
       <div className="container">
         {user?.role !== "supplier" && (
           <Link to="/tailors" className="back-link">
-            ← Back
+            <FaArrowLeft className="back-icon" />
+            Back to Tailors
           </Link>
         )}
 
-        <div className="profile-hero">
-          <div className="profile-avatar-wrapper">
-            {tailor.avatar ? (
-              <img src={tailor.avatar} alt={tailor.name} className="profile-avatar" />
-            ) : (
-              <div className="profile-avatar placeholder">
-                {tailor.name.charAt(0).toUpperCase()}
+        <div className="profile-layout">
+          {/* Left Column - Profile Details */}
+          <div className="profile-left-column">
+            <div className="profile-card">
+              <div className="profile-header-section">
+                <div className="profile-avatar-wrapper">
+                  {tailor.avatar ? (
+                    <img src={tailor.avatar} alt={tailor.name} className="profile-avatar-img" />
+                  ) : (
+                    <div className="profile-avatar-img placeholder">
+                      {tailor.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="profile-name-section">
+                  <h1 className="profile-name">{tailor.shopName || tailor.name}</h1>
+                  <p className="tailor-id">#{tailor._id?.slice(-8).toUpperCase() || "TAILOR"}</p>
+                </div>
+                <button className="profile-menu-btn">
+                  <FaEllipsisV />
+                </button>
               </div>
-            )}
-          </div>
 
-          <div className="profile-hero-content">
-            <div className="profile-header-top">
-              <div>
-                <h1>{tailor.shopName || tailor.name}</h1>
-                <p className="profile-subtitle">{tailor.name}</p>
+              {/* About Section */}
+              <div className="info-section">
+                <h3 className="section-title">About</h3>
+                {tailor.phone && (
+                  <div className="info-item">
+                    <FaPhone className="info-icon" />
+                    <span className="info-value">{tailor.phone}</span>
+                  </div>
+                )}
+                {tailor.email && (
+                  <div className="info-item">
+                    <FaEnvelope className="info-icon" />
+                    <span className="info-value">{tailor.email}</span>
+                  </div>
+                )}
+                {tailor.bio && (
+                  <div className="info-item">
+                    <span className="info-value">{tailor.bio}</span>
+                  </div>
+                )}
               </div>
-            </div>
 
-            {tailor.badges?.length > 0 && (
-              <div className="profile-badges-main">
-                {tailor.badges.map((badge, idx) => {
-                  const badgeName = typeof badge === 'object' ? (badge.name || badge.type) : badge;
-                  return (
-                    <span key={idx} className="badge-main" title={badgeName}>
-                      {badgeName}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-
-            {tailor.address && (
-              <p className="profile-location">
-                {tailor.address.street && `${tailor.address.street}, `}
-                {tailor.address.city && `${tailor.address.city}, `}
-                {tailor.address.province && tailor.address.province}
-              </p>
-            )}
-
-            <div className="profile-rating-inline">
-              <span className="rating-number">{tailor.rating?.toFixed(1) || "0.0"}</span>
-              <span className="rating-count">({tailor.totalReviews || 0} reviews)</span>
-            </div>
-
-            {tailor.bio && <p className="profile-bio">{tailor.bio}</p>}
-
-            <div className="profile-actions">
-              {user && user._id === tailor._id && (
-                <Link to={`/tailors/${tailor._id}/edit`} className="btn btn-secondary">
-                  Edit profile
-                </Link>
+              {/* Address Section */}
+              {tailor.address && (
+                <div className="info-section">
+                  <h3 className="section-title">Address</h3>
+                  {tailor.address.street && (
+                    <div className="info-item">
+                      <FaBuilding className="info-icon" />
+                      <span className="info-value">{tailor.address.street}</span>
+                    </div>
+                  )}
+                  {tailor.address.city && tailor.address.province && (
+                    <div className="info-item">
+                      <FaMapMarkerAlt className="info-icon" />
+                      <span className="info-value">
+                        {tailor.address.city}, {tailor.address.province}
+                      </span>
+                    </div>
+                  )}
+                  {tailor.address.postalCode && (
+                    <div className="info-item">
+                      <FaMapMarkerAlt className="info-icon" />
+                      <span className="info-value">{tailor.address.postalCode}</span>
+                    </div>
+                  )}
+                </div>
               )}
-              {user && user.role === "customer" && user._id !== tailor._id && (
-                <Link to={`/tailors/${tailor._id}/book`} className="btn btn-primary">
-                  Book service
-                </Link>
-              )}
+
+              {/* Tailor Details Section */}
+              <div className="info-section">
+                <h3 className="section-title">Tailor details</h3>
+                {tailor.experience && (
+                  <div className="info-item">
+                    <FaCalendarAlt className="info-icon" />
+                    <span className="info-value">Experience: {tailor.experience} years</span>
+                  </div>
+                )}
+                {tailor.totalOrders !== undefined && (
+                  <div className="info-item">
+                    <FaBriefcase className="info-icon" />
+                    <span className="info-value">Total Orders: {tailor.totalOrders}</span>
+                  </div>
+                )}
+                {tailor.completionRate !== undefined && (
+                  <div className="info-item">
+                    <FaUser className="info-icon" />
+                    <span className="info-value">Completion Rate: {tailor.completionRate?.toFixed(0) || 0}%</span>
+                  </div>
+                )}
+                {tailor.averageResponseTime && (
+                  <div className="info-item">
+                    <FaPhone className="info-icon" />
+                    <span className="info-value">Avg Response: {formatResponseTime(tailor.averageResponseTime)}</span>
+                  </div>
+                )}
+                <div className="info-item">
+                  <FaCalendarAlt className="info-icon" />
+                  <span className="info-value">
+                    Joined: {new Date(tailor.createdAt || Date.now()).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric', 
+                      year: 'numeric' 
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Rating Section */}
+              <div className="info-section">
+                <h3 className="section-title">Rating</h3>
+                <div className="info-item">
+                  <span className="info-value">
+                    {tailor.rating?.toFixed(1) || "0.0"} ({tailor.totalReviews || 0} reviews)
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              {(user && user._id === tailor._id) || (user && user.role === "customer" && user._id !== tailor._id) ? (
+                <div className="profile-actions-section">
+                  {user && user._id === tailor._id && (
+                    <Link to={`/tailors/${tailor._id}/edit`} className="btn btn-primary">
+                      Edit Profile
+                    </Link>
+                  )}
+                  {user && user.role === "customer" && user._id !== tailor._id && (
+                    <Link to={`/tailors/${tailor._id}/book`} className="btn btn-primary">
+                      Book Service
+                    </Link>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
-        </div>
 
-        <div className="profile-stats-row">
-          <div className="profile-stat">
-            <div className="stat-number">{tailor.experience || 0}</div>
-            <div className="stat-text">Years experience</div>
-          </div>
-          <div className="profile-stat">
-            <div className="stat-number">{tailor.totalOrders || 0}</div>
-            <div className="stat-text">Total orders</div>
-          </div>
-          <div className="profile-stat highlight-stat">
-            <div className="stat-number">{tailor.completionRate?.toFixed(0) || 0}%</div>
-            <div className="stat-text">Completion rate</div>
-          </div>
-          <div className="profile-stat highlight-stat">
-            <div className="stat-number">{formatResponseTime(tailor.averageResponseTime)}</div>
-            <div className="stat-text">Avg response time</div>
-          </div>
-        </div>
-
-        <div className="profile-tabs">
+          {/* Right Column - Tabs & Content */}
+          <div className="profile-right-column">
+            <div className="profile-tabs">
           <button
             className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
             onClick={() => setActiveTab("overview")}
@@ -233,7 +306,7 @@ const TailorProfile = () => {
           </button>
         </div>
 
-        <div className="profile-content">
+            <div className="profile-content">
           {activeTab === "overview" && (
             <div className="tab-content">
               {(specializations.traditional.length > 0 || 
@@ -434,6 +507,8 @@ const TailorProfile = () => {
               <PricingDisplay tailorId={tailor._id} />
             </div>
           )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
