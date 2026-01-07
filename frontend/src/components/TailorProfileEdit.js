@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
+import { FaArrowLeft } from "react-icons/fa";
 import "./TailorProfileEdit.css";
 
 const TailorProfileEdit = () => {
@@ -258,7 +259,10 @@ const TailorProfileEdit = () => {
       formData.append("afterImageUrl", newPortfolioItem.afterImageUrl || "");
 
       const response = await api.post("/tailors/portfolio", formData);
-      setPortfolioItems([...portfolioItems, response.data.data]);
+
+      // Reload portfolio items from server to ensure we have correct URLs
+      await loadUserData();
+
       setNewPortfolioItem({
         title: "",
         description: "",
@@ -347,9 +351,16 @@ const TailorProfileEdit = () => {
     if (url.startsWith("http://") || url.startsWith("https://")) {
       return url;
     }
+    // Handle relative paths that start with /
+    if (url.startsWith("/")) {
+      const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const BASE_URL = API_BASE.replace("/api", "");
+      return `${BASE_URL}${url}`;
+    }
+    // Handle any other relative paths
     const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
     const BASE_URL = API_BASE.replace("/api", "");
-    return `${BASE_URL}${url}`;
+    return `${BASE_URL}/${url}`;
   };
 
   if (!user || user.role !== "tailor") {
@@ -357,13 +368,16 @@ const TailorProfileEdit = () => {
   }
 
   return (
-    <div className="profile-edit-container">
+    <div className="tailor-profile-edit-container">
       <div className="container">
+        <Link to={`/tailors/${user._id}`} className="back-link">
+          <FaArrowLeft className="back-icon" />
+          Back to Profile
+        </Link>
+
         <div className="edit-header">
-          <h1>Edit profile</h1>
-          <button onClick={() => navigate(`/tailors/${user._id}`)} className="btn btn-text">
-            View profile
-          </button>
+          <h1>Edit Tailor Profile</h1>
+          <p>Update your profile information</p>
         </div>
 
         {error && <div className="error-message">{error}</div>}
@@ -771,10 +785,17 @@ const TailorProfileEdit = () => {
                         src={getImageUrl(item.afterImage || item.imageUrl)}
                         alt={item.title || "Portfolio item"}
                         className="portfolio-thumbnail"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
                       />
                     ) : (
                       <div className="portfolio-placeholder">No image</div>
                     )}
+                    <div className="portfolio-placeholder" style={{ display: 'none' }}>
+                      Failed to load image
+                    </div>
                     <div className="portfolio-item-info">
                       {item.title && <h4>{item.title}</h4>}
                       {item.category && (

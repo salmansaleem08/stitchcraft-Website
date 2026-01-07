@@ -70,8 +70,8 @@ supplyReviewSchema.index({ supplier: 1, createdAt: -1 });
 supplyReviewSchema.index({ customer: 1 });
 supplyReviewSchema.index({ order: 1 });
 
-// Prevent duplicate reviews for the same order
-supplyReviewSchema.index({ customer: 1, order: 1 }, { unique: true });
+// Prevent duplicate reviews for the same supply
+supplyReviewSchema.index({ customer: 1, supply: 1 }, { unique: true });
 
 // Pre-save middleware to mark as verified if order exists
 supplyReviewSchema.pre("save", async function (next) {

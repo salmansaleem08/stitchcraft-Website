@@ -13,8 +13,8 @@ const EquipmentDetail = () => {
   const [error, setError] = useState("");
   const [showRentalForm, setShowRentalForm] = useState(false);
   const [rentalData, setRentalData] = useState({
-    rentalStartDate: "",
-    rentalEndDate: "",
+    startDate: "",
+    endDate: "",
     deliveryAddress: {
       street: "",
       city: "",
@@ -44,13 +44,83 @@ const EquipmentDetail = () => {
 
   const handleRentalRequest = async (e) => {
     e.preventDefault();
+
+    // Validate dates
+    if (!rentalData.startDate || !rentalData.endDate) {
+      alert("Please select both start and end dates");
+      return;
+    }
+
+    const startDate = new Date(rentalData.startDate);
+    const endDate = new Date(rentalData.endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (startDate < today) {
+      alert("Start date cannot be in the past");
+      return;
+    }
+
+    if (endDate <= startDate) {
+      alert("End date must be after start date");
+      return;
+    }
+
+    // Validate delivery address
+    if (!rentalData.deliveryAddress.street || !rentalData.deliveryAddress.city) {
+      alert("Please provide delivery address (street and city are required)");
+      return;
+    }
+
     try {
-      await api.post(`/equipment/${id}/rent`, rentalData);
+      // Prepare data for backend
+      const submitData = {
+        startDate: rentalData.startDate,
+        endDate: rentalData.endDate,
+        pickupAddress: rentalData.deliveryAddress, // Backend expects pickupAddress
+        rentalPeriod: "daily", // Default to daily
+        notes: rentalData.notes,
+      };
+
+      console.log("Submitting rental data:", submitData);
+      console.log("Start date valid:", !!rentalData.startDate && !isNaN(new Date(rentalData.startDate).getTime()));
+      console.log("End date valid:", !!rentalData.endDate && !isNaN(new Date(rentalData.endDate).getTime()));
+
+      await api.post(`/equipment/${id}/rent`, submitData);
       alert("Rental request submitted successfully!");
       setShowRentalForm(false);
+      setRentalData({
+        startDate: "",
+        endDate: "",
+        deliveryAddress: {
+          street: "",
+          city: "",
+          province: "",
+          postalCode: "",
+        },
+        notes: "",
+      });
       navigate("/orders");
     } catch (error) {
+      console.error("Rental request error:", error);
       alert(error.response?.data?.message || "Failed to submit rental request");
+    }
+  };
+
+  const handlePurchaseRequest = async () => {
+    if (!equipment.saleStock || equipment.saleStock <= 0) {
+      alert("This equipment is currently out of stock.");
+      return;
+    }
+
+    try {
+      const response = await api.post(`/equipment/${id}/buy`);
+      alert("Purchase request submitted successfully! You will be contacted soon.");
+      // Refresh equipment data to update stock
+      fetchEquipment();
+    } catch (error) {
+      console.error("Error submitting purchase request:", error);
+      alert(error.response?.data?.message || "Failed to submit purchase request. Please try again.");
     }
   };
 
@@ -88,7 +158,7 @@ const EquipmentDetail = () => {
     );
   }
 
-  const isSupplier = user?.role === "supplier" && user?._id === equipment.supplier._id;
+  const isSupplier = user?.role === "supplier" && user?._id === equipment.owner._id;
 
   return (
     <div className="equipment-detail-container">
@@ -152,11 +222,11 @@ const EquipmentDetail = () => {
             )}
 
             <div className="pricing-section">
-              {equipment.isRentable && equipment.rentalPricePerDay && (
+              {equipment.isAvailableForRental && equipment.rentalPrice && (
                 <div className="pricing-card">
                   <h3>Rental</h3>
                   <div className="price-main">
-                    PKR {equipment.rentalPricePerDay.toLocaleString()}/day
+                    PKR {equipment.rentalPrice.toLocaleString()}/day
                   </div>
                   {equipment.minRentalDays && (
                     <p className="rental-info">Minimum rental: {equipment.minRentalDays} days</p>
@@ -177,7 +247,7 @@ const EquipmentDetail = () => {
                 </div>
               )}
 
-              {equipment.isSellable && equipment.salePrice && (
+              {equipment.isAvailableForSale && equipment.salePrice && (
                 <div className="pricing-card">
                   <h3>Sale price</h3>
                   <div className="price-main">
@@ -194,6 +264,17 @@ const EquipmentDetail = () => {
                       <p>Down payment: {equipment.financingOptions.downPaymentPercentage}%</p>
                       <p>Monthly: PKR {equipment.financingOptions.monthlyPaymentEstimate?.toLocaleString()}</p>
                       <p>Tenure: {equipment.financingOptions.tenureMonths} months</p>
+                    </div>
+                  )}
+                  {user && user.role !== "supplier" && (
+                    <div className="action-buttons">
+                      <button
+                        onClick={() => handlePurchaseRequest()}
+                        className="btn btn-primary"
+                        disabled={!equipment.saleStock || equipment.saleStock <= 0}
+                      >
+                        {equipment.saleStock && equipment.saleStock > 0 ? "Buy Now" : "Out of Stock"}
+                      </button>
                     </div>
                   )}
                 </div>
@@ -221,8 +302,8 @@ const EquipmentDetail = () => {
 
             <div className="supplier-section">
               <h3>Supplier</h3>
-              <Link to={`/suppliers/${equipment.supplier._id}`} className="supplier-link">
-                {equipment.supplier?.businessName || equipment.supplier?.name}
+              <Link to={`/suppliers/${equipment.owner._id}`} className="supplier-link">
+                {equipment.owner?.businessName || equipment.owner?.name}
               </Link>
             </div>
           </div>
@@ -237,8 +318,9 @@ const EquipmentDetail = () => {
                   <label>Start date *</label>
                   <input
                     type="date"
-                    value={rentalData.rentalStartDate}
-                    onChange={(e) => setRentalData({ ...rentalData, rentalStartDate: e.target.value })}
+                    value={rentalData.startDate}
+                    onChange={(e) => setRentalData({ ...rentalData, startDate: e.target.value })}
+                    min={new Date().toISOString().split('T')[0]}
                     required
                   />
                 </div>
@@ -246,8 +328,9 @@ const EquipmentDetail = () => {
                   <label>End date *</label>
                   <input
                     type="date"
-                    value={rentalData.rentalEndDate}
-                    onChange={(e) => setRentalData({ ...rentalData, rentalEndDate: e.target.value })}
+                    value={rentalData.endDate}
+                    onChange={(e) => setRentalData({ ...rentalData, endDate: e.target.value })}
+                    min={rentalData.startDate || new Date().toISOString().split('T')[0]}
                     required
                   />
                 </div>

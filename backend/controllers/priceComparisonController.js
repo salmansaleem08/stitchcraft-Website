@@ -20,10 +20,10 @@ exports.compareFabricPrices = async (req, res) => {
       .populate("supplier", "name businessName qualityRating verificationStatus location")
       .sort({ pricePerMeter: 1 });
 
-    // Group by similar characteristics
+    // Group by fabric type only - fabrics can be compared if they have the same fabric type
     const grouped = {};
     fabrics.forEach((fabric) => {
-      const key = `${fabric.fabricType}_${fabric.color}_${fabric.pattern || "Plain"}`;
+      const key = `${fabric.fabricType}`;
       if (!grouped[key]) {
         grouped[key] = [];
       }
@@ -98,10 +98,10 @@ exports.compareSupplyPrices = async (req, res) => {
       .populate("supplier", "name businessName qualityRating verificationStatus location")
       .sort({ price: 1 });
 
-    // Group by category and brand
+    // Group by category only - supplies can be compared if they have the same category
     const grouped = {};
     supplies.forEach((supply) => {
-      const key = `${supply.category}_${supply.brand || "Generic"}`;
+      const key = `${supply.category}`;
       if (!grouped[key]) {
         grouped[key] = [];
       }

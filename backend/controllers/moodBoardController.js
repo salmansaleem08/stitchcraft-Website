@@ -35,23 +35,49 @@ exports.getMoodBoard = async (req, res) => {
   try {
     const moodBoard = await MoodBoard.findById(req.params.id)
       .populate("createdBy", "name avatar")
-      .populate("order", "orderNumber status")
-      .populate("items.fabricId")
-      .populate("items.patternId");
+      .populate("order", "orderNumber status customer tailor")
+      .populate({
+        path: "items.fabricId",
+        model: "Fabric"
+      })
+      .populate({
+        path: "items.patternId",
+        model: "Pattern"
+      })
+      .populate({
+        path: "sharedWith.user",
+        model: "User",
+        select: "name avatar"
+      });
 
     if (!moodBoard) {
       return res.status(404).json({ message: "Mood board not found" });
     }
 
     // Check if user has access
-    const hasAccess =
-      moodBoard.createdBy._id.toString() === req.user._id.toString() ||
-      moodBoard.sharedWith.some(
-        (share) => share.user.toString() === req.user._id.toString()
-      ) ||
-      (moodBoard.order &&
-        (moodBoard.order.customer?.toString() === req.user._id.toString() ||
-          moodBoard.order.tailor?.toString() === req.user._id.toString()));
+    let hasAccess = false;
+
+    // Check if user is the creator
+    if (moodBoard.createdBy && moodBoard.createdBy._id) {
+      hasAccess = hasAccess || (moodBoard.createdBy._id.toString() === req.user._id.toString());
+    }
+
+    // Check if user is in sharedWith list
+    if (moodBoard.sharedWith && Array.isArray(moodBoard.sharedWith)) {
+      hasAccess = hasAccess || moodBoard.sharedWith.some(
+        (share) => share.user && share.user._id && share.user._id.toString() === req.user._id.toString()
+      );
+    }
+
+    // Check if user is customer or tailor of the associated order
+    if (moodBoard.order) {
+      if (moodBoard.order.customer && moodBoard.order.customer.toString() === req.user._id.toString()) {
+        hasAccess = true;
+      }
+      if (moodBoard.order.tailor && moodBoard.order.tailor.toString() === req.user._id.toString()) {
+        hasAccess = true;
+      }
+    }
 
     if (!hasAccess) {
       return res.status(403).json({ message: "Not authorized" });
@@ -62,6 +88,7 @@ exports.getMoodBoard = async (req, res) => {
       data: moodBoard,
     });
   } catch (error) {
+    console.error("Error in getMoodBoard:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -88,7 +115,7 @@ exports.createMoodBoard = async (req, res) => {
 
     const populated = await MoodBoard.findById(moodBoard._id)
       .populate("createdBy", "name avatar")
-      .populate("order", "orderNumber status");
+      .populate("order", "orderNumber status customer tailor");
 
     res.status(201).json({
       success: true,
@@ -135,9 +162,15 @@ exports.updateMoodBoard = async (req, res) => {
 
     const populated = await MoodBoard.findById(moodBoard._id)
       .populate("createdBy", "name avatar")
-      .populate("order", "orderNumber status")
-      .populate("items.fabricId")
-      .populate("items.patternId");
+      .populate("order", "orderNumber status customer tailor")
+      .populate({
+        path: "items.fabricId",
+        model: "Fabric"
+      })
+      .populate({
+        path: "items.patternId",
+        model: "Pattern"
+      });
 
     res.json({
       success: true,
@@ -229,8 +262,14 @@ exports.addMoodBoardItem = async (req, res) => {
     await moodBoard.save();
 
     const populated = await MoodBoard.findById(moodBoard._id)
-      .populate("items.fabricId")
-      .populate("items.patternId");
+      .populate({
+        path: "items.fabricId",
+        model: "Fabric"
+      })
+      .populate({
+        path: "items.patternId",
+        model: "Pattern"
+      });
 
     res.json({
       success: true,

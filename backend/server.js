@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
+const mongoose = require("mongoose");
 require("dotenv").config();
 const connectDB = require("./config/db");
 const app = express();
@@ -8,6 +9,52 @@ app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 connectDB();
+
+// Fix supply review indexes after DB connection is ready
+const fixSupplyReviewIndexes = async () => {
+  try {
+    // Wait for mongoose connection to be ready
+    if (mongoose.connection.readyState !== 1) {
+      console.log('⏳ Waiting for database connection...');
+      await new Promise((resolve) => {
+        mongoose.connection.once('connected', resolve);
+      });
+    }
+
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+
+    const collection = db.collection('supplyreviews');
+
+    // Drop old index if it exists
+    try {
+      await collection.dropIndex('customer_1_order_1');
+      console.log('✅ Dropped old supply review index: customer_1_order_1');
+    } catch (error) {
+      // Index doesn't exist, which is fine
+      console.log('ℹ️  Old index customer_1_order_1 not found or already dropped');
+    }
+
+    // Create new index
+    try {
+      await collection.createIndex({ customer: 1, supply: 1 }, { unique: true });
+      console.log('✅ Created new supply review index: customer_1_supply_1');
+    } catch (error) {
+      // Index might already exist
+      console.log('ℹ️  Supply review index already exists or error:', error.message);
+    }
+  } catch (error) {
+    console.error('❌ Error fixing supply review indexes:', error);
+  }
+};
+
+// Run index fix after DB connection is established
+mongoose.connection.once('connected', () => {
+  console.log('🔧 Starting supply review index fix...');
+  setTimeout(fixSupplyReviewIndexes, 1000);
+});
 
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

@@ -344,7 +344,11 @@ const PatternDetail = () => {
                   {review.images && review.images.length > 0 && (
                     <div className="review-images">
                       {review.images.map((img, index) => (
-                        <img key={index} src={img} alt={`Review ${index + 1}`} />
+                        <img
+                          key={index}
+                          src={`http://localhost:5000${img}`}
+                          alt={`Review ${index + 1}`}
+                        />
                       ))}
                     </div>
                   )}

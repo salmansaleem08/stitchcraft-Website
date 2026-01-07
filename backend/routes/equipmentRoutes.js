@@ -7,6 +7,7 @@ const {
   updateEquipment,
   deleteEquipment,
   requestRental,
+  requestPurchase,
   getRentals,
   updateRentalStatus,
 } = require("../controllers/equipmentController");
@@ -18,6 +19,7 @@ router.post("/", protect, createEquipment);
 router.put("/:id", protect, updateEquipment);
 router.delete("/:id", protect, deleteEquipment);
 router.post("/:id/rent", protect, requestRental);
+router.post("/:id/buy", protect, requestPurchase);
 router.get("/rentals/all", protect, getRentals);
 router.put("/rentals/:id/status", protect, updateRentalStatus);
 

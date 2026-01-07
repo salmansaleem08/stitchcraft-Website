@@ -25,6 +25,7 @@ import {
   FaEllipsisV,
   FaPlus,
   FaEye,
+  FaEdit,
 } from "react-icons/fa";
 import "./SupplierProfile.css";
 
@@ -262,6 +263,16 @@ const SupplierProfile = () => {
                   onDataLoad={(data) => setReviewsData(data)}
                 />
               </div>
+
+              {/* Edit Profile Button */}
+              {user && user.role === "supplier" && user._id === supplier._id && (
+                <div className="profile-actions-section">
+                  <Link to={`/suppliers/${supplier._id}/edit`} className="btn btn-primary edit-profile-btn">
+                    <FaEdit className="btn-icon" />
+                    Edit Profile
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Categories Tags */}

@@ -68,19 +68,26 @@ const SupplierAnalytics = () => {
     <div className="supplier-analytics-container">
       <div className="container">
         <div className="analytics-header">
-          <h1>Analytics Dashboard</h1>
-          <div className="header-actions">
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              className="period-select"
-            >
-              <option value="monthly">Monthly</option>
-              <option value="weekly">Weekly</option>
-            </select>
-            <Link to="/dashboard" className="btn btn-secondary">
-              Back to Dashboard
-            </Link>
+          <div className="header-content-wrapper">
+            <div className="header-text">
+              <h1>Analytics Dashboard</h1>
+              <p className="dashboard-subtitle">
+                Track your business performance and analyze key metrics.
+              </p>
+            </div>
+            <div className="header-actions">
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="period-select"
+              >
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+              </select>
+              <Link to="/dashboard" className="btn btn-secondary">
+                Back to Dashboard
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -90,56 +97,81 @@ const SupplierAnalytics = () => {
           <>
             <div className="overview-cards">
               <div className="stat-card revenue">
-                <div className="stat-icon">Revenue</div>
-                <div className="stat-value">{formatCurrency(overview.revenue.monthly)}</div>
-                <div className="stat-label">This Month</div>
-                <div className="stat-change">
-                  {overview.revenue.growth >= 0 ? "+" : ""}
-                  {overview.revenue.growth.toFixed(1)}% from last month
+                <div className="stat-corner-icon">
+                  <span>💰</span>
                 </div>
-                <div className="stat-total">Total: {formatCurrency(overview.revenue.total)}</div>
+                <div className="stat-content">
+                  <div className="stat-value">{formatCurrency(overview.revenue.monthly)}</div>
+                  <div className="stat-label">This Month</div>
+                  <div className="stat-change">
+                    <span className="trend-icon">↗️</span>
+                    {overview.revenue.growth >= 0 ? "+" : ""}
+                    {overview.revenue.growth.toFixed(1)}% from last month
+                  </div>
+                  <div className="stat-total">Total: {formatCurrency(overview.revenue.total)}</div>
+                </div>
               </div>
 
               <div className="stat-card orders">
-                <div className="stat-icon">Orders</div>
-                <div className="stat-value">{overview.orders.monthly}</div>
-                <div className="stat-label">This Month</div>
-                <div className="stat-total">Total: {overview.orders.total}</div>
+                <div className="stat-corner-icon">
+                  <span>📦</span>
+                </div>
+                <div className="stat-content">
+                  <div className="stat-value">{overview.orders.monthly}</div>
+                  <div className="stat-label">This Month</div>
+                  <div className="stat-total">Total: {overview.orders.total}</div>
+                </div>
               </div>
 
               <div className="stat-card products">
-                <div className="stat-icon">Products</div>
-                <div className="stat-value">{overview.products.active}</div>
-                <div className="stat-label">Active Products</div>
-                <div className="stat-total">Total: {overview.products.total}</div>
+                <div className="stat-corner-icon">
+                  <span>🏪</span>
+                </div>
+                <div className="stat-content">
+                  <div className="stat-value">{overview.products.active}</div>
+                  <div className="stat-label">Active Products</div>
+                  <div className="stat-total">Total: {overview.products.total}</div>
+                </div>
               </div>
 
               <div className="stat-card reviews">
-                <div className="stat-icon">Rating</div>
-                <div className="stat-value">
-                  {overview.reviews.averageRating > 0
-                    ? overview.reviews.averageRating.toFixed(1)
-                    : "N/A"}
+                <div className="stat-corner-icon">
+                  <span>⭐</span>
                 </div>
-                <div className="stat-label">Average Rating</div>
-                <div className="stat-total">{overview.reviews.total} reviews</div>
+                <div className="stat-content">
+                  <div className="stat-value">
+                    {overview.reviews.averageRating > 0
+                      ? overview.reviews.averageRating.toFixed(1)
+                      : "N/A"}
+                  </div>
+                  <div className="stat-label">Average Rating</div>
+                  <div className="stat-total">{overview.reviews.total} reviews</div>
+                </div>
               </div>
 
               {overview.estimatedProfit !== undefined && (
                 <div className="stat-card profit">
-                  <div className="stat-icon">Profit</div>
-                  <div className="stat-value">{formatCurrency(overview.estimatedProfit)}</div>
-                  <div className="stat-label">Estimated Profit</div>
-                  <div className="stat-total">From {formatCurrency(overview.totalRevenue)} revenue</div>
+                  <div className="stat-corner-icon">
+                    <span>💵</span>
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value">{formatCurrency(overview.estimatedProfit)}</div>
+                    <div className="stat-label">Estimated Profit</div>
+                    <div className="stat-total">From {formatCurrency(overview.totalRevenue)} revenue</div>
+                  </div>
                 </div>
               )}
 
               {overview.totalInventoryValue !== undefined && (
                 <div className="stat-card inventory">
-                  <div className="stat-icon">Inventory</div>
-                  <div className="stat-value">{formatCurrency(overview.totalInventoryValue)}</div>
-                  <div className="stat-label">Inventory Value</div>
-                  <div className="stat-total">{overview.totalItemsLeft || 0} items left</div>
+                  <div className="stat-corner-icon">
+                    <span>📊</span>
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value">{formatCurrency(overview.totalInventoryValue)}</div>
+                    <div className="stat-label">Inventory Value</div>
+                    <div className="stat-total">{overview.totalItemsLeft || 0} items left</div>
+                  </div>
                 </div>
               )}
             </div>

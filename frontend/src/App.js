@@ -139,7 +139,7 @@ function App() {
                 }
               />
               <Route
-                path="/moodboards/:id"
+                path="/mood-boards/:id"
                 element={
                   <ProtectedRoute>
                     <MoodBoard />

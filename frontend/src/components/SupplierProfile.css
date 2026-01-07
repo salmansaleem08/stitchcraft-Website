@@ -85,6 +85,75 @@
 
 .profile-name-section {
   flex: 1;
+}
+
+.profile-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c1810;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: -0.01em;
+}
+
+.supplier-id {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0;
+  font-weight: 500;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.profile-actions-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.profile-actions-section .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.edit-profile-btn {
+  background: #ff8c42;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.edit-profile-btn:hover {
+  background: #e67a33;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 140, 66, 0.3);
+}
+
+.profile-menu-btn {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-menu-btn:hover {
+  background: #e9ecef;
+  border-color: #ff8c42;
+  color: #ff8c42;
+}
+
+.profile-name-section {
+  flex: 1;
   min-width: 0;
 }
 
@@ -705,6 +774,27 @@
   background: #dc2626;
 }
 
+.btn-primary {
+  background: #ff8c42;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #e67a33;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #ff8c42;
+  color: #ff8c42;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .profile-layout {
@@ -717,6 +807,11 @@
 
   .profile-header-section {
     flex-wrap: wrap;
+  }
+
+  .edit-profile-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
   }
 
   .info-cards-grid {
@@ -749,6 +844,16 @@
 @media (max-width: 480px) {
   .supplier-profile-container .container {
     padding: 0 1rem;
+  }
+
+  .edit-profile-btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .profile-menu-btn {
+    width: 32px;
+    height: 32px;
   }
 
   .profile-card,

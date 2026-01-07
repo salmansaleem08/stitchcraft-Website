@@ -1987,7 +1987,37 @@ exports.updateOrderStatus = async (req, res) => {
         if (tailor.totalOrders > 0) {
           tailor.completionRate = (tailor.completedOrders / tailor.totalOrders) * 100;
         }
-        
+
+        // Calculate average response time from recent orders
+        const recentOrders = await Order.find({
+          tailor: order.tailor,
+          status: { $in: ['completed', 'in_progress', 'confirmed'] }
+        })
+        .sort({ createdAt: -1 })
+        .limit(50); // Last 50 orders
+
+        if (recentOrders.length > 0) {
+          const allMessages = recentOrders.flatMap((o) => o.messages || []);
+          const responseTimes = [];
+
+          // Calculate time between customer message and tailor response
+          for (let i = 0; i < allMessages.length - 1; i++) {
+            const currentMessage = allMessages[i];
+            const nextMessage = allMessages[i + 1];
+
+            if (currentMessage.sender.toString() !== nextMessage.sender.toString()) {
+              const timeDiff = new Date(nextMessage.createdAt) - new Date(currentMessage.createdAt);
+              if (timeDiff > 0 && timeDiff < 7 * 24 * 60 * 60 * 1000) { // Less than 7 days
+                responseTimes.push(timeDiff / (1000 * 60 * 60)); // Convert to hours
+              }
+            }
+          }
+
+          if (responseTimes.length > 0) {
+            tailor.averageResponseTime = responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
+          }
+        }
+
         await tailor.save();
         
         // Assign badges based on performance

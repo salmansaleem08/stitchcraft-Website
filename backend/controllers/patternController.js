@@ -410,7 +410,7 @@ exports.downloadPattern = async (req, res) => {
 // @access  Private
 exports.addPatternReview = async (req, res) => {
   try {
-    const { rating, comment, images } = req.body;
+    const { rating, comment } = req.body;
 
     const pattern = await Pattern.findById(req.params.id);
 
@@ -435,12 +435,18 @@ exports.addPatternReview = async (req, res) => {
       return res.status(400).json({ message: "You have already reviewed this pattern" });
     }
 
+    // Process uploaded images
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      imageUrls = req.files.map(file => `/uploads/images/${file.filename}`);
+    }
+
     const review = await PatternReview.create({
       pattern: pattern._id,
       user: req.user._id,
       rating,
       comment,
-      images: images || [],
+      images: imageUrls,
       verifiedPurchase: !!purchase,
     });
 

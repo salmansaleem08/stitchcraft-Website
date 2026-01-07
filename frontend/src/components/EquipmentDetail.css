@@ -66,7 +66,12 @@
   padding: 0.5rem 0;
 }
 
-.image-thumbnails img {
+.thumbnail-item {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.thumbnail-item img {
   width: 80px;
   height: 80px;
   object-fit: cover;
@@ -76,8 +81,22 @@
   transition: border-color 0.2s ease;
 }
 
-.image-thumbnails img:hover {
+.thumbnail-item img:hover {
   border-color: #8b4513;
+}
+
+.thumbnail-placeholder {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f1eb;
+  border: 1px solid #e8e0d6;
+  border-radius: 4px;
+  color: #9ca3af;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .equipment-info {

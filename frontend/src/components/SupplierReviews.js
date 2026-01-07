@@ -212,7 +212,10 @@ const SupplierReviews = ({ supplierId, onDataLoad }) => {
                       <div className="images-grid">
                         {review.images.map((image, idx) => (
                           <div key={idx} className="review-image-wrapper">
-                            <img src={image} alt={`Review ${idx + 1}`} />
+                            <img
+                              src={`http://localhost:5000${image}`}
+                              alt={`Review ${idx + 1}`}
+                            />
                             <div className="image-overlay"></div>
                           </div>
                         ))}

@@ -313,6 +313,56 @@
   border-radius: 12px;
 }
 
+.tailor-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.badge-small {
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.badge-small.badge-master-tailor {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+}
+
+.badge-small.badge-speed-stitching {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+.badge-small.badge-quality-expert {
+  background: linear-gradient(135deg, #45b7d1 0%, #96c93d 100%);
+}
+
+.badge-small.badge-customer-favorite {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.badge-small.badge-experienced-professional {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  color: #374151;
+}
+
+.badge-small.badge-rising-star {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  color: #374151;
+}
+
+.badge-small.badge-more {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
 .rating-stars {
   display: flex;
   gap: 0.25rem;

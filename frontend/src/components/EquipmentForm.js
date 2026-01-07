@@ -14,6 +14,7 @@ const EquipmentForm = () => {
     brand: "",
     model: "",
     description: "",
+    images: [],
     condition: "Good",
     yearOfManufacture: "",
     isAvailableForRental: false,
@@ -43,6 +44,8 @@ const EquipmentForm = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [imageFiles, setImageFiles] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
     if (isEditMode) {
@@ -61,6 +64,7 @@ const EquipmentForm = () => {
         brand: eq.brand || "",
         model: eq.model || "",
         description: eq.description || "",
+        images: eq.images || [],
         condition: eq.condition || "Good",
         yearOfManufacture: eq.yearOfManufacture?.toString() || "",
         isAvailableForRental: eq.isAvailableForRental || false,
@@ -95,11 +99,62 @@ const EquipmentForm = () => {
     }
   };
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setImageFiles(files);
+
+    // Create preview URLs
+    const newImages = files.map(file => URL.createObjectURL(file));
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...newImages]
+    }));
+  };
+
+  const removeImage = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadImages = async () => {
+    if (imageFiles.length === 0) return [];
+
+    setUploadingImages(true);
+    try {
+      const formDataUpload = new FormData();
+      imageFiles.forEach(file => {
+        formDataUpload.append('images', file);
+      });
+
+      const response = await api.post('/upload/images', formDataUpload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      throw new Error('Failed to upload images');
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setError("");
       setLoading(true);
+
+      // Upload images first
+      let imageUrls = formData.images;
+      if (imageFiles.length > 0) {
+        imageUrls = await uploadImages();
+      }
 
       const submitData = {
         name: formData.name,
@@ -107,6 +162,7 @@ const EquipmentForm = () => {
         brand: formData.brand,
         model: formData.model,
         description: formData.description,
+        images: imageUrls,
         condition: formData.condition,
         yearOfManufacture: formData.yearOfManufacture ? parseInt(formData.yearOfManufacture) : undefined,
         isAvailableForRental: formData.isAvailableForRental,
@@ -114,7 +170,13 @@ const EquipmentForm = () => {
         rentalPeriod: formData.rentalPeriod,
         isAvailableForSale: formData.isAvailableForSale,
         salePrice: formData.isAvailableForSale && formData.salePrice ? parseFloat(formData.salePrice) : undefined,
-        location: formData.location,
+        location: {
+          type: 'Point',
+          coordinates: [73.0479, 33.6844], // Default coordinates for Islamabad - you can add geocoding later
+          city: formData.location.city,
+          province: formData.location.province,
+          address: formData.location.address,
+        },
         financingOptions: formData.financingOptions.available
           ? {
               available: true,
@@ -253,6 +315,52 @@ const EquipmentForm = () => {
                 rows="5"
                 placeholder="Detailed description of the equipment..."
               ></textarea>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h2>Images</h2>
+            <div className="form-group">
+              <label>Equipment Images (Max 10 images)</label>
+              <div className="image-upload-container">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                  className="image-input"
+                  id="image-upload"
+                />
+                <label htmlFor="image-upload" className="image-upload-label">
+                  <div className="upload-icon">📷</div>
+                  <div className="upload-text">Click to upload images</div>
+                  <div className="upload-subtext">PNG, JPG, GIF up to 10MB each</div>
+                </label>
+              </div>
+
+              {formData.images.length > 0 && (
+                <div className="image-preview-grid">
+                  {formData.images.map((image, index) => (
+                    <div key={index} className="image-preview-item">
+                      <img src={image} alt={`Preview ${index + 1}`} />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="remove-image-btn"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {uploadingImages && (
+                <div className="upload-progress">
+                  <div className="loading-spinner"></div>
+                  <span>Uploading images...</span>
+                </div>
+              )}
             </div>
           </div>
 

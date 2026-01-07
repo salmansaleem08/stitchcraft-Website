@@ -11,10 +11,13 @@ if (!fs.existsSync(uploadsDir)) {
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     let uploadPath = uploadsDir;
-    
+
     if (file.fieldname === "patternFile") {
       uploadPath = path.join(uploadsDir, "patterns");
-    } else if (file.fieldname === "images") {
+    } else if (file.fieldname === "images" ||
+               file.fieldname === "mainImage" ||
+               file.fieldname === "beforeImage" ||
+               file.fieldname === "afterImage") {
       uploadPath = path.join(uploadsDir, "images");
     } else if (file.fieldname === "video") {
       uploadPath = path.join(uploadsDir, "videos");

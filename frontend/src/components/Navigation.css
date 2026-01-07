@@ -45,6 +45,18 @@
   opacity: 0.9;
 }
 
+/* Hide Community text link on desktop for Tailor role (shown as icon instead) */
+.nav-link[data-community-link="true"] {
+  display: none;
+}
+
+/* Show Community link on mobile */
+@media (max-width: 768px) {
+  .nav-link[data-community-link="true"] {
+    display: block;
+  }
+}
+
 /* Center: Navigation Links */
 .main-nav {
   flex: 1;

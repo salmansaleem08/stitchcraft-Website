@@ -256,6 +256,9 @@ exports.updateTailorProfile = async (req, res) => {
 
     const updatedTailor = await tailor.save();
 
+    // Assign badges based on updated profile
+    await assignBadges(tailor._id);
+
     res.json({
       success: true,
       data: updatedTailor,

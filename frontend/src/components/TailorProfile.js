@@ -123,9 +123,16 @@ const TailorProfile = () => {
     if (url.startsWith("http://") || url.startsWith("https://")) {
       return url;
     }
+    // Handle relative paths that start with /
+    if (url.startsWith("/")) {
+      const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const BASE_URL = API_BASE.replace("/api", "");
+      return `${BASE_URL}${url}`;
+    }
+    // Handle any other relative paths
     const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
     const BASE_URL = API_BASE.replace("/api", "");
-    return `${BASE_URL}${url}`;
+    return `${BASE_URL}/${url}`;
   };
 
   return (
@@ -258,6 +265,27 @@ const TailorProfile = () => {
                   </span>
                 </div>
               </div>
+
+              {/* Certification Badges */}
+              {tailor.badges && tailor.badges.length > 0 && (
+                <div className="info-section">
+                  <h3 className="section-title">Certifications</h3>
+                  <div className="badges-list">
+                    {tailor.badges.map((badge, idx) => (
+                      <div key={idx} className={`certification-badge badge-${badge.type?.toLowerCase().replace(' ', '-') || 'default'}`}>
+                        <span className="badge-icon">🏆</span>
+                        <span className="badge-name">{badge.name || badge.type}</span>
+                        <span className="badge-earned">
+                          {badge.earnedAt ? new Date(badge.earnedAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            year: 'numeric'
+                          }) : ''}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               {(user && user._id === tailor._id) || (user && user.role === "customer" && user._id !== tailor._id) ? (
@@ -411,7 +439,14 @@ const TailorProfile = () => {
                             <div className="portfolio-comparison-item">
                               <div className="comparison-label">Before</div>
                               <div className="portfolio-image-container">
-                                <img src={getImageUrl(item.beforeImage)} alt="Before" className="portfolio-image" />
+                                <img
+                                  src={getImageUrl(item.beforeImage)}
+                                  alt="Before"
+                                  className="portfolio-image"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
                               </div>
                             </div>
                           )}
@@ -419,7 +454,14 @@ const TailorProfile = () => {
                             <div className="portfolio-comparison-item">
                               <div className="comparison-label">After</div>
                               <div className="portfolio-image-container">
-                                <img src={getImageUrl(item.afterImage)} alt="After" className="portfolio-image" />
+                                <img
+                                  src={getImageUrl(item.afterImage)}
+                                  alt="After"
+                                  className="portfolio-image"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
                               </div>
                             </div>
                           )}
@@ -427,7 +469,14 @@ const TailorProfile = () => {
                       ) : (
                         <div className="portfolio-image-container">
                           {item.imageUrl ? (
-                            <img src={getImageUrl(item.imageUrl)} alt={item.title || "Portfolio item"} className="portfolio-image" />
+                            <img
+                              src={getImageUrl(item.imageUrl)}
+                              alt={item.title || "Portfolio item"}
+                              className="portfolio-image"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
                           ) : (
                             <div className="portfolio-placeholder">No image</div>
                           )}

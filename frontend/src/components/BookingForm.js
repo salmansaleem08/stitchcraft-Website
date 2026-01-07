@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import api from "../utils/api";
 import MeasurementForm from "./MeasurementForm";
 import { getDefaultPricing } from "../utils/pricingDefaults";
+import { FaArrowLeft } from "react-icons/fa";
 import "./BookingForm.css";
 
 const BookingForm = () => {

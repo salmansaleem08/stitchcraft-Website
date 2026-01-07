@@ -6,6 +6,7 @@ const {
   getOrderReview,
 } = require("../controllers/reviewController");
 const { protect } = require("../middleware/auth");
+const upload = require("../utils/upload");
 
 router.post("/", protect, createReview);
 router.get("/tailor/:tailorId", getTailorReviews);

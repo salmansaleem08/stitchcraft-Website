@@ -11,8 +11,8 @@ const EquipmentMarketplace = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: "",
-    isRentable: "",
-    isSellable: "",
+    isAvailableForRental: "",
+    isAvailableForSale: "",
     condition: "",
     city: "",
     search: "",
@@ -63,13 +63,30 @@ const EquipmentMarketplace = () => {
   const clearFilters = () => {
     setFilters({
       category: "",
-      isRentable: "",
-      isSellable: "",
+      isAvailableForRental: "",
+      isAvailableForSale: "",
       condition: "",
       city: "",
       search: "",
     });
     setPage(1);
+  };
+
+  const handleRentClick = (equipmentId) => {
+    // Navigate to equipment detail page and show rental form
+    window.location.href = `/equipment/${equipmentId}`;
+  };
+
+  const handleBuyClick = async (equipmentId) => {
+    try {
+      const response = await api.post(`/equipment/${equipmentId}/buy`);
+      alert("Purchase request submitted successfully! You will be contacted soon.");
+      // Refresh the equipment list
+      fetchEquipment();
+    } catch (error) {
+      console.error("Error submitting purchase request:", error);
+      alert(error.response?.data?.message || "Failed to submit purchase request. Please try again.");
+    }
   };
 
   if (loading) {
@@ -168,8 +185,8 @@ const EquipmentMarketplace = () => {
                   <label>
                     <input
                       type="checkbox"
-                      name="isRentable"
-                      checked={filters.isRentable === "true"}
+                      name="isAvailableForRental"
+                      checked={filters.isAvailableForRental === "true"}
                       onChange={handleFilterChange}
                     />
                     Available for rental
@@ -180,8 +197,8 @@ const EquipmentMarketplace = () => {
                   <label>
                     <input
                       type="checkbox"
-                      name="isSellable"
-                      checked={filters.isSellable === "true"}
+                      name="isAvailableForSale"
+                      checked={filters.isAvailableForSale === "true"}
                       onChange={handleFilterChange}
                     />
                     Available for sale
@@ -218,13 +235,13 @@ const EquipmentMarketplace = () => {
                 ) : (
                   <div className="equipment-placeholder">No image</div>
                 )}
-                {item.isRentable && item.isSellable && (
+                {item.isAvailableForRental && item.isAvailableForSale && (
                   <span className="equipment-badge dual">Rent & Sale</span>
                 )}
-                {item.isRentable && !item.isSellable && (
+                {item.isAvailableForRental && !item.isAvailableForSale && (
                   <span className="equipment-badge rent">Rental</span>
                 )}
-                {!item.isRentable && item.isSellable && (
+                {!item.isAvailableForRental && item.isAvailableForSale && (
                   <span className="equipment-badge sale">For sale</span>
                 )}
               </div>
@@ -237,15 +254,15 @@ const EquipmentMarketplace = () => {
                   <p className="equipment-brand">{item.brand} {item.model}</p>
                 )}
                 <div className="equipment-pricing">
-                  {item.isRentable && item.rentalPricePerDay && (
+                  {item.isAvailableForRental && item.rentalPrice && (
                     <div className="price-item">
                       <span className="price-label">Rental:</span>
                       <span className="price-value">
-                        PKR {item.rentalPricePerDay.toLocaleString()}/day
+                        PKR {item.rentalPrice.toLocaleString()}/day
                       </span>
                     </div>
                   )}
-                  {item.isSellable && item.salePrice && (
+                  {item.isAvailableForSale && item.salePrice && (
                     <div className="price-item">
                       <span className="price-label">Sale:</span>
                       <span className="price-value">
@@ -260,6 +277,37 @@ const EquipmentMarketplace = () => {
                     <span>{item.rating.toFixed(1)}</span>
                     <span className="rating-reviews">({item.totalReviews || 0})</span>
                   </div>
+                )}
+              </div>
+
+              {/* Action buttons overlay */}
+              <div className="equipment-actions">
+                {user && user.role !== "supplier" && (
+                  <>
+                    {item.isAvailableForRental && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleRentClick(item._id);
+                        }}
+                        className="action-btn rent-btn"
+                      >
+                        Rent
+                      </button>
+                    )}
+                    {item.isAvailableForSale && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleBuyClick(item._id);
+                        }}
+                        className="action-btn buy-btn"
+                        disabled={!item.saleStock || item.saleStock <= 0}
+                      >
+                        {item.saleStock && item.saleStock > 0 ? "Buy" : "Out"}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </Link>

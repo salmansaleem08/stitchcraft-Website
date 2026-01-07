@@ -20,6 +20,7 @@ const SupplyReviews = ({ supplyId, onReviewSubmit }) => {
     quality: 5,
     valueForMoney: 5,
     delivery: 5,
+    images: [],
   });
 
   useEffect(() => {
@@ -60,10 +61,27 @@ const SupplyReviews = ({ supplyId, onReviewSubmit }) => {
       const supplyRes = await api.get(`/supplies/${supplyId}`);
       const supply = supplyRes.data.data;
 
-      await api.post("/supply-reviews", {
-        supply: supplyId,
-        supplier: supply.supplier._id,
-        ...reviewData,
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append("supply", supplyId);
+      formData.append("supplier", supply.supplier._id);
+      formData.append("rating", reviewData.rating);
+      formData.append("comment", reviewData.comment || "");
+      formData.append("quality", reviewData.quality);
+      formData.append("valueForMoney", reviewData.valueForMoney);
+      formData.append("delivery", reviewData.delivery);
+
+      // Add images if any
+      if (reviewData.images && reviewData.images.length > 0) {
+        reviewData.images.forEach((image, index) => {
+          formData.append("images", image);
+        });
+      }
+
+      await api.post("/supply-reviews", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       setShowReviewForm(false);
@@ -73,6 +91,7 @@ const SupplyReviews = ({ supplyId, onReviewSubmit }) => {
         quality: 5,
         valueForMoney: 5,
         delivery: 5,
+        images: [],
       });
       fetchReviews();
       if (onReviewSubmit) onReviewSubmit();
@@ -182,6 +201,72 @@ const SupplyReviews = ({ supplyId, onReviewSubmit }) => {
                 rows="4"
                 placeholder="Share your experience..."
               />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="images">Photos (optional)</label>
+              <div className="image-upload-container">
+                <div className="upload-area" onClick={() => document.getElementById('images').click()}>
+                  <div className="upload-icon">📸</div>
+                  <div className="upload-text">
+                    <strong>Click to upload photos</strong>
+                    <br />
+                    <span className="upload-subtitle">or drag and drop images here</span>
+                  </div>
+                  <button type="button" className="btn btn-secondary upload-btn" onClick={(e) => {
+                    e.stopPropagation();
+                    document.getElementById('images').click();
+                  }}>
+                    Choose Files
+                  </button>
+                </div>
+                <input
+                  type="file"
+                  id="images"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    // Limit to 5 images
+                    if (files.length > 5) {
+                      alert("You can upload maximum 5 images");
+                      return;
+                    }
+                    setReviewData({ ...reviewData, images: files });
+                  }}
+                  className="file-input-hidden"
+                  style={{ display: 'none' }}
+                />
+                <small className="file-help">Upload up to 5 images (max 10MB each)</small>
+              </div>
+
+              {reviewData.images.length > 0 && (
+                <div className="image-preview">
+                  <h4>Selected Photos ({reviewData.images.length}/5)</h4>
+                  <div className="preview-grid">
+                    {reviewData.images.map((file, idx) => (
+                      <div key={idx} className="preview-item">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Preview ${idx + 1}`}
+                          className="preview-image"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newImages = reviewData.images.filter((_, i) => i !== idx);
+                            setReviewData({ ...reviewData, images: newImages });
+                          }}
+                          className="remove-image"
+                          title="Remove image"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="form-actions">
@@ -324,7 +409,11 @@ const SupplyReviews = ({ supplyId, onReviewSubmit }) => {
                 {review.images && review.images.length > 0 && (
                   <div className="review-images">
                     {review.images.map((image, idx) => (
-                      <img key={idx} src={image} alt={`Review ${idx + 1}`} />
+                      <img
+                        key={idx}
+                        src={`http://localhost:5000${image}`}
+                        alt={`Review ${idx + 1}`}
+                      />
                     ))}
                   </div>
                 )}

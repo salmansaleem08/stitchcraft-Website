@@ -328,13 +328,37 @@ const OrderTracking = () => {
     setSuccess("");
 
     try {
+      let imageUrls = [];
+      if (reviewPhotoFiles.length > 0) {
+        const formData = new FormData();
+        reviewPhotoFiles.forEach((file) => {
+          formData.append("images", file);
+        });
+        const response = await api.post("/upload/images", formData);
+        imageUrls = response.data.data.map((url) => `http://localhost:5000${url}`);
+      }
+
       await api.post("/reviews", {
         tailor: order.tailor._id,
         order: order._id,
-        ...reviewData,
+        rating: reviewData.rating,
+        comment: reviewData.comment,
+        quality: reviewData.quality,
+        communication: reviewData.communication,
+        valueForMoney: reviewData.valueForMoney,
+        photos: imageUrls,
       });
       setSuccess("Review submitted successfully");
       setShowReviewForm(false);
+      setReviewData({
+        rating: 5,
+        comment: "",
+        quality: 5,
+        communication: 5,
+        valueForMoney: 5,
+        photos: [],
+      });
+      setReviewPhotoFiles([]);
       checkExistingReview();
       fetchOrder();
     } catch (error) {
@@ -773,23 +797,21 @@ const OrderTracking = () => {
         </Link>
 
         <div className="order-header">
-          <div>
-            <h1>Order #{order.orderNumber}</h1>
-            <p className="order-date">
+          <div className="order-info-section">
+            <p className="order-date-small">
               Placed on {new Date(order.createdAt).toLocaleDateString()}
+            </p>
+            <h1 className="order-id-header">Order #{order.orderNumber}</h1>
+            <p className="order-subtitle">
+              Track your order progress, communicate with your tailor, and manage delivery details.
             </p>
           </div>
           <div className="order-header-actions">
-            <div className="order-status-badge">
-              <span className={`status ${order.status}`}>
-                {order.status.replace(/_/g, " ").toUpperCase()}
-              </span>
-            </div>
-            <div className="design-tools-links">
+            <div className="design-tools-buttons">
               {order.measurements && (
                 <Link
                   to="/virtual-tryon"
-                  className="btn btn-secondary btn-sm"
+                  className="design-tool-btn"
                   target="_blank"
                 >
                   Virtual Try-On
@@ -797,18 +819,16 @@ const OrderTracking = () => {
               )}
               <Link
                 to={`/orders/${order._id}/mood-board`}
-                className="btn btn-secondary btn-sm"
+                className="design-tool-btn"
               >
                 Mood Board
               </Link>
-              {order.designReference && order.designReference.length > 0 && (
-                <Link
-                  to={`/orders/${order._id}/annotate`}
-                  className="btn btn-secondary btn-sm"
-                >
-                  Annotate Design
-                </Link>
-              )}
+            </div>
+            <div className="order-status-display">
+              <span className="status-label">Status:</span>
+              <span className={`status ${order.status}`}>
+                {order.status.replace(/_/g, " ").toUpperCase()}
+              </span>
             </div>
           </div>
         </div>
@@ -1112,6 +1132,72 @@ const OrderTracking = () => {
                 />
               </div>
 
+              <div className="form-group">
+                <label htmlFor="reviewPhotos">Photos (optional)</label>
+                <div className="image-upload-container">
+                  <div className="upload-area" onClick={() => document.getElementById('reviewPhotos').click()}>
+                    <div className="upload-icon">📸</div>
+                    <div className="upload-text">
+                      <strong>Click to upload photos</strong>
+                      <br />
+                      <span className="upload-subtitle">or drag and drop images here</span>
+                    </div>
+                    <button type="button" className="btn btn-secondary upload-btn" onClick={(e) => {
+                      e.stopPropagation();
+                      document.getElementById('reviewPhotos').click();
+                    }}>
+                      Choose Files
+                    </button>
+                  </div>
+                  <input
+                    type="file"
+                    id="reviewPhotos"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files);
+                      // Limit to 5 images
+                      if (files.length > 5) {
+                        alert("You can upload maximum 5 images");
+                        return;
+                      }
+                      setReviewPhotoFiles(files);
+                    }}
+                    className="file-input-hidden"
+                    style={{ display: 'none' }}
+                  />
+                  <small className="file-help">Upload up to 5 images (max 10MB each)</small>
+                </div>
+
+                {reviewPhotoFiles.length > 0 && (
+                  <div className="image-preview">
+                    <h4>Selected Photos ({reviewPhotoFiles.length}/5)</h4>
+                    <div className="preview-grid">
+                      {reviewPhotoFiles.map((file, idx) => (
+                        <div key={idx} className="preview-item">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${idx + 1}`}
+                            className="preview-image"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newFiles = reviewPhotoFiles.filter((_, i) => i !== idx);
+                              setReviewPhotoFiles(newFiles);
+                            }}
+                            className="remove-image"
+                            title="Remove image"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="form-actions">
                 <button
                   type="button"
@@ -1140,6 +1226,20 @@ const OrderTracking = () => {
                 <span className="rating-value">{existingReview.rating}/5</span>
               </div>
               {existingReview.comment && <p>{existingReview.comment}</p>}
+              {existingReview.photos && existingReview.photos.length > 0 && (
+                <div className="review-images">
+                  <h4>Your Photos:</h4>
+                  <div className="images-grid">
+                    {existingReview.photos.map((photo, idx) => (
+                      <img
+                        key={idx}
+                        src={`http://localhost:5000${photo}`}
+                        alt={`Review photo ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

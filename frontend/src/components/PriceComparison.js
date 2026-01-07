@@ -175,8 +175,8 @@ const PriceComparison = () => {
                   <div className="comparison-title-section">
                     <h3>
                       {productType === "fabric"
-                        ? `${comparison.fabricType} - ${comparison.color} (${comparison.pattern})`
-                        : `${comparison.category} - ${comparison.brand}`}
+                        ? `${comparison.fabricType}`
+                        : `${comparison.category}`}
                     </h3>
                   </div>
                   <div className="comparison-stats">

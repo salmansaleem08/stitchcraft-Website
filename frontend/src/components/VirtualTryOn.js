@@ -205,7 +205,7 @@ const VirtualTryOn = () => {
         </div>
 
         {step === 1 && (
-          <div className="tryon-step">
+          <div className="tryon-step" data-step="1">
             <h2>Step 1: Select Garment</h2>
             <div className="garment-selection">
               <div className="form-group">
@@ -273,7 +273,7 @@ const VirtualTryOn = () => {
         )}
 
         {step === 2 && session && (
-          <div className="tryon-step">
+          <div className="tryon-step" data-step="2">
             <h2>Step 2: Body Measurement Scanning</h2>
             <div className="scanning-section">
               <div className="camera-section">
@@ -345,7 +345,7 @@ const VirtualTryOn = () => {
         )}
 
         {step === 3 && session && (
-          <div className="tryon-step">
+          <div className="tryon-step" data-step="3">
             <h2>Step 3: Fabric & Pattern Selection</h2>
             <div className="selection-section">
               <div className="fabric-selection">
@@ -405,7 +405,7 @@ const VirtualTryOn = () => {
         )}
 
         {step === 4 && session && visualization && (
-          <div className="tryon-step">
+          <div className="tryon-step" data-step="4">
             <h2>Step 4: Visualization & Fit Analysis</h2>
             <div className="visualization-section">
               {session.tryOnVisualization?.fabricDraping?.previewImage && (

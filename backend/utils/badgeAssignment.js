@@ -24,6 +24,32 @@ const assignBadges = async (tailorId) => {
       });
     }
 
+    // Experienced Professional: Many completed orders
+    if (
+      tailor.completedOrders >= 100 &&
+      !existingBadgeTypes.includes("Experienced Professional")
+    ) {
+      badges.push({
+        name: "Experienced Professional",
+        type: "Experienced Professional",
+        earnedAt: new Date(),
+      });
+    }
+
+    // Rising Star: Good performance with moderate orders
+    if (
+      tailor.rating >= 4.0 &&
+      tailor.completedOrders >= 10 &&
+      tailor.completionRate >= 85 &&
+      !existingBadgeTypes.includes("Rising Star")
+    ) {
+      badges.push({
+        name: "Rising Star",
+        type: "Rising Star",
+        earnedAt: new Date(),
+      });
+    }
+
     // Speed Stitching: Fast response time + high completion rate
     if (
       tailor.averageResponseTime <= 24 &&

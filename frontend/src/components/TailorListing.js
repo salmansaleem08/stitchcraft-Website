@@ -369,6 +369,21 @@ const TailorListing = () => {
                     </div>
                   </div>
 
+                  {tailor.badges && tailor.badges.length > 0 && (
+                    <div className="tailor-badges">
+                      {tailor.badges.slice(0, 2).map((badge, idx) => (
+                        <span key={idx} className={`badge-small badge-${badge.type?.toLowerCase().replace(' ', '-') || 'default'}`}>
+                          {badge.name || badge.type}
+                        </span>
+                      ))}
+                      {tailor.badges.length > 2 && (
+                        <span className="badge-small badge-more">
+                          +{tailor.badges.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {tailor.specialization?.length > 0 && (
                     <div className="tailor-specializations">
                       {tailor.specialization.slice(0, 2).map((spec, idx) => (

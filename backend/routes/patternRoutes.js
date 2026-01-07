@@ -14,6 +14,7 @@ const {
   respondToCollaborationRequest,
 } = require("../controllers/patternController");
 const { protect, authorize } = require("../middleware/auth");
+const upload = require("../utils/upload");
 
 // Public routes
 router.get("/", getPatterns);
@@ -28,7 +29,7 @@ router.put("/:id", updatePattern);
 router.delete("/:id", deletePattern);
 router.post("/:id/purchase", purchasePattern);
 router.get("/:id/download", downloadPattern);
-router.post("/:id/reviews", addPatternReview);
+router.post("/:id/reviews", upload.array("images", 5), addPatternReview);
 router.post("/:id/collaborate", requestCollaboration);
 router.put("/:id/collaborate/:requestId", respondToCollaborationRequest);
 

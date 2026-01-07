@@ -14,11 +14,17 @@ exports.createSupplyReview = async (req, res) => {
       return res.status(403).json({ message: "Only customers can create reviews" });
     }
 
-    const { supply, supplier, order, rating, comment, quality, valueForMoney, delivery, images } =
+    const { supply, supplier, order, rating, comment, quality, valueForMoney, delivery } =
       req.body;
 
     if (!supply || !supplier || !rating) {
       return res.status(400).json({ message: "Supply, supplier, and rating are required" });
+    }
+
+    // Process uploaded images
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      imageUrls = req.files.map(file => `/uploads/images/${file.filename}`);
     }
 
     // Verify supply exists
@@ -32,7 +38,8 @@ exports.createSupplyReview = async (req, res) => {
     }
 
     // If order is provided, verify it belongs to the customer
-    if (order) {
+    if (order !== undefined && order !== null && order !== '') {
+      console.log("Order provided, checking order validation");
       const orderDoc = await SupplyOrder.findById(order);
       if (!orderDoc) {
         return res.status(404).json({ message: "Order not found" });
@@ -68,7 +75,7 @@ exports.createSupplyReview = async (req, res) => {
       quality: quality || null,
       valueForMoney: valueForMoney || null,
       delivery: delivery || null,
-      images: images || [],
+      images: imageUrls,
     });
 
     const populatedReview = await SupplyReview.findById(review._id)
@@ -224,14 +231,19 @@ exports.updateSupplyReview = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to update this review" });
     }
 
-    const { rating, comment, quality, valueForMoney, delivery, images } = req.body;
+    const { rating, comment, quality, valueForMoney, delivery } = req.body;
 
     if (rating) review.rating = rating;
     if (comment !== undefined) review.comment = comment;
     if (quality !== undefined) review.quality = quality;
     if (valueForMoney !== undefined) review.valueForMoney = valueForMoney;
     if (delivery !== undefined) review.delivery = delivery;
-    if (images !== undefined) review.images = images;
+
+    // Process uploaded images if any
+    if (req.files && req.files.length > 0) {
+      const newImageUrls = req.files.map(file => `/uploads/images/${file.filename}`);
+      review.images = [...(review.images || []), ...newImageUrls];
+    }
 
     await review.save();
 

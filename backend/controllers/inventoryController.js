@@ -26,7 +26,7 @@ exports.getInventorySummary = async (req, res) => {
       totalStockValue: fabrics.reduce((sum, f) => sum + f.pricePerMeter * f.stockQuantity, 0),
       totalSupplies: supplies.length,
       activeSupplies: supplies.filter((s) => s.isActive).length,
-      lowStockSupplies: supplies.filter((s) => s.stockQuantity < 10 && s.stockQuantity > 0).length,
+      lowStockSupplies: supplies.filter((s) => s.stockQuantity < 50 && s.stockQuantity > 0).length,
       outOfStockSupplies: supplies.filter((s) => s.stockQuantity === 0).length,
       totalSuppliesValue: supplies.reduce((sum, s) => sum + s.price * s.stockQuantity, 0),
       byType: {},
@@ -134,7 +134,7 @@ exports.updateFabricStock = async (req, res) => {
 // @access  Private (Supplier only)
 exports.getLowStockItems = async (req, res) => {
   try {
-    const { threshold = 10, type } = req.query;
+    const { threshold = 50, type } = req.query;
 
     const filter = {
       supplier: req.user._id,

@@ -26,15 +26,20 @@ const MoodBoard = () => {
     if (id) {
       fetchMoodBoard();
     } else if (orderId) {
-      // Create new mood board for order
-      createMoodBoardForOrder();
+      // Check if user can create mood boards (only tailors and suppliers)
+      if (user?.role === "tailor" || user?.role === "supplier") {
+        createMoodBoardForOrder();
+      } else {
+        // Customers cannot create mood boards, redirect to orders page
+        navigate("/orders");
+      }
     }
-  }, [id, orderId]);
+  }, [id, orderId, user]);
 
   const fetchMoodBoard = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/moodboards/${id}`);
+      const response = await api.get(`/mood-boards/${id}`);
       setMoodBoard(response.data.data);
       setError("");
     } catch (error) {
@@ -48,11 +53,11 @@ const MoodBoard = () => {
   const createMoodBoardForOrder = async () => {
     try {
       setLoading(true);
-      const response = await api.post("/moodboards", {
+      const response = await api.post("/mood-boards", {
         title: `Design Board for Order`,
         order: orderId,
       });
-      navigate(`/moodboards/${response.data.data._id}`);
+      navigate(`/mood-boards/${response.data.data._id}`);
     } catch (error) {
       setError("Failed to create mood board");
       console.error("Error creating mood board:", error);
@@ -62,7 +67,7 @@ const MoodBoard = () => {
 
   const handleSave = async () => {
     try {
-      await api.put(`/moodboards/${id}`, {
+      await api.put(`/mood-boards/${id}`, {
         title: moodBoard.title,
         description: moodBoard.description,
         items: moodBoard.items,
@@ -78,7 +83,7 @@ const MoodBoard = () => {
 
   const handleAddItem = async () => {
     try {
-      const response = await api.post(`/moodboards/${id}/items`, newItem);
+      const response = await api.post(`/mood-boards/${id}/items`, newItem);
       setMoodBoard({
         ...moodBoard,
         items: [...moodBoard.items, response.data.data],
@@ -98,7 +103,7 @@ const MoodBoard = () => {
 
   const handleRemoveItem = async (itemId) => {
     try {
-      await api.delete(`/moodboards/${id}/items/${itemId}`);
+      await api.delete(`/mood-boards/${id}/items/${itemId}`);
       setMoodBoard({
         ...moodBoard,
         items: moodBoard.items.filter((item) => item._id !== itemId),

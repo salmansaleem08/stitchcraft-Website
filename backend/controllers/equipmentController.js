@@ -1,5 +1,6 @@
 const Equipment = require("../models/Equipment");
 const EquipmentRental = require("../models/EquipmentRental");
+const EquipmentPurchase = require("../models/EquipmentPurchase");
 const User = require("../models/User");
 
 // @desc    Get all equipment
@@ -218,20 +219,32 @@ exports.requestRental = async (req, res) => {
       return res.status(400).json({ message: "Equipment is already rented for the selected dates" });
     }
 
-    // Calculate rental amount
+    // Ensure dates are valid
     const start = new Date(startDate);
     const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ message: "Invalid date format. Please provide valid start and end dates." });
+    }
+
+    // Calculate rental amount
     const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    if (days <= 0) {
+      return res.status(400).json({ message: "End date must be after start date" });
+    }
+
     const dailyRate = equipment.rentalPrice || 0;
     const totalAmount = days * dailyRate;
     const deposit = totalAmount * 0.2; // 20% deposit
+
+    console.log("Creating rental with dates:", { startDate: start, endDate: end, days, totalAmount });
 
     const rental = new EquipmentRental({
       equipment: equipment._id,
       renter: req.user._id,
       owner: equipment.owner,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: start,
+      endDate: end,
       rentalPeriod: rentalPeriod || "daily",
       dailyRate,
       totalAmount,
@@ -256,6 +269,78 @@ exports.requestRental = async (req, res) => {
     res.status(201).json({
       success: true,
       data: rental,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    Request equipment purchase
+// @route   POST /api/equipment/:id/buy
+// @access  Private
+exports.requestPurchase = async (req, res) => {
+  try {
+    const { deliveryAddress, paymentMethod, financingDetails, quantity = 1, notes } = req.body;
+
+    const equipment = await Equipment.findById(req.params.id);
+
+    if (!equipment) {
+      return res.status(404).json({ message: "Equipment not found" });
+    }
+
+    if (!equipment.isAvailableForSale) {
+      return res.status(400).json({ message: "Equipment is not available for purchase" });
+    }
+
+    if (equipment.owner.toString() === req.user._id.toString()) {
+      return res.status(400).json({ message: "Cannot purchase your own equipment" });
+    }
+
+    // Check stock availability
+    if (equipment.saleStock !== undefined && equipment.saleStock < quantity) {
+      return res.status(400).json({ message: `Only ${equipment.saleStock} units available in stock` });
+    }
+
+    const unitPrice = equipment.salePrice || 0;
+    const totalAmount = unitPrice * quantity;
+
+    const purchase = new EquipmentPurchase({
+      equipment: equipment._id,
+      buyer: req.user._id,
+      seller: equipment.owner,
+      purchasePrice: unitPrice,
+      quantity,
+      totalAmount,
+      deliveryAddress,
+      paymentMethod: paymentMethod || "cash",
+      financingDetails: financingDetails || { enabled: false },
+      conditionAtPurchase: equipment.condition,
+      notes,
+      timeline: [
+        {
+          status: "pending",
+          timestamp: new Date(),
+          note: "Purchase request submitted",
+          updatedBy: req.user._id,
+        },
+      ],
+    });
+
+    await purchase.save();
+    await purchase.populate("equipment", "name category brand model");
+    await purchase.populate("buyer", "name email phone");
+    await purchase.populate("seller", "name businessName email phone");
+
+    // Update equipment stock if applicable
+    if (equipment.saleStock !== undefined) {
+      equipment.saleStock -= quantity;
+      await equipment.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      data: purchase,
+      message: "Purchase request submitted successfully",
     });
   } catch (error) {
     res.status(400).json({ message: error.message });

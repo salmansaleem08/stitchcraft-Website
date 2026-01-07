@@ -17,7 +17,7 @@ exports.uploadImages = async (req, res) => {
       }
 
       const imageUrls = req.files.images.map((file) => {
-        return `/uploads/images/${file.filename}`;
+        return `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/images/${file.filename}`;
       });
 
       res.json({
@@ -47,7 +47,7 @@ exports.uploadPatternFile = async (req, res) => {
       res.json({
         success: true,
         data: {
-          url: `/uploads/patterns/${req.file.filename}`,
+          url: `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/patterns/${req.file.filename}`,
           fileName: req.file.originalname,
           fileSize: req.file.size,
           fileType: req.file.mimetype,
@@ -76,7 +76,7 @@ exports.uploadVideo = async (req, res) => {
       res.json({
         success: true,
         data: {
-          url: `/uploads/videos/${req.file.filename}`,
+          url: `${process.env.BACKEND_URL || 'http://localhost:5000'}/uploads/videos/${req.file.filename}`,
           fileName: req.file.originalname,
           fileSize: req.file.size,
           fileType: req.file.mimetype,

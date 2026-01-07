@@ -132,6 +132,8 @@ exports.rejectVerification = async (req, res) => {
 // @access  Private (Admin only)
 exports.getAdminDashboard = async (req, res) => {
   try {
+    console.log("=== Admin Dashboard Stats Query Started ===");
+
     const [
       pendingVerifications,
       totalSuppliers,
@@ -153,39 +155,82 @@ exports.getAdminDashboard = async (req, res) => {
       revenueResult,
     ] = await Promise.all([
       // User counts
-      User.countDocuments({ role: "supplier", verificationStatus: "under_review" }),
-      User.countDocuments({ role: "supplier" }),
-      User.countDocuments({ role: "tailor" }),
-      User.countDocuments({ role: "customer" }),
-      User.countDocuments({ "badges.type": "Mentor" }),
+      User.countDocuments({ role: "supplier", verificationStatus: "under_review" }).catch(err => { console.error("Error counting pending verifications:", err); return 0; }),
+      User.countDocuments({ role: "supplier" }).catch(err => { console.error("Error counting suppliers:", err); return 0; }),
+      User.countDocuments({ role: "tailor" }).catch(err => { console.error("Error counting tailors:", err); return 0; }),
+      User.countDocuments({ role: "customer" }).catch(err => { console.error("Error counting customers:", err); return 0; }),
+      User.countDocuments({ "badges.type": "Mentor" }).catch(err => { console.error("Error counting mentors:", err); return 0; }),
       // Order counts
-      Order.countDocuments(),
-      Order.countDocuments({ status: { $in: ["pending", "confirmed", "in_progress"] } }),
-      Order.countDocuments({ status: "completed" }),
+      Order.countDocuments().catch(err => { console.error("Error counting orders:", err); return 0; }),
+      Order.countDocuments({ status: { $in: ["pending", "consultation_scheduled", "consultation_completed", "fabric_selected", "in_progress", "revision_requested", "quality_check"] } }).catch(err => { console.error("Error counting pending orders:", err); return 0; }),
+      Order.countDocuments({ status: "completed" }).catch(err => { console.error("Error counting completed orders:", err); return 0; }),
       // Product counts
-      Fabric.countDocuments(),
-      Supply.countDocuments(),
-      Equipment.countDocuments(),
+      Fabric.countDocuments().catch(err => { console.error("Error counting fabrics:", err); return 0; }),
+      Supply.countDocuments().catch(err => { console.error("Error counting supplies:", err); return 0; }),
+      Equipment.countDocuments().catch(err => { console.error("Error counting equipment:", err); return 0; }),
       // Learning resources
-      Course.countDocuments(),
-      Workshop.countDocuments(),
-      Pattern.countDocuments(),
-      Video.countDocuments(),
-      IndustryNews.countDocuments(),
+      Course.countDocuments().catch(err => { console.error("Error counting courses:", err); return 0; }),
+      Workshop.countDocuments().catch(err => { console.error("Error counting workshops:", err); return 0; }),
+      Pattern.countDocuments().catch(err => { console.error("Error counting patterns:", err); return 0; }),
+      Video.countDocuments().catch(err => { console.error("Error counting videos:", err); return 0; }),
+      IndustryNews.countDocuments().catch(err => { console.error("Error counting news:", err); return 0; }),
       // Additional stats
-      User.countDocuments({ role: "supplier", verificationStatus: "verified" }),
+      User.countDocuments({ role: "supplier", verificationStatus: "verified" }).catch(err => { console.error("Error counting verified suppliers:", err); return 0; }),
       // Revenue calculation
       Order.aggregate([
         { $match: { status: "completed" } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } },
-      ]),
+      ]).catch(err => { console.error("Error calculating revenue:", err); return []; }),
     ]);
+
+    console.log("Raw counts from database:");
+    console.log(`pendingVerifications: ${pendingVerifications}`);
+    console.log(`totalSuppliers: ${totalSuppliers}`);
+    console.log(`totalTailors: ${totalTailors}`);
+    console.log(`totalCustomers: ${totalCustomers}`);
+    console.log(`totalMentors: ${totalMentors}`);
+    console.log(`totalOrders: ${totalOrders}`);
+    console.log(`pendingOrders: ${pendingOrders}`);
+    console.log(`completedOrders: ${completedOrders}`);
+    console.log(`totalFabrics: ${totalFabrics}`);
+    console.log(`totalSupplies: ${totalSupplies}`);
+    console.log(`totalEquipment: ${totalEquipment}`);
+    console.log(`totalCourses: ${totalCourses}`);
+    console.log(`totalWorkshops: ${totalWorkshops}`);
+    console.log(`totalPatterns: ${totalPatterns}`);
+    console.log(`totalVideos: ${totalVideos}`);
+    console.log(`totalNews: ${totalNews}`);
+    console.log(`verifiedSuppliers: ${verifiedSuppliers}`);
+    console.log(`revenueResult:`, revenueResult);
 
     // Calculate total products
     const totalProducts = totalFabrics + totalSupplies + totalEquipment;
-    
+
     // Extract revenue
     const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
+
+    console.log("Final response data being sent:");
+    console.log({
+      pendingVerifications,
+      totalSuppliers,
+      totalTailors,
+      totalCustomers,
+      totalMentors,
+      totalOrders,
+      pendingOrders,
+      completedOrders,
+      totalFabrics,
+      totalSupplies,
+      totalEquipment,
+      totalProducts,
+      totalCourses,
+      totalWorkshops,
+      totalPatterns,
+      totalVideos,
+      totalNews,
+      verifiedSuppliers,
+      totalRevenue: totalRevenue || 0,
+    });
 
     res.json({
       success: true,
